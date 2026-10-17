@@ -23,20 +23,49 @@ function invoiceContinuation(c) {
   const w=c?.workflow;if(!w)return false;
   const latest=c.messages.findLast(m=>m.channel==='simulated_customer_reply');
   const unfinished=w.processing || ['pending_review','model_attempt_reserved'].includes(latest?.review?.status);
-  const busy=caseActionBusy||dueActive()||state.status==='running'||['running','waiting_for_portfolio'].includes(agentJob?.status);
+  const busy=caseActionBusy||sendBusy||dueActive()||state.status==='running'||['running','waiting_for_portfolio'].includes(agentJob?.status);
   return Boolean(unfinished && !w.pending && !busy);
 }
 
 function invoiceCaseHeader(c) {
-  if(!c)return '';
-  const continuation=invoiceContinuation(c);
-  return `<div class="case-reference"><span>Collection case</span><code title="${escapeHTML(c.id)}">#${escapeHTML(c.id.slice(0,8))}</code><span class="saved-indicator">Saved</span></div>
-    ${continuation?'<div class="invoice-continue"><p>Invoice processing did not finish. Continue from the last saved step.</p><button class="secondary" id="resume-case-action">Continue invoice processing</button></div>':''}`;
+  const row=state.invoices.find(r=>r.id===state.selectedId);if(!row)return '';
+  const w=c?.workflow,pending=w?.pending,send=$('send-draft');
+  let title='Review this invoice',explanation=rowView(row).next,action='';
+  const busy=caseActionBusy||sendBusy||dueActive()||['running','waiting_for_portfolio'].includes(agentJob?.status);
+  if(invoiceContinuation(c)) {
+    title='Continue interrupted invoice processing';explanation='Continue this invoice from its last saved step. This does not restart the portfolio.';
+    action='<button class="primary" id="resume-case-action">Continue invoice processing</button>';
+  } else if(pending?.tool==='record_promise') {
+    title='Record payment promise';explanation='Review the customer reply and proposed payment date, then approve saving this promise.';
+    action=`<button class="primary" id="approve-case-action" ${busy?'disabled':''}>Record payment promise</button><button class="secondary" id="decline-case-action" ${busy?'disabled':''}>Leave for review</button>`;
+  } else if(['send_email','send_followup_email'].includes(pending?.tool) || (send && !send.disabled)) {
+    title=send?.textContent || actionLabels[pending?.tool];
+    explanation='Review the saved email below. This button approves and sends that email to the project test inbox, then continues this invoice’s workflow.';
+    action=`<button class="primary" id="invoice-next-action" ${busy||!send||send.disabled?'disabled':''}>${escapeHTML(title)}</button>`;
+    if(send?.disabled && !mailEnabled)explanation='A reminder is prepared, but email is disabled or not configured on the server.';
+  } else if(w?.processing || busy) {
+    title='Processing in progress';explanation='The active operation is processing saved case actions. Activity below updates from the backend.';
+  } else if(!w && !c) {
+    title='Run collections to prepare this invoice';explanation='Return to the queue and choose Run collections. Opening this invoice does not start processing.';
+  } else if(['awaiting_response','awaiting_delivery','promise_recorded'].includes(rowView(row).status)) {
+    title=rowView(row).label;explanation=rowView(row).next+'. No approval is pending. Simulate a customer reply on the right to test the next response.';
+  } else if(rowView(row).status==='dispute_hold_review_required') {
+    title='Review dispute evidence';explanation='Collections are paused. Inspect the supporting evidence on the right before deciding how to resolve the dispute. No automatic chase is allowed.';
+    action='<button class="secondary" id="review-invoice-evidence">View supporting evidence</button>';
+  }
+  return `${c?`<div class="case-reference"><span>Collection case</span><code title="${escapeHTML(c.id)}">#${escapeHTML(c.id.slice(0,8))}</code><span class="saved-indicator">Saved</span></div>`:''}
+    <div class="invoice-next-step"><div class="eyebrow">Next step · ${escapeHTML(row.id)}</div><h3>${escapeHTML(title)}</h3><p>${escapeHTML(explanation)}</p><div class="next-step-actions">${action}</div></div>`;
 }
 
 function refreshInvoiceCaseHeader(c) {
   const panel=$('invoice-case-controls');if(!panel)return;
-  panel.innerHTML=invoiceCaseHeader(c);panel.hidden=!c;
+  panel.innerHTML=invoiceCaseHeader(c);panel.hidden=false;
+  if($('invoice-next-action'))$('invoice-next-action').onclick=()=>{if(!$('send-draft').disabled)$('send-draft').click();};
+  if($('review-invoice-evidence'))$('review-invoice-evidence').onclick=()=>{
+    const evidence=$('case-conversation').querySelector('.case-outcome');
+    if(evidence){evidence.tabIndex=-1;evidence.focus();evidence.scrollIntoView?.({block:'start',behavior:'smooth'});}
+  };
+  if(c)bindWorkflowExtras(c);
   if($('resume-case-action'))$('resume-case-action').onclick=async()=>{
     caseActionBusy=true;renderCase();renderSendState();
     try{saveCase(await api(`/api/cases/${c.id}/resume`,{method:'POST'}));}
@@ -122,20 +151,20 @@ function renderWorkflowSummary() {
 
 function renderCaseExecution() {
   const panel=$('case-agent-activity');if(!panel)return;
-  const row=state.invoices.find(r=>r.id===state.selectedId);const c=visitorCases.find(c=>c.invoice_id===row?.id),w=c?.workflow;
-  panel.innerHTML=`<div class="activity-head"><span class="activity-title">${w?'Invoice activity · '+escapeHTML(c.invoice_id):'Invoice activity'}</span>${w?`<span class="tag state">${w.mode==='limited'?'Review &amp; approve':'Automatic processing'}</span>`:''}</div>
-    ${w?`<p class="explain">${escapeHTML(rowView(row).label)} · ${escapeHTML(w.next_action || '')}</p>
-      <div class="case-trace">${(w.activity||[]).slice(-12).map(a=>`<div class="case-trace-item"><b>${escapeHTML(activityLabels[a.node] || a.node)} · ${a.status==='completed'?'Completed':a.status==='started'?'In progress':escapeHTML(a.status)}</b><div>${escapeHTML(a.message)}</div><small>${escapeHTML(new Date(a.timestamp).toLocaleTimeString())}</small></div>`).join('')}</div>`:
-      '<p class="explain">Run collections to process this invoice. This panel shows recorded actions and outcomes.</p>'}`;
+  const row=state.invoices.find(r=>r.id===state.selectedId),c=visitorCases.find(c=>c.invoice_id===row?.id),w=c?.workflow;
+  const changed=panel.dataset.invoice!==row?.id,scrollLeft=changed?0:(panel.querySelector('.case-trace')?.scrollLeft || 0);panel.dataset.invoice=row?.id || '';
+  panel.innerHTML=`<div class="activity-head"><span class="activity-title">Invoice processing · ${escapeHTML(row?.id || 'select an invoice')}</span>${w?`<span class="tag state">${w.mode==='limited'?'Review &amp; approve':'Automatic processing'}</span>`:''}</div>
+    <p class="panel-sub">Saved backend actions for this invoice only. These are separate from portfolio preparation.</p>
+    ${w?`<p class="explain">${escapeHTML(rowView(row).label)} · ${escapeHTML(rowView(row).next)}</p>
+      <div class="case-trace" tabindex="0" role="list" aria-label="Recorded invoice processing steps">${(w.activity||[]).slice(-12).map(a=>`<div class="case-trace-item" role="listitem"><b>${escapeHTML(activityLabels[a.node] || a.node)}</b><span class="trace-status">${a.status==='completed'?'Completed':a.status==='started'?'In progress':escapeHTML(a.status)}</span><div>${escapeHTML(a.message)}</div><small>${escapeHTML(new Date(a.timestamp).toLocaleString())}</small></div>`).join('') || '<p>No backend actions recorded yet.</p>'}</div>`:
+      `<p class="explain">${c?'This saved case has no recorded LangGraph steps yet.':'This invoice has not been processed by the collection agent yet.'} Run collections to prepare actions; opening the invoice is read-only.</p>`}`;
+  const trace=panel.querySelector('.case-trace');if(trace)trace.scrollLeft=scrollLeft;
 }
 
 function workflowExtras(c) {
   const w=c.workflow;if(!w)return '';
   const view=rowView(state.invoices.find(r=>r.id===c.invoice_id)||c.snapshot.invoice);
   return `<section class="case-outcome"><h3>${escapeHTML(view.label)}</h3><p><b>Next step:</b> ${escapeHTML(view.next)}</p>
-    ${w.pending && !['send_email','send_followup_email'].includes(w.pending.tool)?`<p>Prepared action: ${escapeHTML(actionLabels[w.pending.tool] || w.pending.tool.replaceAll('_',' '))}</p><button class="secondary" id="approve-case-action" ${caseActionBusy?'disabled':''}>${escapeHTML(actionLabels[w.pending.tool] || 'Approve action')}</button><button class="secondary" id="decline-case-action" ${caseActionBusy?'disabled':''}>Leave for review</button>`:''}
-    ${['send_email','send_followup_email'].includes(w.pending?.tool)?'<p>Review the draft and use its Send button above to approve this action.</p>':''}
-
     ${w.followup?`<p><b>Follow-up:</b> ${escapeHTML(w.followup.status)} · promised ${escapeHTML(w.followup.promise_date)} · checked on simulation date ${escapeHTML(w.followup.as_of_date)}. Original reminder stays in history.</p>`:''}
     ${w.promise?`<p>Promise date: <b>${escapeHTML(w.promise.promise_date)}</b>. Amount: ${escapeHTML(w.promise.promise_amount || 'not specified')}. Next review: ${escapeHTML(w.followup_date)} (simulation date).</p>`:''}
     ${w.reconciliation?`<p><b>Synthetic payment match:</b> ${escapeHTML(w.reconciliation.financial_state.replaceAll('_',' '))} · matched ${money(w.reconciliation.matched_amount)} · demo remaining ${money(w.reconciliation.remaining_amount)}. Source AR remains unchanged.</p>`:''}
@@ -146,7 +175,7 @@ function workflowExtras(c) {
 
 function bindWorkflowExtras(c) {
   const act=async approved=>{
-    caseActionBusy=true;renderCase();
+    caseActionBusy=true;renderCase();renderSendState();
     try{saveCase(await api(`/api/cases/${c.id}/approve`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event_key:c.workflow.pending.event_key,approved})}));}
     catch(error){showError(error.message);await refreshCases(false);}
     finally{caseActionBusy=false;renderCase();renderSendState();}
@@ -168,7 +197,7 @@ async function pollWorkflow() {
   const active=['waiting_for_portfolio','running'].includes(agentJob?.status);
   const checkingDue=dueActive();
   const mailPending=visitorCases.some(c=>[c.outbound,...(c.followups||[])].some(out=>out && !out.events.some(e=>['email.delivered','email.bounced','email.complained','email.failed','email.suppressed'].includes(e.type))));
-  if(!active && !checkingDue && !caseActionBusy && !mailPending)return;
+  if(!active && !checkingDue && !caseActionBusy && !mailPending && !$('invoice-dialog')?.open)return;
   workflowPollBusy=true;
   try {
     if(active)agentJob=await api(`/api/runs/${agentJob.run_id}/agent`);
@@ -178,7 +207,7 @@ async function pollWorkflow() {
     renderFollowupControls();
     if(active && !['waiting_for_portfolio','running'].includes(agentJob.status)) {
       $('start-run').disabled=dueActive();
-      banner(agentJob.status==='completed'?'PROCESSING FINISHED':'INTERRUPTED',agentJob.status==='completed'?'Case actions saved. Waiting/review states remain open.':'Continue collections run below.');
+      banner(agentJob.status==='completed'?'PROCESSING FINISHED':'INTERRUPTED',agentJob.status==='completed'?'Case actions saved. Waiting/review states remain open.':'Open Run overview to continue the interrupted collections run.');
     }
   } catch(error){showError(error.message);}
   finally{workflowPollBusy=false;}

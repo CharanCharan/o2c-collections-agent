@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.9 overrides historicalsidebar: horizontalfullwidthportfolioflow+collapsedeventlogabovequeue, selectedinvoicehistoryinsidepopup withread-onlyrefresh/explicitidentity and topNextstepspecificcontrols. NoSQL/packages/env; lessonV2_9; merge/deploy/visualacceptancepending.
+
 V2.8 implements saved run processing results vs current attention/waiting, clearer status reasons and clickable filters, compact queue header, native scroll without custom slider. Final columns Current status / Last completed action / Next step. NoSQL/packages/env; lessonMILESTONE_V2_8; learnermerge/deploypending.
 
 V2.7 overrides historicalthree-columnlayout: landingwideARqueue+Collectionsactivity, selectedinvoice opensnative dialog withemailleft/simulatedreplyright; obviousrowcue/keyboard/focusreturn, customlocalSVG/ICOfavicon. All8cols/businesscontrols/conditionalcaseContinue/policies retained. UI-only/no newSQL/packages/env; lessonMILESTONE_V2_7.md, learnerdeploy/nativebrowseracceptancepending.

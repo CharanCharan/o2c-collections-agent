@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_8_run_results
-implementation_branch: run-results-compact-queue
+implementation_milestone: V2_9_invoice_next_step
+implementation_branch: invoice-next-step-horizontal-flow
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_run_results_and_verify_new_run_vs_current_state
+pending_learning_check: deploy_next_step_horizontal_flow_and_verify_selected_invoice_history
 next_milestone: guided_interviewer_walkthrough_then_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.8 run results and compact queue — authoritative current checkpoint
+## V2.9 invoice next step and horizontal processing — authoritative current checkpoint
+
+PR18 mergeda0fcc746bfd8b16c0f3b0618d86b51e33ae62406; compareddcd1fc5 to main mergeonly/nofilechanges. Userapproves consistent topNextstep ininvoicepopup and asks horizontalflow/removalofredundantCollectionsactivity plusselectedinvoiceactivityfix. Branchinvoice-next-step-horizontal-flow, lesson docs/MILESTONE_V2_9.md. UI-only/noSQL/packages/env; existing012prerequisite. Charanmerge/manualdeploy/nativebrowseracceptancepending.
+
+FullwidthPortfolio processing horizontal6realbackendstages abovequeue; collapsedportfolioeventlog; removeverticalrightsidebar, tablefullwidth. Selectedcaseactivitypersistentinsidepopup rightpane belowreply/evidence/history; explicitinvoiceID evennocase, latest12actualsavedactions horizontalcards withstatus/time, nosyntheticuniversalgraphpath. Rowopenread-onlyrefreshCases, workflowpollalsoactivewhilepopupopen evennojob/mail; noinvocation/email/LLMfromopening. Previouslyoutsidepopup+anonymousnocaseheadingmadehistoryhardtoinspect; interruptedjobcanleaveinvoicesgenuinelyunprocessed, emptytextsaysthisexplicitly. Switchingselectionupdatestrace, row/selectedcurrentcase remainowned.
+
+TopNextstep areaexistsbeforeandaftercasecreation. Specificsend/reminder/followup/retry proxiesexistingSendhandler/disabledeligibility; promiseapproval+declinemovedtopreuseexistingapproveRPC; Continueonlyactualunfinishedinvocation/noapprovalpending; disputeViewevidence focusesexistingoutcome. WaitingstatesexplanationwithoutfakeRunbutton; pre-runreturnqueueRuncollections. CaseUUIDretained. Pendingpromisebuttonboundaftereachheaderrebuild, topheaderrebuiltafterSendeligibilitycalculation. Busyactionsdisable. workflow-11 caches. Frozenrunreports andallbackendpoliciesunchanged.
+
+Validation10isolatedSQL/API/reportingtests passed, mockedproviders. ActuallocalHTTP/SSE/cookieJSDOM passedhorizontalportfolio/fullwidthqueue, traceinsidepopup/selectedidentity/unprocessedmessage/switching, topSend andpromiseapproval, interruptresume/signeddelivery/reconciliation/date/followup/reload/sourceunchanged. JSsyntaxpassed. No actualpixel/nativefocustrapverification, liveprovider/cloudwrite/deploy. Nextguidedinterviewerwalkthrough, editorlast.
+
+## Historical V2.8 run results and compact queue
 
 PR17 merged1b959e0544e52ab9939c45cf3bc554c9e17871a0, main compare no code changes. User approved run reporting design and requests compact queue header, removal of custom slider and clearer column names/order. Branch run-results-compact-queue; lesson docs/MILESTONE_V2_8.md. No SQL/packages/env changes; existing012 prerequisite. Charan review/merge/manualdeploy/visual acceptance pending.
 

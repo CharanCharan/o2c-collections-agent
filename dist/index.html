@@ -7,11 +7,11 @@
   <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="/assets/favicon.ico?v=1" />
   <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/favicon.svg?v=1" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-10" />
-  <script src="/assets/invoice-ui.js?v=workflow-10" defer></script>
-  <script src="/assets/followup-ui.js?v=workflow-10" defer></script>
-  <script src="/assets/workflow-ui.js?v=workflow-10" defer></script>
-  <script src="/assets/app.js?v=workflow-10" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-11" />
+  <script src="/assets/invoice-ui.js?v=workflow-11" defer></script>
+  <script src="/assets/followup-ui.js?v=workflow-11" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-11" defer></script>
+  <script src="/assets/app.js?v=workflow-11" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -41,6 +41,11 @@
     <div class="stat"><div class="stat-top">Eligible exposure <span class="stat-icon">↗</span></div><div class="stat-value" id="metric-eligible">—</div><div class="stat-foot" id="eligible-note">Calculated after loading data</div></div>
   </section>
   <p class="panel-sub" id="preview-caption" hidden>Current AR data · read-only preview. Run collections to prepare and save collection actions.</p>
+  <section class="panel portfolio-flow" aria-label="Portfolio processing">
+    <div class="run-banner"><div><div class="panel-title">Portfolio processing</div><div class="panel-sub" id="run-caption">Connecting…</div></div><div class="run-state"><i class="dot"></i><span id="state-label">WAITING</span></div></div>
+    <div class="flow" id="flow" tabindex="0" role="list" aria-label="Portfolio preparation stages"></div><div class="progress"><span id="progress-bar"></span></div>
+    <details class="portfolio-events"><summary>Portfolio event log · <span id="event-count">0 events</span></summary><div class="feed" id="feed" aria-live="polite"></div></details>
+  </section>
   <main class="grid">
     <section class="panel queue-column" aria-label="Accounts receivable work queue">
       <div class="panel-head">
@@ -57,14 +62,7 @@
       </div>
       <div id="queue-scroll" class="table-wrap" tabindex="0" role="region" aria-label="Invoice queue; scroll horizontally for all columns"><table class="ar-table"><thead><tr><th>Customer / invoice</th><th>Source balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Current status</th><th>Last completed action</th><th>Next step</th></tr></thead><tbody id="queue"></tbody></table></div>
     </section>
-    <aside class="agent-column" aria-label="Live agent execution">
-      <section class="panel run-panel">
-        <div class="run-banner"><div><div class="panel-title">Collections activity</div><div class="panel-sub" id="run-caption">Connecting…</div></div><div class="run-state"><i class="dot"></i><span id="state-label">WAITING</span></div></div>
-        <div class="flow" id="flow"></div><div class="progress"><span id="progress-bar"></span></div>
-        <section class="activity" id="case-agent-activity" aria-label="Selected case execution" aria-live="polite"></section>
-        <div class="activity"><div class="activity-head"><span class="activity-title">Live activity</span><span class="activity-count" id="event-count">0 events</span></div><div class="feed" id="feed" aria-live="polite"></div></div>
-      </section>
-    </aside>
+
   </main>
 
   <details id="model-evidence" class="model-evidence"><summary>Payment-risk model evidence</summary><p>Start a run to inspect the model used for that snapshot.</p></details>
@@ -75,7 +73,7 @@
   <header class="invoice-dialog-head"><div><div class="eyebrow">Invoice workspace</div><h2 id="invoice-dialog-title">Invoice details</h2><p id="invoice-dialog-caption">Review the email on the left and simulate a customer reply on the right.</p></div><button class="secondary" id="close-invoice-dialog" autofocus>Back to queue <span aria-hidden="true">×</span></button></header>
   <div class="invoice-dialog-columns">
     <section class="panel detail" id="detail" aria-label="Invoice and reminder email"></section>
-    <section class="panel detail" id="case-conversation" aria-label="Simulated customer reply" aria-live="polite"><p class="explain">Loading this browser’s saved cases…</p></section>
+    <section class="panel detail reply-pane" aria-label="Customer reply and selected invoice activity"><div id="case-conversation" aria-label="Simulated customer reply" aria-live="polite"><p class="explain">Loading this browser’s saved cases…</p></div><section class="activity" id="case-agent-activity" aria-label="Selected invoice processing history" aria-live="polite"></section></section>
   </div>
 </dialog>
 <dialog id="agent-mode-dialog" aria-labelledby="agent-mode-title">

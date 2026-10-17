@@ -1,3 +1,5 @@
+> Latest V2.9: [invoice Next step and horizontal processing](docs/MILESTONE_V2_9.md). Portfolio stages run horizontally above the full-width queue; selected invoice history appears in its popup beside reply/evidence, with specific next-action controls at the top. Merge/pull and redeploy; no new SQL or packages.
+
 > Latest V2.8: [run results and compact queue](docs/MILESTONE_V2_8.md). Run overview separates saved processing results from current approvals and customer waiting states. Compact queue header, native scrolling and clearer status/action columns. Merge/pull and manually deploy; no new SQL or packages.
 
 > Latest V2.7: [queue-first invoice workspace](docs/MILESTONE_V2_7.md). Landing page shows a wider invoice table and collections activity. Open an invoice for side-by-side email and simulated reply, with a custom website icon. Merge/pull and deploy only; no new SQL or packages.
