@@ -1,14 +1,16 @@
 """Business operations. These functions do the work; they do not update the UI.
 
-The POC uses a transparent policy score and reminder template. ML and LLMs are later
-milestones. Monetary calculations use Decimal; JSON amounts are decimal strings.
+The POC uses a trained synthetic-data risk model, transparent policy score and
+reminder template. LLMs are a later milestone. Monetary calculations use Decimal; JSON amounts are decimal strings.
 """
 
 import hashlib
 import json
 from dataclasses import dataclass, field
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
+from . import risk_model
 from .models import ReceivablesSnapshot
 
 
@@ -26,6 +28,7 @@ class Context:
     snapshot: ReceivablesSnapshot | None = None
     invoices: list[dict] = field(default_factory=list)
     source_sha256: str = ""
+    model: dict | None = None
 
 
 def ingest(context: Context, source: dict) -> dict:
@@ -70,6 +73,7 @@ def validate(context: Context) -> dict:
             "score": None,
             "level": "pending",
             "reasons": [],
+            "prediction": None,
             "draft": None,
             "contacted": False,
         })
@@ -119,19 +123,42 @@ def assess(context: Context) -> dict:
     }
 
 
+def predict(context: Context) -> dict:
+    model = risk_model.load_model()  # One artifact snapshot for the entire run.
+    context.model = risk_model.model_card(model)
+    history = {invoice.id: invoice for invoice in context.snapshot.invoices}
+    count = 0
+    for row in context.invoices:
+        invoice = history[row['id']]
+        if row['days'] == 0 or invoice.amount == 0:
+            row['prediction'] = {'status': 'not_scored', 'reason': 'Model covers positive overdue balances only.'}
+            continue
+        prediction = risk_model.predict_invoice(model, row['days'], invoice.amount,
+            invoice.previous_invoices, invoice.late_payments, invoice.broken_promises)
+        prediction['scored_as_of'] = context.snapshot.as_of_date.isoformat()
+        prediction['horizon_date'] = (context.snapshot.as_of_date + timedelta(days=30)).isoformat()
+        row['prediction'] = prediction
+        count += 1
+    return {'message': f'Predicted 30-day non-settlement risk for {count} overdue balances using a synthetic-trained model.',
+            'model': context.model, 'scored_count': count,
+            'target': risk_model.TARGET, 'limitation': risk_model.LIMITATION}
+
+
 def prioritize(context: Context) -> dict:
     for row in context.invoices:
-        # This exposure-weighted index is a ranking tool, not expected cash recovery.
-        row["priority_index"] = money(Decimal(row["amount"]) * row["score"] / Decimal(100))
+        # Risk-weighted exposure is a ranking index, not expected cash recovery.
+        prediction = row['prediction'] or {}
+        probability = prediction.get('probability_unpaid_30d')
+        row['priority_index'] = money(Decimal(row['amount']) * Decimal(str(probability))) if probability is not None else '0.00'
     context.invoices.sort(key=lambda row: (
         -int(row["eligible"]), -Decimal(row["priority_index"]), -row["days"], row["id"]
     ))
     eligible = [row for row in context.invoices if row["eligible"]]
     top = eligible[0]["customer"] if eligible else "None"
     return {
-        "message": f"Ranked {len(eligible)} eligible invoices by balance × urgency score. Top account: {top}.",
+        "message": f"Ranked {len(eligible)} eligible invoices by balance × predicted 30-day non-settlement risk. Top account: {top}.",
         "eligible_count": len(eligible),
-        "ranking_formula": "open_balance * urgency_score / 100",
+        "ranking_formula": "open_balance * probability_unpaid_30d; eligible first",
         "top_customer": top,
     }
 
@@ -169,10 +196,13 @@ def result_snapshot(context: Context) -> dict:
     total = sum((Decimal(row["amount"]) for row in positive), Decimal(0))
     past_due = sum((Decimal(row["amount"]) for row in overdue), Decimal(0))
     return {
+        "workflow_version": "M3",
         "as_of_date": context.snapshot.as_of_date.isoformat() if context.snapshot else None,
         "currency": context.snapshot.currency if context.snapshot else "USD",
         "source_sha256": context.source_sha256,
         "policy_version": POLICY_VERSION,
+        "model": context.model,
+        "ranking_formula": "open_balance * probability_unpaid_30d; eligible first",
         "invoices": rows,
         "summary": {
             "invoice_count": len(rows),

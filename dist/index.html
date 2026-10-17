@@ -15,7 +15,8 @@
     .activity{padding:14px 17px 16px}.activity-head{display:flex;justify-content:space-between;margin-bottom:11px}.activity-title{font-size:11px;font-weight:720}.activity-count{font-size:9px;color:#879390}.feed{display:grid;gap:12px;max-height:255px;overflow:auto}.event{display:grid;grid-template-columns:20px 1fr auto;gap:9px;align-items:start;animation:enter .26s ease}.event-icon{width:19px;height:19px;border-radius:6px;background:#eff6f4;color:#34877a;display:grid;place-items:center;font-size:9px}.event-text{font-size:10px;color:#526461;line-height:1.4}.event-text b{color:#284541;font-weight:680}.event-time{font-size:9px;color:#a0aaa7;white-space:nowrap}.feed-empty{font-size:10px;color:#899592;padding:15px 0;text-align:center}@keyframes enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
     .detail{padding:16px 17px}.detail-top{display:flex;justify-content:space-between;align-items:flex-start}.detail-name{font-size:14px;font-weight:720;letter-spacing:-.02em}.detail-id{font-size:9px;color:#869390;margin-top:3px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;padding:11px 0;border-top:1px solid #edf0ef;border-bottom:1px solid #edf0ef}.detail-metric label{display:block;font-size:9px;color:#8a9693}.detail-metric strong{display:block;margin-top:3px;font-size:12px}.explain{font-size:10px;color:#70807c;line-height:1.55}.explain b{color:#3d5751}.draft{margin-top:12px;padding:11px;background:#f7faf9;border:1px solid #e8eeec;border-radius:8px}.draft-head{display:flex;justify-content:space-between;align-items:center;font-size:9px;font-weight:720;color:#49625e;margin-bottom:6px}.draft-head span{color:#28836c;font-size:8px;text-transform:uppercase;letter-spacing:.06em}.draft-body{font-size:10px;line-height:1.55;color:#667572}.detail-actions{display:flex;gap:8px;margin-top:11px}.secondary{border:1px solid #dce5e2;background:#fff;color:#42615b;padding:7px 10px;border-radius:6px;font-size:9px;font-weight:680}.secondary:hover{background:#f4f8f7}.secondary:disabled{opacity:.45;cursor:default}.footer{display:flex;justify-content:space-between;align-items:center;color:#99a39f;font-size:9px;padding:18px 3px 0}.footer a{color:#59716b;text-decoration:none}.modal-backdrop{position:fixed;inset:0;background:rgba(15,34,33,.38);display:none;place-items:center;padding:20px;z-index:5}.modal-backdrop.show{display:grid}.modal{max-width:430px;width:100%;background:white;border-radius:12px;padding:22px;box-shadow:0 20px 80px rgba(0,0,0,.2)}.modal h2{font-size:18px;margin:0 0 8px}.modal p{font-size:12px;color:#71817d;line-height:1.6;margin:0 0 16px}.modal .primary{width:100%;justify-content:center}.modal .secondary{width:100%;margin-top:8px;padding:10px}.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,15px);background:#173d3b;color:white;padding:10px 14px;border-radius:8px;font-size:11px;opacity:0;transition:.2s;pointer-events:none;z-index:8}.toast.show{opacity:1;transform:translate(-50%,0)}
     @media(max-width:1000px){.grid{grid-template-columns:1fr}.right-stack{grid-template-columns:1fr 1fr}.run-panel{grid-row:span 2}.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.shell{padding:0 14px 26px}.topbar{height:58px;margin-bottom:17px}.intro{align-items:flex-start;flex-direction:column;margin:20px 0 16px}.intro h1{font-size:25px}.run-wrap{width:100%;justify-content:space-between}.stats{grid-template-columns:repeat(2,1fr);gap:8px}.stat{padding:12px}.stat-value{font-size:21px}.right-stack{grid-template-columns:1fr}.run-panel{grid-row:auto}.top-actions .pill{display:none}.panel-head{padding:14px}.footer{gap:12px;align-items:flex-start;flex-direction:column}}
-  </style>
+  .model-evidence{margin:14px 0;padding:14px;background:white;border:1px solid var(--line);border-radius:10px;font-size:12px;overflow-wrap:anywhere}.model-evidence summary{cursor:pointer;font-weight:700}.model-evidence p{line-height:1.6}.model-evidence pre{white-space:pre-wrap;max-height:240px;overflow:auto}.model-evidence table{min-width:480px}
+</style>
 <style>
     .event details {margin-top:5px;font-size:9px} .event summary {cursor:pointer;color:#087e78}
     .event pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:9px;background:#f4f8f6;padding:8px;max-height:240px;overflow:auto}
@@ -24,7 +25,8 @@
     .error-box {background:#fff0ed;border:1px solid #efc9c2;color:#943f39;padding:12px;border-radius:8px;margin:0 0 16px;font-size:12px;white-space:pre-wrap}
     [hidden] {display:none!important} .explain ul {padding-left:16px} .feed {max-height:330px}
   .history-bar{display:flex;align-items:center;gap:10px;margin:0 0 16px;flex-wrap:wrap}.history-bar label{font-size:11px;font-weight:700}.history-bar select{max-width:100%;padding:7px;border:1px solid #dce5e2;border-radius:6px;background:white;color:#42615b;font-size:10px}
-  </style>
+  .model-evidence{margin:14px 0;padding:14px;background:white;border:1px solid var(--line);border-radius:10px;font-size:12px;overflow-wrap:anywhere}.model-evidence summary{cursor:pointer;font-weight:700}.model-evidence p{line-height:1.6}.model-evidence pre{white-space:pre-wrap;max-height:240px;overflow:auto}.model-evidence table{min-width:480px}
+</style>
   <script src="/assets/app.js" defer></script>
 </head>
 <body>
@@ -34,10 +36,10 @@
     <div class="top-actions"><div class="pill"><i class="dot"></i><span id="backend-label">Connecting to Python…</span></div><div class="pill" id="as-of">Start to load the demo snapshot</div><div class="avatar">CS</div></div>
   </header>
   <section class="intro">
-    <div><div class="eyebrow">Order to cash · Milestone 2</div><h1>Charan's Collections Agent</h1><p>Watch Python load invoices from Supabase, prioritize collections and save each run.</p></div>
+    <div><div class="eyebrow">Order to cash · Milestone 3</div><h1>Charan's Collections Agent</h1><p>Watch Python load invoices from Supabase, predict payment risk, prioritize collections and save each run.</p></div>
     <div class="run-wrap"><div class="last-run" id="last-run">No active run</div><button class="primary" id="start-run" disabled><span class="play">▶</span> Start collections run</button></div>
   </section>
-  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices from Supabase, real Python execution and persistent history. Urgency uses rules; reminders use templates. No ML, LLM or email provider is connected yet.</span></div>
+  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices from Supabase, real Python execution and persistent history. Payment risk uses a model trained on synthetic history. Urgency uses rules; reminders use templates. No LLM or email provider yet.</span></div>
   <div class="error-box" id="error-box" role="alert" hidden></div>
   <section class="stats" aria-label="Accounts receivable summary">
     <div class="stat"><div class="stat-top">Open receivables <span class="stat-icon">◌</span></div><div class="stat-value" id="metric-open">—</div><div class="stat-foot" id="open-note">Calculated after loading data</div></div>
@@ -47,10 +49,11 @@
     <div class="stat"><div class="stat-top">Eligible exposure <span class="stat-icon">↗</span></div><div class="stat-value" id="metric-eligible">—</div><div class="stat-foot" id="eligible-note">Calculated after loading data</div></div>
   </section>
   <section class="history-bar" aria-label="Saved run history"><label for="saved-runs">Saved runs</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open saved run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · stored in Supabase</span></section>
+  <details id="model-evidence" class="model-evidence"><summary>Payment-risk model evidence</summary><p>Start a run to inspect the model used for that snapshot.</p></details>
   <main class="grid">
     <section class="panel">
       <div class="panel-head"><div><div class="panel-title">Collections work queue</div><div class="panel-sub" id="queue-sub">Start to load invoices</div></div><button class="filter" id="filter-btn">All invoices ▾</button></div>
-      <div class="table-wrap"><table><thead><tr><th>Customer / invoice</th><th>Open balance</th><th>Due / aging</th><th>Collection urgency</th><th>Next action</th></tr></thead><tbody id="queue"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>Customer / invoice</th><th>Open balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · 30 days</th><th>Next action</th></tr></thead><tbody id="queue"></tbody></table></div>
     </section>
     <div class="right-stack">
       <section class="panel run-panel">
@@ -61,7 +64,7 @@
       <section class="panel detail" id="detail" aria-label="Selected invoice"></section>
     </div>
   </main>
-  <footer class="footer"><span>Collections Agent · M2 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
+  <footer class="footer"><span>Collections Agent · M3 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
 </div>
 <div class="modal-backdrop" id="modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title"><h2 id="approval-title">Record a dry-run approval?</h2><p>Python will record this invoice's approved template once in this run's saved event history. No email is sent. The approval and its event are saved together in Supabase.</p><button class="primary" id="confirm-send">Approve &amp; record dry run</button><button class="secondary" id="cancel-send">Go back</button></div></div>
 <div class="toast" id="toast" role="status"></div>

@@ -2,88 +2,69 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
-implementation_milestone: M2
-implementation_pr: 3
+implementation_milestone: M3
+implementation_branch: milestone-3-payment-risk
 implementation_status: ready_for_review_not_learner_verified
-learner_status: M1_normal_run_confirmed_Supabase_project_created
-pending_learning_check: M2_cloud_setup_source_edit_restart_persistence
-next_milestone: M3_payment_risk_model
+learner_status: M2_complete_cloud_source_edit_restart_confirmed
+pending_learning_check: M3_run_prediction_input_edit_and_understanding
+next_milestone: M4_LLM_drafting_and_policy
 ---
 
 # Project knowledge — continuation context
 
-## Read first
+## Read first and preserve the agreement
 
-Use only https://github.com/CharanCharan/o2c-collections-agent . Read this file, PROJECT_PLAN.md, docs/MILESTONE_2.md and current code before changing anything. Delivery is one complete runnable milestone through a branch/PR, then Charan reviews/merges/pulls/runs/edits. Do not merge for him. His edits must be pushed before the next implementation. Repository documents are explicit handoff context, not automatic memory in unrelated sessions.
+Canonical repository: https://github.com/CharanCharan/o2c-collections-agent . Read this file, PROJECT_PLAN.md, docs/MILESTONE_3.md and actual code before changes. Delivery: one complete runnable milestone per branch/PR; explain the code and give an exercise. Charan reviews/merges/pulls/runs/edits; do not merge for him. Preserve/push local edits before next work. Documents are handoff context, not automatic memory in other sessions. Inspect GitHub head/merge status; this document alone does not prove a PR merged.
 
-Purpose: a shareable interview POC whose visitor clicks Start and sees genuine collections operations/evidence. Charan must own, edit and explain the code. Preserve O2C sequence: ingest → validate/exceptions → assess → prioritize → draft → controlled send → capture replies → promises/follow-ups → audit.
+Goal: a shareable interview O2C POC showing genuine backend actions/evidence. User must own, edit and explain it. Preserve ingest → validate/exceptions → assess/predict → prioritize → draft → controlled send → replies/promises/follow-ups → audit. No detours to extra agents, source connectors or production infrastructure without a demonstrated need/user scope change.
 
-## Latest decision and learner checkpoint
+## Learner and environment checkpoint
 
-- Disposable, low-cost POC. Supabase Free is hosted Postgres: one source/store choice. No paid upgrade, second DB, CSV importer, arbitrary online connector, normalized payment ledgers or extra production infrastructure in M2.
-- Runtime invoice JSON has been removed. SQL seeds the same six synthetic records; each new run reads Supabase.
-- Visitor data editing comes only after M0–M6. Owner editing in Supabase is allowed now.
-- User confirmed Supabase project created and database password copied. Password is not needed by this app; privately configure project URL and backend API secret in ignored `.env`. No credentials received or live project connection tested by assistant.
-- Windows VS Code / Anaconda Python 3.13.5; use `python`, not unavailable `py`. Git identity/auth set up. Use `.venv\Scripts\python.exe` to avoid activation-policy problems.
-- M0 complete. M1 normal local run and expected results confirmed. M1 JSON amount-edit exercise was unconfirmed and is superseded by M2's database edit exercise.
-- M2 code and local tests ready in PR #3; merge, cloud SQL/key setup and learner acceptance remain pending. Do not label M2 learner-complete until Charan confirms source edit and restart exercises.
-- Supabase Free may pause after a week of inactivity. Check/resume manually before demos. No automatic keepalive or always-on claim.
+- Windows, VS Code from Anaconda Prompt, Python 3.13.5. Use `python`, not unavailable `py`. Direct `.venv\Scripts\python.exe` avoids PowerShell activation issues. Git installed/configured/authenticated.
+- M0 complete; M1 normal local run confirmed; M1 JSON edit exercise superseded by M2 DB edit.
+- M2 PR #3 merged ea7a5fb7c3d1d2747c35182c97d4280f63f70d2f. User confirmed everything working, then confirmed source-change/immutable history and restart/approval persistence exercises on 2026-10-17. Mark M2 learner-complete based on that report; assistant has not independently accessed his Supabase.
+- M3 code prepared on milestone-3-payment-risk; local tests passed, learner M3 run/input edit/understanding checks pending. Do not infer learner mastery or live-cloud M3 success from assistant tests.
+- Only this repository. Unused duplicate CharanCharan/collections-agent deletion handled by user, not verified. M1 merge af9944b; knowledge PR #2 merge 692f03d. Check current refs before next work.
+- Old URL https://collections-agent-live-demo.blithecomet33.chatgpt.site/ is a static presentation prototype; current Python/Supabase/ML app is local until M6. Do not silently publish via Sites.
 
-## Repository and deployment facts
+## Decisions and limits
 
-Only canonical repository above. Duplicate `CharanCharan/collections-agent` is unused; user handles deletion, not independently verified. Baseline 4777bb5; M1 PR #1 merge af9944b; knowledge PR #2 merge 692f03d. M2 branch `milestone-2-supabase`, PR #3. Inspect actual GitHub head/merge status when resuming; these documents do not imply PRs have been merged.
+Throwaway low-cost POC. Supabase Free = hosted Postgres, sole online invoice source/history store. Runtime invoice JSON removed; six synthetic source records seeded by SQL. No CSV invoice importer, arbitrary source connector, normalized payment/credit ledgers, second DB or paid plan. Offline generated training CSV is separate from runtime invoice ingestion. Owner source edits in Supabase allowed; visitor editing comes only after M0–M6.
 
-Original public URL https://collections-agent-live-demo.blithecomet33.chatgpt.site/ is the old static presentation prototype. Current Python/Supabase app is local, not deployed there. Public deployment is M6.
+Free database can pause after inactivity; manually check/resume before demos, no paid upgrade/keepalive assumed. Secrets stay server-side in ignored .env; no secrets received in chat/code. Backend uses project URL and server API secret, not database password. One backend process per database; history is durable, jobs do not automatically resume. UUIDs do not provide production auth; public access/usage controls remain M6.
 
-## Current implementation and honest capability labels
+## What M3 actually does
 
-| Capability | M2 behavior |
+| Capability | Current reality |
 |---|---|
-| Source | Online Supabase tables, six synthetic invoices seeded through SQL |
-| Validation/money | Pydantic consistency checks, Decimal/SQL NUMERIC, USD only |
-| Urgency | Explicit policy score out of 100; no trained model |
-| Reminder | Factual Python template; no LLM |
-| Approval | Persisted dry-run interaction; no email provider or actual send |
-| Live display | SSE of stored events, outputs, timestamps and duration |
-| Persistence | Postgres runs, input/result snapshots, events and interactions |
-| Restart | Saved history remains; abandoned active jobs become interrupted |
-| Isolation | Separate run UUID and approval state; no production auth yet |
+| Source | Fresh Supabase snapshot; synthetic source invoices |
+| Validation/money | Pydantic, USD, Decimal/SQL NUMERIC |
+| Urgency | Existing explicit policy score, not probability |
+| ML risk | Saved scikit-learn-trained logistic model; standard-library inference |
+| Target | Overdue positive balance remains at snapshot+30 days |
+| Training/evaluation | Independent synthetic historical snapshots; no real customer validation |
+| Prioritization | Eligible-first, balance × predicted risk |
+| Explanation | Feature values, additive log-odds contributions, versions/hashes, holdout report |
+| Reminders/approvals | Templates and persisted dry-run only; no LLM or actual email |
+| Storage | Supabase input/results/events/interactions including prediction evidence |
 
-This is the workflow foundation. Agentic language/tool reasoning arrives in M4; do not inflate current capabilities. Action summaries/evidence can be displayed; private model chain-of-thought must not be displayed.
+Training happens offline; never per visitor Start. No LLM/tool reasoning implementation until M4. Do not describe rule scores as ML, synthetic metrics as real finance performance, or dry-run records as sent email. Show action summaries/evidence, not private model chain-of-thought.
 
-## Request-to-result path and code map
+## M3 target, feature and training contracts
 
-1. FastAPI serves `/` and `/assets/app.js`; browser checks `/api/health`.
-2. Start POSTs `/api/runs`; Python persists a queued run and schedules stage execution.
-3. Ingest calls `ca_source` for a consistent settings/invoice snapshot. `pipeline.ingest` hashes it; later stages validate, assess, prioritize and draft.
-4. Every started/completed event is saved using `ca_append_event`. Run status/result/input changes commit with the event. Python only reports persisted success after the write succeeds.
-5. SSE reads stored events after its cursor every 0.35 seconds and streams them. This poll interval is delivery plumbing, not artificial work delay. Five stage pairs plus terminal success normally give 11 events.
-6. Approval invokes one atomic SQL function: verify completed/eligible/draft, create unique interaction, update result and append event. Duplicate retries return recorded false; no second interaction/event. Approval adds event 12.
-7. Saved-run UI lists latest 20; opening a terminal run replays stored evidence then applies latest stored result (including approval). Older runs are retained.
+The earlier candidate was unpaid at due+30. Some queue invoices are already beyond that date, so the implemented forward-looking target is unpaid at snapshot+30 for already-overdue positive balances. Snapshot date t is fixed source as_of_date, not current laptop date. Label1: full settlement not observed by t+30 after adequate observation; label0: fully settled by horizon. Synthetic generator assumes full settlement, no partial/payment/write-off ledger. A real dataset needs reconciled historical balances/outcomes.
 
-| File | Contract |
-|---|---|
-| backend/main.py | API routes, health, SSE cursor/replay, frontend and lifespan |
-| backend/runner.py | RunService initialization/recovery, stage orchestration, persist-before-success |
-| backend/storage.py | Supabase HTTPS RPC, dotenv config, sanitized errors; no fallback |
-| backend/pipeline.py | Context, ingest/validate/assess/prioritize/draft/result_snapshot |
-| backend/models.py | Typed source schema and history constraints |
-| dist/index.html / dist/app.js | UI, requests/events, safe text rendering, saved runs |
-| sql/001_schema.sql | Five tables, permissions and atomic RPC functions |
-| sql/002_seed_demo.sql | Upsert settings and six synthetic invoices |
-| tests/test_storage.py | Config, headers, provider errors, business 404 |
-| tests/test_milestone_2.py | Actual SQL-backed API/business/persistence checks |
-| tests/sql_bridge.cjs / conftest.py | Isolated PGlite SQL engine behind httpx test transport |
+Features v1: min(days_overdue,180); late/previous or0; min(broken_promises,4); log1p(min(balance,250000)); no-history flag. Counts assumed known at t; simplified source schema cannot independently prove historic availability. Outcome/settlement dates, future labels, customer/invoice IDs, rule score and dispute are excluded from feature vector. No-history disclosed. Ranges outside generated support flagged; caps fixed before fitting. Zero/not-overdue balances not scored; disputes may receive a prediction but are still ineligible.
 
-## Database, credentials and transaction contracts
+`ml/generate.py` seed42 creates4,000 unique customer/invoice snapshots from Jan2024–Aug2026 with invented noisy non-settlement mechanism. No six demo-row copies or real data. CSV+hash manifest generated into ignored ml/data; script regenerates it deterministically. Source SHA256 02a0ffbc8d61a77e804bc8a16175fa30a042b56eedc4a4723e56d9f3b0f6ef36. Outcome observation maxSep30 2026.
 
-Tables: `ca_demo_settings` (one fixed-date/currency row), `ca_invoices` (source), `ca_runs` (status/process/input/result), `ca_run_events` (ordered evidence), `ca_interactions` (approval records).
+`ml/train.py`: mature labels; fixed chronological splits: train2,887 throughNov30 2025, validation390 Jan–Mar2026, test500 May–Aug2026, embargo223 Dec2025/Apr2026. Unique customers/invoices and month gaps prevent overlaps/immature label leakage. StandardScaler and LogisticRegression fitted on training only; C(.1,1,10) selected by validation Brier, selected .1. No refit on validation/test. Baseline constant train prevalence. Test never used for selection. Generator itself encodes the signal; favorable metrics do not prove usefulness on real ERP data.
 
-Functions: `ca_health`, `ca_source`, `ca_create_run`, `ca_append_event`, `ca_get_run`, `ca_event_feed`, `ca_recent_runs`, `ca_recover_runs`, `ca_approve_dry_run`. RLS is enabled; anon/authenticated/public table/function access revoked; service_role has required access. Security-definer functions set a fixed search_path. Browser has no database key. This is a local POC trust boundary, not user authentication.
+Artifact: artifacts/payment_risk.json; model ar-logreg-30d-v1-4e1935af6cbd. Trained Python3.12.14/scikit-learn1.9.1/NumPy2.5.4. Hash/version bind learned parameters and report. ModelError on missing/incompatible or stale-hash artifact; no rule-as-probability fallback. Serving uses standard-library sigmoid with exported means/scales/coefficients/intercept. No sklearn/pickle/hosted model needed at runtime. Optional requirements-ml enables generator/trainer tests. Environment/path metadata and float differences may change identity across environments; no universal bitwise-retraining guarantee.
 
-`SUPABASE_URL` must be the standard project HTTPS URL. `SUPABASE_SECRET_KEY` accepts modern `sb_secret_` via apikey header or legacy service-role JWT via apikey+Authorization. Secret/publishable types differ; password is not API key. No raw provider error body/key is exposed. `.env` ignored; blank `.env.example` checked in. dotenv never overrides existing process environment; restart after changes.
+Test metrics: ROC AUC .807976 vs .5; AP .798793 vs .466; Brier .180169 vs .249267; top20% precision .84 vs prevalence .466. Top20% rate is not overall accuracy. Brier combines probability/discrimination effects, so show calibration bins separately; e.g. middle bin .489 mean predicted vs .610 observed (n123), calibration imperfect. No real calibration or business uplift established. Export/sklearn maxprobability difference 2.22e-16 on generated splits. Full report/limitations in artifact, docs/MILESTONE_3.md and ml/MODEL_CARD.md.
 
-Runs/events are append-oriented: event IDs are monotonic per run, UUID event keys deduplicate retried appends, locks keep status/result/event atomic. Approval uniqueness is `(run_id, invoice_id, action)`, enforced with transaction/row lock. Inputs are saved at ingest and never changed by source edits or approval. Approval updates final result, not historical stage snapshots. SQL seed upserts source only; history remains. Do not truncate live project tables.
+Per invoice prediction saves rounded6decimal probability, scored_as_of/horizon_date, transformed features, intercept/contributions, modelversion/artifacthash, warnings. Explanation: coefficients×standardized inputs; contributions sum with intercept to logit. Relative to training means, not causal or percentage-point effects. Run model metadata additionally saves parameters/training environment/report, so later artifact changes do not rewrite historical evidence. `/api/model` describes current artifact, not necessarily an older run.
 
 ## Source schema, finance rules and calculations
 
@@ -111,74 +92,75 @@ Urgency points:
 - Round the total using Decimal ROUND_HALF_UP to an integer.
 - High: at least 65; medium: at least 35; low: below 35.
 
-Priority index = open balance × urgency / 100. Eligible invoices sort first;
-within that group, index descends, then days overdue descend, then ID breaks ties.
-This index is not forecast cash recovery. A score of 81 is not an 81% probability.
-Eligible invoices with scores at least 35 get template drafts; lower scores are
-monitored. Disputes stay paused regardless of their score.
+Priority index (M3) = open balance × probability_unpaid_30d (six-decimal probability). Money index is formatted with Decimal, eligible-first, then descending index/days, then ID. The old M2 balance×urgency index remains only in historical M2 results. Neither index is a cash forecast. Rule score is not probability. Policy urgency threshold35 still controls template eligibility/cadence independently of the model. Disputes always pause.
 
-Policy version: collections-policy-v1. Template version: reminder-template-v1.
-Draft generation mode: template_no_llm.
+Policy version collections-policy-v1; template reminder-template-v1; generation_mode template_no_llm. Workflow version M3 distinguishes current snapshots from older saved runs.
 
-## Reproducible sample outputs
+## Seeded reference outputs
 
-Snapshot date: 2026-10-17. All amounts below are USD.
+Snapshot2026-10-17 → horizon2026-11-16. Open/past-due372,200; eligible308,000; six invoices/fiveeligible; four drafts; onehighurgencyeligible; one dispute; zero90+.
 
-| Customer | Balance | Days overdue | Urgency | Priority index | Action |
-|---|---:|---:|---:|---:|---|
-| Cedar & Finch Retail | 115,200.00 | 56 | 81 | 93,312.00 | Review draft |
-| Northstar Medical Group | 86,400.00 | 29 | 57 | 49,248.00 | Review draft |
-| Meridian Components | 52,750.00 | 22 | 46 | 24,265.00 | Review draft |
-| BluePeak Logistics | 38,900.00 | 15 | 39 | 15,171.00 | Review draft |
-| Atlas Office Systems | 14,750.00 | 12 | 9 | 1,327.50 | Monitor |
-| Solace Energy Partners | 64,200.00 | 43 | 67 | 43,014.00 | Pause — dispute |
+| Customer | Rule urgency | ML risk | Risk-weighted index | Action |
+|---|---:|---:|---:|---|
+| Cedar & Finch | 81 | .711312 | 81,943.14 | Review draft |
+| Northstar | 57 | .356656 | 30,815.08 | Review draft |
+| Meridian | 46 | .258685 | 13,645.63 | Review draft |
+| BluePeak | 39 | .245919 | 9,566.25 | Review draft |
+| Atlas | 9 | .090755 | 1,338.64 | Monitor |
+| Solace | 67 | .448718 | 28,807.70 | Dispute paused, sorted after eligible |
 
-Open AR = 372,200.00; past due = 372,200.00; 90+ = 0.00; eligible exposure =
-308,000.00; five eligible invoices; one high-urgency eligible invoice; four drafts.
-Solace has a large index but is sorted after eligible accounts because of dispute.
+M2 exercises: amount Northstar86400→96400 changes total382200/eligible318000; restoring source does not rewrite saved history. M3 exercise: Cedar late_payments9→0, broken_promises2→0 lowers prediction/urgency, preserves balances, drafts4→3; restore9/2. Old result unchanged. Optional generate/train lesson; do not select a flattering seed by test performance.
 
-Learning exercise: Northstar 86,400.00 → 96,400.00 should produce open AR 382,200.00
-and eligible exposure 318,000.00 on the next run. Restore input after checking.
+## Code map and actual event sequence
 
-## API and failure contracts
-
-| Route | Behavior |
+| File | Contract |
 |---|---|
-| GET /api/health | M2, supabase_postgres, actual schema/seed readiness/count; actionable 503 on config/DB problems |
-| POST /api/runs | 202, UUID/status/events_url; max five active runs in SQL |
-| GET /api/runs | Latest 20 run summaries, not a retention cap |
-| GET /api/runs/{UUID} | Saved input/result/events/interactions; 404 if absent |
-| GET /api/runs/{UUID}/events | SSE event update with persisted IDs; Last-Event-ID replay |
-| POST /api/runs/{UUID}/invoices/{invoice_id}/dry-run | Atomic eligible completed-run approval; deduplicated |
+| backend/main.py | Routes, health/model info, SSE, frontend, lifecycle |
+| backend/runner.py | initialize/recover, six stages, persist-before-success |
+| backend/storage.py | Server-only HTTPS RPC, config and sanitized errors; no fallback |
+| backend/pipeline.py / models.py | Context, snapshot validation, finance/policy, predict and rank |
+| backend/risk_model.py | Shared features, validated artifact, portable inference/explanations |
+| ml/generate.py / train.py | Optional offline synthetic data, labels/splits/fit/export/evaluation |
+| artifacts/payment_risk.json | Learned model and measured provenance/report |
+| dist/index.html / app.js | UI, SSE, model evidence, historical-run compatibility |
+| sql/001_schema.sql / 002_seed_demo.sql | Existing M2 schema/functions/seed, no M3 migration |
+| tests/ | Storage, actual SQL/API regression, ML label/export/failure/policy checks |
 
-Event fields: run_id, event_id, stage, status, message, timestamp; completed stages also duration_ms/result/snapshot. Money uses decimal strings. Terminal run states: completed/failed/cancelled/interrupted; active: queued/running. Malformed UUIDs are rejected by API validation. SQL business errors map to 404/409/429; connectivity/config/schema failures to sanitized 503.
+Start POST persists queued run, then Python executes ingest→validate→assess→predict→prioritize→draft. Ingest captures consistent Supabase settings+invoices; canonical snapshot hash saved. Each stage started/completed and state/result are committed through SQL; only committed success is displayed. Six pairs plus terminal =13events, approval adds14. Prediction loads artifact once for the whole run. Stored model/parameters accompany result; historical stage snapshots are not recalculated later.
 
-A database failure never triggers JSON fallback or fabricated persisted success. Failure events are best-effort if DB itself is unavailable. SSE can send a transient `connection-error` (not saved evidence) and the UI shows lost connection. Next startup marks abandoned active jobs interrupted and adds evidence. Startup recovery is once per backend process; **one backend process per database only**, no multi-worker/independent parallel servers. This is not durable job execution or automatic resume. Completed history survives restart; runs may finish while their browser is disconnected.
+SSE polls persisted events after cursor every.35sec and pushes them; no artificial work delays. Saved dropdown lists latest20, older records retained. Opening M2 result preserves original events/ranking; UI detects absent workflow_version M3, shows five-stage flow/no ML and does not rescore. Opening M3 uses its stored model evidence, not `/api/model` current values.
 
-## Setup, evidence and troubleshooting
+## Database/API/failure contracts
 
-Complete Windows steps and exercises: docs/MILESTONE_2.md. Merge/pull PR #3; run schema then seed in Supabase SQL Editor; copy `.env.example` to `.env` once and set URL/server secret privately; install requirements; start `.venv\Scripts\python.exe -m uvicorn backend.main:app --reload --port 8000`. No second Python or Node installation is needed for the app.
+Existing tables ca_demo_settings, ca_invoices, ca_runs, ca_run_events, ca_interactions. Existing RPCs ca_health/source/create_run/append_event/get_run/event_feed/recent_runs/recover_runs/approve_dry_run. RLS on, table/function access revoked for anon/authenticated/PUBLIC, service_role authorized, security-definer fixed search_path. Modern sb_secret in apikey only; legacy service-role JWT also Authorization. `.env` ignored; dotenv process environment takes precedence. Restart after .env changes.
 
-Assistant evidence on Python 3.12.14: 14 tests passed (4 storage + 10 real SQL-backed API tests in PGlite). Tests cover changed source/new run, immutable old input, SQL constraints, anon denial, duplicate approval, restart persistence, SSE resume, interrupted recovery and DB failure. Actual Uvicorn HTTP/SSE with frontend DOM passed Start → six rows/totals/11 events → approval/12 events → saved-run reopening. Syntax checks passed. No real Supabase gateway, credentials, cloud permissions or user Python 3.13.5 verification yet. Do not present local test transport as cloud end-to-end proof.
+Event IDs monotonic per run; event-key UUID dedupes retries; append status/result/input transaction is atomic. Approval locks run, requires completed/eligible/draft/non-dispute, unique run/invoice/action; duplicate recordedfalse with no extra event. Approval updates final result but not historical stage/model evidence. Seed upserts source and preserves history. Do not truncate live tables.
 
-Optional full tests need Node and `npm install --prefix tests`, then Python requirements-dev and pytest. SQL tests skip if dependency absent; storage tests remain. PGlite resets/truncates only its isolated in-memory engine, never live Supabase.
-
-| Symptom | Action |
+| Route | Contract |
 |---|---|
-| Health 503 missing schema/seed | Run SQL001 then SQL002 in same project as URL |
-| Access rejected | Check server secret/service_role, not anon/publishable/password |
-| Network/paused | Check project availability and manually resume Free project |
-| New .env ignored | Restart Python; check pre-existing terminal environment variables |
-| Changed amount not reflected | Start new run; old saved results must remain unchanged |
-| Port busy or old static page | Stop old server; start Uvicorn from repository root |
-| Interrupted run after restart | Start new run; history is durable, job execution is not resumed |
-| Wrong origin/unpushed edits | Check git status/remote/log; preserve and push learner edits |
+| GET /api/health | M3, Supabase readiness/count,6stages,current model version; actionable503 on model/config/storage failure |
+| GET /api/model | Current artifact card incl parameters, source/identity/metrics/limitations |
+| POST /api/runs | 202 UUID/status/events_url; max5active in SQL |
+| GET /api/runs | Latest20 summaries, no history deletion |
+| GET /api/runs/{UUID} | Saved input/result/model/events/interactions |
+| GET /api/runs/{UUID}/events | update SSE with IDs; Last-Event-ID replay |
+| POST /api/runs/{UUID}/invoices/{id}/dry-run | Atomic eligible approval, no email |
 
-## Next milestone TODO — M3, after learner M2 checks
+Financial amounts/index Decimal strings. Prediction numericfloat rounded6decimal; ranking converts it to Decimal. Terminal states completed/failed/cancelled/interrupted; queued/running active. BadUUID rejected; absent404; SQLbusiness409/429; config/connectivity/schema/model503. Mid-run model failure records predict failed and does not continue ranking/drafting. A DB outage may prevent its own failure persistence; never fabricated success. SSE connection-error is transient, not invented saved evidence. Next startup marks prior-process active work interrupted; singlebackend/process perDB, no multiserver or job auto-resume. Completed history survives restart and browser disconnect.
 
-1. Record user's cloud health, expected totals, source-edit and restart/approval results. Do not mark them done from assistant tests.
-2. Confirm training target and prediction time (initial candidate: unpaid 30 days after due date at a documented scoring date). Define labels from historical outcomes.
-3. Obtain/license a suitable historical dataset or clearly disclosed synthetic training generator. Six demo rows are insufficient for useful model evaluation. Keep online demo source in Supabase; no arbitrary connector expansion.
-4. Build timestamp-safe features; exclude future payments/outcomes. Time-based holdout, basic baseline and interpretable classifier; measure ranking and calibration with limitations.
-5. Save/version artifact and feature contract; display model version/reasons with persisted run evidence. Keep probability separate from collection priority and policy exceptions.
-6. Deliver runnable M3 through PR, explain code, provide exercise. M4 LLM, M5 real controlled email/reply loop, M6 public deployment, then optional isolated visitor editor.
+## Execution and verification evidence
+
+Current hands-on commands/explanation: docs/MILESTONE_3.md. After merge/pull, reuse.env, pip install requirements, start `.venv\Scripts\python.exe -m uvicorn backend.main:app --reload --port 8000`. No M3 SQL or new key. Fresh Supabase setup: docs/MILESTONE_2.md. Optional training: install requirements-ml; python -m ml.generate; python -m ml.train; stop/restart Python around replacement. Source CSV ignored/reproducible; artifact tracked. Do not request passwords or expose API secrets in source/chat/browser.
+
+Local M3 evidence Python3.12.14:22tests passed including 14 prior storage/SQL checks, new label chronology/maturity/reproducibility, sklearn export parity, predictions/source sensitivity, separate risk ranking/policy, and truthful missing-model failures. Actual Uvicorn HTTP/SSE + DOM passed Start/sixrows/model/evidence/13events, approval14, reopen saved history. Optional Node/PGlite for SQL tests and sklearn for one training parity test; absent dependencies skip explicitly. No Node/ML package needed to serve. One upstream Starlette/httpx deprecation warning. User M3 cloud/Python3.13.5 check remains pending; M2 cloud success is user-reported. Isolated PGlite is not a live Supabase gateway test.
+
+Troubleshooting:503model→restore committed artifact or retrain; don't edit coefficients without valid identity. 503schema/key→sameproject URL+secret and SQL001/002. Paused→manualresume. New.env ignored→restart and inspect existing terminalvars. Old run unchanged→expected snapshots. Portbusy/staticpage→stop prior server and run Uvicorn atroot. Interruptedrun→newrun, not auto-resume. Wrongrepo/unpushededits→gitstatus/remote/log, preserve edits.
+
+## Next TODO — M4 after learner M3 checkpoint
+
+1. Record user's M3 run and input-change results; explain risk vs urgency vs ranking, synthetic evaluation limits, optional training. Do not mark learner complete from tests.
+2. Inspect current pushed code/plan before changes; preserve user edits. Select a low-cost LLM provider/model and explain actual API billing separately from ChatGPT subscription before requiring a key.
+3. Add server-side explicit drafting tool using only validated invoice facts. Structured output/schema; deterministic checks for amount/currency/invoiceID/due/asof; disputes gate before generation. No sending in M4.
+4. Record provider/model/prompt/tool versions, latency, validated output and errors in persisted events. Distinguish LLM output from template fallback; malformed/inconsistent/provider-failed outputs route to visible review/fallback policy, never fake successful generation.
+5. Add structured reply-classification contract with labelled fixtures; actual inbound webhook/email loop remains M5. Keep instructions from customer text untrusted.
+6. Give runnable milestone PR, code walkthrough and exercise. M5 outbound allowlist/idempotency + signed inbound replies + promise/followup audit (a claim of payment is not reconciliation). M6 own-account hosting/access/caps; visitor isolated editing only afterM6.

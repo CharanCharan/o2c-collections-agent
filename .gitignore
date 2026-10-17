@@ -11,3 +11,6 @@ site-package.tar.gz
 *.log
 .pytest_cache/
 
+
+# Reproducible offline synthetic training data; artifact is committed.
+ml/data/

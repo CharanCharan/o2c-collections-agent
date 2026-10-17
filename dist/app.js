@@ -2,14 +2,19 @@
 "use strict";
 
 const stages = [
-  ["ingest", "Load receivables", "Read a fresh JSON snapshot"],
+  ["ingest", "Load receivables", "Read a fresh Supabase snapshot"],
   ["validate", "Validate invoice data", "Check IDs, amounts, dates and history"],
   ["assess", "Assess collection urgency", "Apply documented rules; pause disputes"],
-  ["prioritize", "Prioritize accounts", "Rank eligible balances by urgency"],
+  ["predict", "Predict payment risk", "Apply trained model; inspect evidence"],
+  ["prioritize", "Prioritize accounts", "Rank eligible balance × predicted risk"],
   ["draft", "Prepare reminder templates", "Prepare factual drafts for review"],
 ];
+const riskFeatureLabels = {
+  days_overdue_capped: "Invoice aging", late_rate: "Previous late payments",
+  broken_promises_capped: "Broken payment promises", log_balance: "Balance size", no_history: "No prior history",
+};
 const state = {
-  invoices: [], selectedId: null, currentRun: null, status: "idle",
+  invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
   highOnly: false, events: [], eventIds: new Set(), stageStatus: {}, source: null, approvalId: null,
 };
 const $ = (id) => document.getElementById(id);
@@ -63,8 +68,29 @@ function applySnapshot(snapshot) {
   $("metric-high").textContent = s.high_urgency_count;
   $("metric-eligible").textContent = money(s.eligible_balance);
   $("eligible-note").textContent = `${s.eligible_count} eligible invoices · ${s.disputed_count} disputed`;
+  renderModel(snapshot.model);
   renderQueue();
   renderDetail();
+}
+
+function renderModel(model) {
+  const element = $("model-evidence");
+  if (!model) {
+    element.innerHTML = '<summary>Payment-risk model evidence</summary><p>No trained prediction in this snapshot. Older M2 runs retain their original rule-based results.</p>';
+    return;
+  }
+  const test = model.evaluation.splits.test;
+  const m = test.logistic, baseline = test.constant_baseline;
+  element.innerHTML = `<summary>Model evidence · synthetic holdout of ${test.rows} invoices</summary>
+    <p><b>Target:</b> ${escapeHTML(model.target)}. <b>${escapeHTML(model.limitation)}</b></p>
+    <p>Scoring date is the saved snapshot date. History counts are assumed known on that date. Training and holdout use independent synthetic customers.</p>
+    <table><thead><tr><th>Later-date holdout · ${escapeHTML(test.snapshot_start)} to ${escapeHTML(test.snapshot_end)}</th><th>Constant baseline</th><th>Logistic model</th></tr></thead>
+    <tbody><tr><td>ROC AUC · higher is better</td><td>${baseline.roc_auc.toFixed(3)}</td><td>${m.roc_auc.toFixed(3)}</td></tr>
+    <tr><td>Average precision · higher is better</td><td>${baseline.average_precision.toFixed(3)}</td><td>${m.average_precision.toFixed(3)}</td></tr>
+    <tr><td>Brier error · lower is better</td><td>${baseline.brier.toFixed(3)}</td><td>${m.brier.toFixed(3)}</td></tr></tbody></table>
+    <p>Calibration is imperfect. Ranking quality and probability error are different checks; these results do not establish real customer accuracy.</p>
+    <p>Version: ${escapeHTML(model.model_version)}<br>Artifact SHA-256: ${escapeHTML(model.artifact_sha256)}<br>Training source SHA-256: ${escapeHTML(model.training_data.sha256)}</p>
+    <details><summary>Calibration bins · predictions versus observed non-settlement</summary><pre>${escapeHTML(JSON.stringify(m.calibration_bins, null, 2))}</pre></details>`;
 }
 
 function renderQueue() {
@@ -77,8 +103,9 @@ function renderQueue() {
       <td class="amount">${money(row.amount)}</td>
       <td><div>${dateLabel(row.due)}</div><div class="subline">${row.days} days overdue</div></td>
       <td><span class="tag ${row.score === null ? "state" : row.level}">${row.score === null ? "Awaiting rules" : `${row.score}/100 · ${row.level}`}</span></td>
+      <td>${row.prediction?.status === 'scored' ? `<strong>${(100 * row.prediction.probability_unpaid_30d).toFixed(1)}%</strong><div class="subline">Unpaid in 30 days</div>` : '<span class="subline">No prediction</span>'}</td>
       <td><span class="tag ${row.dispute ? "warn" : row.contacted ? "done" : "state"}">${escapeHTML(row.action)}</span></td>
-    </tr>`).join("") : '<tr><td colspan="5" class="empty-state">Start a run to load invoices, or change the queue filter.</td></tr>';
+    </tr>`).join("") : '<tr><td colspan="6" class="empty-state">Start a run to load invoices, or change the queue filter.</td></tr>';
   $("queue").querySelectorAll("tr[data-id]").forEach((row) => {
     const select = () => {state.selectedId = row.dataset.id; renderQueue(); renderDetail();};
     row.addEventListener("click", select);
@@ -94,6 +121,16 @@ function renderDetail() {
     $("detail").innerHTML = '<div class="panel-title">Invoice detail</div><p class="explain">Start a run, then select an invoice to inspect its data, policy score and draft.</p>';
     return;
   }
+  const prediction = row.prediction;
+  const mlDetails = prediction?.status === 'scored' ? `
+    <div class="explain"><b>Predicted non-settlement risk: ${(100 * prediction.probability_unpaid_30d).toFixed(1)}%</b>
+      <p>Outstanding balance remains on ${escapeHTML(prediction.horizon_date)} · scored as of ${escapeHTML(prediction.scored_as_of)}.</p>
+      <ul>${[...prediction.contributions].sort((a,b) => Math.abs(b.log_odds_contribution) - Math.abs(a.log_odds_contribution)).slice(0,3).map(c => `<li>${escapeHTML(riskFeatureLabels[c.feature] || c.feature)}: ${escapeHTML(c.direction)} estimated risk versus the typical training invoice.</li>`).join('')}</ul>
+      ${prediction.warnings.map(w => `<p>${escapeHTML(w)}</p>`).join('')}
+      <p>Synthetic-trained estimate; not confidence in an agent action. Contributions are model associations, not causes.</p>
+      <p>Ranking index: ${row.priority_index ? money(row.priority_index) : 'Awaiting ranking'} = balance × predicted risk; not a cash forecast. Disputes stay paused.</p>
+      <details><summary>Inspect model inputs and version</summary><pre>${escapeHTML(JSON.stringify(prediction, null, 2))}</pre></details></div>`
+    : '<p class="explain">No trained risk prediction for this snapshot. The model covers positive overdue balances; older runs may predate M3.</p>';
   const canApprove = state.status === "completed" && row.eligible && row.draft && !row.contacted;
   $("detail").innerHTML = `
     <div class="detail-top"><div><div class="detail-name">${escapeHTML(row.customer)}</div><div class="detail-id">${escapeHTML(row.id)} · ${escapeHTML(row.segment)}</div></div>
@@ -106,6 +143,7 @@ function renderDetail() {
     </div>
     <div class="explain"><b>Why this action?</b><ul>${row.reasons.length ? row.reasons.map((reason) => `<li>${escapeHTML(reason)}</li>`).join("") : "<li>Waiting for policy assessment.</li>"}</ul>
       <span>Rule score measures urgency. It is not a predicted probability.</span></div>
+    ${mlDetails}
     <div class="draft"><div class="draft-head">Reminder <span>${row.draft ? "TEMPLATE · REVIEW REQUIRED" : "NO DRAFT"}</span></div>
       ${row.draft ? `<div class="draft-subject">${escapeHTML(row.draft.subject)}</div><pre class="draft-body">${escapeHTML(row.draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : "Drafts are prepared for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
@@ -116,14 +154,15 @@ function renderDetail() {
 
 function renderFlow() {
   let completed = 0;
-  $("flow").innerHTML = stages.map(([id, name, desc], i) => {
+  const visibleStages = state.legacyRun ? stages.filter(([id]) => id !== "predict") : stages;
+  $("flow").innerHTML = visibleStages.map(([id, name, desc], i) => {
     const status = state.stageStatus[id];
     if (status === "completed") completed++;
     const cls = status === "completed" ? "complete" : status === "started" ? "active" : status === "failed" ? "failed" : "";
     const symbol = status === "completed" ? "✓" : status === "failed" ? "!" : i + 1;
     return `<div class="step ${cls}"><div class="step-icon">${symbol}</div><div><div class="step-name">${name}</div><div class="step-desc">${desc}</div></div><div class="step-meta">${status || "Waiting"}</div></div>`;
   }).join("");
-  $("progress-bar").style.width = `${completed / stages.length * 100}%`;
+  $("progress-bar").style.width = `${completed / visibleStages.length * 100}%`;
 }
 
 function addEvent(event) {
@@ -170,7 +209,7 @@ function handleEvent(event) {
 
 function clearRun() {
   state.source?.close();
-  Object.assign(state, {invoices: [], selectedId: null, currentRun: null, status: "idle",
+  Object.assign(state, {invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
     highOnly: false, events: [], eventIds: new Set(), stageStatus: {}, source: null, approvalId: null});
   $("modal").classList.remove("show");
   $("feed").innerHTML = "";
@@ -182,7 +221,7 @@ function clearRun() {
   for (const id of ["open-note", "past-due-note", "ninety-note", "eligible-note"]) $(id).textContent = "Calculated after loading data";
   $("as-of").textContent = "Start to load the demo snapshot";
   $("last-run").textContent = "No active run";
-  renderQueue(); renderDetail(); renderFlow();
+  renderModel(null); renderQueue(); renderDetail(); renderFlow();
 }
 
 async function startRun() {
@@ -259,6 +298,7 @@ async function openSavedRun() {
     const run = await api(`/api/runs/${id}`);
     if (["queued", "running"].includes(run.status)) {toast("That run is still active. Refresh history after it finishes."); return;}
     clearRun(); state.currentRun = run.run_id; state.status = run.status;
+    state.legacyRun = run.result.workflow_version !== "M3";
     for (const event of run.events) handleEvent(event);
     state.status = run.status;
     applySnapshot(run.result);

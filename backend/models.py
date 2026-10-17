@@ -1,4 +1,4 @@
-"""Validate the file before using it for finance calculations."""
+"""Validate the snapshot before using it for finance calculations."""
 
 from datetime import date
 from decimal import Decimal
@@ -38,5 +38,5 @@ class ReceivablesSnapshot(BaseModel):
     def unique_invoice_ids(self):
         ids = [invoice.id for invoice in self.invoices]
         if len(ids) != len(set(ids)):
-            raise ValueError("Duplicate invoice IDs found; correct the source file")
+            raise ValueError("Duplicate invoice IDs found; correct the source snapshot")
         return self

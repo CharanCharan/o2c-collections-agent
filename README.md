@@ -2,13 +2,15 @@
 
 Canonical repository: https://github.com/CharanCharan/o2c-collections-agent
 
-Milestone 2 reads six synthetic invoices directly from Supabase Postgres, validates them, calculates collection urgency, prioritizes accounts and prepares reminder templates. Real backend events stream to the browser. Runs, input snapshots, events and dry-run approvals survive Python restarts.
+Milestone 3 reads invoices from Supabase and applies a saved logistic-regression model to predict an overdue balance remaining 30 days after the snapshot. The website shows actual predictions, feature contributions, model version and evaluation evidence. Results/events/approvals remain saved in Postgres.
 
-Scores are policy rules, drafts are templates, and approval sends no email. ML, LLMs, real email and public deployment remain later milestones. This app currently runs locally; the earlier hosted presentation prototype is separate.
+The model is trained on clearly disclosed synthetic history, not real customer outcomes. Urgency remains rules; drafts remain templates; dry-run approvals send no email. LLMs, controlled email and public deployment remain later milestones. The older hosted presentation prototype is separate from this local app.
 
 ## Start here
 
-Follow [Milestone 2 setup and exercise](docs/MILESTONE_2.md): run the two SQL scripts in your own Supabase project, create a private local `.env`, install dependencies, then start Python. The database password is not used by this app. The backend uses a project URL and server API secret.
+For a fresh setup, follow [Milestone 2 database setup](docs/MILESTONE_2.md): run the two SQL scripts in your own Supabase project, create a private local `.env`, install dependencies, then start Python. The database password is not used by this app. The backend uses a project URL and server API secret.
+
+If M2 already works, no new SQL or keys are needed. Follow [Milestone 3 lesson and exercises](docs/MILESTONE_3.md). The committed trained artifact runs without installing ML packages.
 
 After database and environment setup, from the repository root in Windows / Anaconda:
 
@@ -21,7 +23,7 @@ python -m venv .venv
 
 Open http://localhost:8000 . Health: http://localhost:8000/api/health . API explorer: http://localhost:8000/docs . Direct environment Python avoids PowerShell activation-policy issues; no extra Python installation is needed. On macOS/Linux use `.venv/bin/python` instead.
 
-Expected seeded output: USD 372,200 open AR, USD 308,000 eligible exposure, four template drafts, one monitored invoice and one paused dispute. Fixed snapshot date: 2026-10-17.
+Expected seeded output: six stages / 13 stored events; ML-risk percentages beside rule urgency. Financial totals: USD 372,200 open AR, USD 308,000 eligible exposure, four template drafts, one monitored invoice and one paused dispute. Fixed snapshot date: 2026-10-17.
 
 ## Code and learning map
 
@@ -34,11 +36,16 @@ Expected seeded output: USD 372,200 open AR, USD 308,000 eligible exposure, four
 | `backend/pipeline.py`, `backend/models.py` | Validation, Decimal calculations, rules and templates |
 | `sql/001_schema.sql` | Tables, permissions and transactional functions |
 | `sql/002_seed_demo.sql` | Repeatable synthetic source data |
-| `tests/` | Storage, API and actual PostgreSQL-function checks |
+| `backend/risk_model.py` | Shared features, JSON logistic inference and explanations |
+| `ml/generate.py`, `ml/train.py` | Optional offline synthetic history, chronological training and holdout evaluation |
+| `artifacts/payment_risk.json` | Learned parameters, dataset hash and measured metrics |
+| `tests/` | Storage, API, PostgreSQL, ML export/label/policy checks |
 
 - [Project knowledge](PROJECT_KNOWLEDGE.md): implementation contracts and continuation context.
 - [Project plan](PROJECT_PLAN.md): scope, learner progress and future milestones.
-- [M2 checklist](docs/MILESTONE_2_PLAN.md): implementation versus learner verification.
+- [M3 lesson](docs/MILESTONE_3.md): run, understand predictions, edit inputs and optionally retrain.
+- [Model card](ml/MODEL_CARD.md): data provenance, target, measured results and limitations.
+- [M2 checklist](docs/MILESTONE_2_PLAN.md): prior milestone, learner-complete.
 - [M1 guide](docs/MILESTONE_1.md): historical first-backend lesson.
 
 ## Tests
@@ -48,7 +55,17 @@ Expected seeded output: USD 372,200 open AR, USD 308,000 eligible exposure, four
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-The ten SQL integration tests use optional Node.js and an isolated PostgreSQL/WASM engine. To run them too, install Node.js then run `npm install --prefix tests` before pytest. Without that dependency they are skipped; four storage tests still run. Node is not needed to run the application. Tests do not access your live Supabase project.
+The SQL integration tests use optional Node.js and an isolated PostgreSQL/WASM engine. To run them too, install Node.js then run `npm install --prefix tests` before pytest. Without that dependency SQL tests skip explicitly. The training/export parity test also requires optional `requirements-ml.txt`; otherwise it skips. Node is not needed to run the application. Tests do not access your live Supabase project.
+
+## Optional offline training
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-ml.txt
+.\.venv\Scripts\python.exe -m ml.generate
+.\.venv\Scripts\python.exe -m ml.train
+```
+
+This generates 4,000 synthetic historical records, fits on past data and evaluates later dates. Dataset/manifest are ignored and reproducible; artifact is versioned. Stop/restart Python around artifact replacement. Full instructions and measured metrics are in the M3 lesson. No new paid service is involved.
 
 ## Boundaries and shared workflow
 
