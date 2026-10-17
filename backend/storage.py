@@ -64,12 +64,12 @@ class SupabaseStore:
             allowed = {
                 "PT404": "Run or invoice not found.",
                 "PT409": "Run is no longer active, or this invoice has no eligible draft in a completed run.",
-                "PT429": "Five runs are active. Wait, or restart the single backend to recover abandoned runs.",
+                "PT429": "Run capacity or daily email reservation cap reached. Wait; inspect active runs/email history.",
             }
             if data.get("code") in allowed:
                 raise StoreRequestError(int(data["code"][2:]), allowed[data["code"]])
             if response.status_code == 404:
-                raise StorageError("Supabase schema function missing. Run the required schema SQL (001/002 for setup; 004_language_review.sql for M4).")
+                raise StorageError("Supabase schema function missing. Run the required schema SQL (001/002 for setup; 004_language_review.sql for M4; 005_email_loop.sql for M5).")
             raise StorageError("Supabase could not complete the database operation. Check schema setup and project availability.")
         try:
             return response.json()

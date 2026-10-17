@@ -1,6 +1,6 @@
 # Milestone 4 — Modular language tools on Groq Free
 
-M3 PR#4 merged; Charan reported normal execution. M4 is prepared in PR#5, including the requested free-tier switch. Live account/API and learner checks remain pending. No actual email is sent or received in M4.
+M3 PR#4 merged; Charan reported normal execution. M4 PR#5 merged, including the requested free-tier switch. Live account/API and learner checks are deferred at Charan's request until after M5; see docs/MILESTONE_5.md for current email work. No actual email is sent or received by the M4 tools.
 
 ## 1. Merge, pull and prepare Supabase
 

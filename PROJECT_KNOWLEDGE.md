@@ -2,17 +2,41 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
-implementation_milestone: M4_language_tools
-implementation_branch: milestone-4-llm-drafting
+implementation_milestone: M5_controlled_email_loop
+implementation_branch: milestone-5-email-loop
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: M4_SQL004_template_and_live_API_reply_review
-next_milestone: M5_controlled_email_and_replies
+pending_learning_check: M5_live_email_reply_followup_then_deferred_M4
+next_milestone: M6_hosting_access_usage_controls
 ---
 
 # Project knowledge — continuation context
 
-## Current M4 checkpoint — supersedes historical M3 setup notes below
+## Current M5 checkpoint — supersedes M4 pending-delivery notes below
+
+M4 PR#5 merged a18edaad12c96a1d69e325ecbb074616d09aeb2e; compare to head6350b7f showed no file differences/user edits. User explicitly deferred LLM/email-drafting learning checks until after next milestone and authorized M5 now. Do not require those first or mark M4 live acceptance done. M5 branch milestone-5-email-loop, docs/MILESTONE_5.md current lesson. Canonical repo only; Charan merges/pulls/runs. No real Resend/Groq key, email, tunnel or deployment by assistant.
+
+backend/mail/config.py: EMAIL_ENABLED=false default, RESEND_API_KEY/RESEND_WEBHOOK_SECRET/EMAIL_OWNER_TOKEN repr-hidden, EMAIL_FROM=onboarding@resend.dev, EMAIL_TEST_RECIPIENT one bare lowercase owned signup address, EMAIL_RECEIVING_DOMAIN actual account *.resend.app.32+character random owner token required for send/review (X-Collections-Owner), not provider key. Existing .env loaded server-side; terminal overrides and restart needed. Resend Free account manually confirmed by owner, app cannot verify billing tier. No domain purchase needed for owned-inbox/test sender and free managed receiving subdomain. No runtime dependency added; fixed HTTPS endpoints/httpx/no retries.
+
+SQL005 additive four tables ca_mail_messages,ca_mail_webhooks,ca_mail_replies,ca_followups with RLS/anon denied and backend RPCs. ca_mail_prepare locks global advisory key, checks completed run/overdue eligible draft/no source dispute and any reviewed dispute hold across runs (also on retries), unique(run,invoice), persists exact payload and random reply address before send. Ten new reservations/UTC day durable, failed intents included. Mail approval/send/delivery/reply/followup events append under locked run last_event_id; financial result/source snapshots remain unchanged. Parent run cascade cleans related demo mail data, no automatic deletion introduced.
+
+MailService.send owner/config/schema check -> immutable snapshot policy -> prepare -> ResendPOST /emails with Idempotency-Key collections-{mailUUID}. Test recipient never from source/visitor/model. Synthetic disclaimer/subject, Reply-To collections-{mailUUID}@manageddomain. State reserved/accepted/uncertain; provider response UUID saved, acceptance is not delivery. Accepted repeated send/restart no new call. Timeout/error conservative uncertain; manual retry only same stored payload/key before20h; config recipient/from changes block retry. Resend dedup retention24h, no send for old unknown intent. Daily cap doesn't prevent repeated HTTP attempts for one intent, which have owner auth and same provider key. SQL+provider not atomic; accepted response/lost DB save may need explicit reconciliation. No distributed exactly-once claims. Recover unknown20+h via verified provider dashboard and SQLca_mail_finish, never blindly create new run to resend.
+
+Webhook: POST /api/webhooks/resend max64KiB raw bytes, Svix v1 HMAC SHA256/base64 constant-time and ±300s timestamp. Signature secret exactendpoint. Dedupe eventID and received providerEmailID before calls, global per-process lock. Deliverytypes sent/delivered/delivery_delayed/bounced/complained/failed/suppressed stored as individual signed evidence, no latest-status regression/out-of-order overwrite. Callback before acceptance match503 to request provider retry. Unmatched inbound reply address ignored200, no subject-based matching. Received event metadata -> fixed GET emails/receiving/{UUID}?html_format=cid and GET emails/{originalProviderUUID}; no URLs from email fetched. Match retrieved ID/to/randomalias/sender-originalrecipient/original message_id token in In-Reply-To or References/provider-computed DMARCpass. Missing messageID503retry; mismatch quarantine/APIattemptfalse; HTML-only or text>4000 manualreview, textstored max4000/truncationflag, no HTML/attachment execution. Verified callback doesn't prove author/payment truth.
+
+Matched short plain text may call existing language.classify with current UTC receipt date for futurepromise validation (not fixedportfolioasof); simulated_input=false override; no LLM disabled gives truthful manualreview. Always review_required. UI shows received text/evidence and owner review form; intent manually confirmable without LLM. Promise needs future literalISO/optionalbounded2decimalamount/evidencequote and max1year; task due promise+1day. Other intents tomorrowUTC, paidclaim reconciliation, dispute investigation. Review resolution+one task+audit atomic/idempotent per reply. Resolution doesn't mark invoice paid/disputed/contacted; revieweddispute separately holds further email for invoice acrossruns. No auto-send/jobworker; tasks state scheduled are dated AR work items. Controlled email is separate from historical dry-run approval.
+
+API: GET /api/email/owner-config owner-only reveals target/from, GET /api/runs/{UUID}/email returns run+messages/replies/delivery_events/followups; send-email owner+strictboolconfirm/forbidextras; resolve owner+boundedbody; callbacks verifiedprovider. GET health milestoneM5 includes email readiness/no token/providerkey, pipeline workflow_versionM5. Email schema checked only by email routes, defaultdisabled does not break pipeline without005. Main run/history/mailstate APIs not authenticated; local only preM6. Actual reply text/addresses are now private data to protect/redact in M6 before publiclink, never use real thirdparty AR/emails.
+
+UI separate owner password (memory only/no storage), target confirmation, send confirmation, immutablepayload evidence/acceptedvsdelivery, replyreview/taskrecords. Poll5s after completed run plus manual refresh; add postrun actualevents without replayingstages. M2/M3/M4 old snapshots still supported. Refresh/reset doesn't imply resending.
+
+Local callback connectivity: backend/webhook_gateway.py only POST /api/webhooks/resend, no docs/run/history/DBstartup; raw bytes/Svix forward fixed127.0.0.1:8000 trust_env=false/no redirects, max64KiB. Start main8000 and helper8001; VSCodePorts publicforward8001only, registeractualHTTPSpath+subscriptionsinResend, saveactualsigningsecret, keepapps/tunnelrunning. Gateway doesn'trecover jobs/startsecondRunService. Do notforward8000untilM6. No new paid hosting or external tunnel account needed. Liveforwarding/account setup learnerpending.
+
+Verification:81 tests passed on Python3.12.14, including17M5tests: owner/optin/strictapproval/recipientinjection, acceptancevsdelivery, dedup+restart, uncertainretry+20hblock, ineligiblegate, signedreply/manualreview/paidnonmutation, sender/thread/DMARCquarantine/noLLM, optionalGroqclassification, literalpromise/date/task, revieweddisputehold includingolduncertainretry, tamper/expiry/size, officialSvixvector, durable10/daycap+anonpermissions and gatewaypath/rawbytes. Previous64SQL/ML/Groq/OpenAIregressions passed. Mockprovider only, isolatedactualSQL. Real local Uvicorn HTTP/SSE + frontendDOM checked templateprogress/dryrun/history/ownerunlock/mocksend/verifiedincomingcallback/manualpaidreview/followuptask/unchanged431700AR. Pythoncompileall/JSsyntax passed. One existing upstreamStarlette/httpxdeprecationwarning. DeferredM4livemodel, liveResenddelivery/thread/DMARCpermission, actualVSCodeforwarding/SupabaseSQL005/userPython3.13.5 remainpending.
+
+Next learner: merge/pull M5, runSQL004ifneeded+005, keepLLMfalse, createResendFreeownedinbox/key/managedsubdomain, helperpublic8001only, endpointsecret+env+restart, actualreceive/emailreply/review/task/dedup/restartchecks. Return todeferredM4LLMchecks afterwards. NextM6: ownerhosting/access/LLMdurablequotas/PIIhistoryprivacy/operatorauth beforepubliclink; visitor editingafterM6.
+
+## Historical M4 checkpoint — implementation remains, learner checks deferred
 
 M3 PR#4 merged f3acb263a4ce64d35e534d77136a8158eac3f6b5. User said "done next step please"; record normal setup/run reported, not independent proof of optional source-edit/retraining mastery. M4 is prepared on milestone-4-llm-drafting, learner/cloud/Groq Free checks pending. Read docs/MILESTONE_4.md first. Canonical repo only; preserve edits and user merge/pull workflow.
 

@@ -232,7 +232,7 @@ def result_snapshot(context: Context) -> dict:
     total = sum((Decimal(row["amount"]) for row in positive), Decimal(0))
     past_due = sum((Decimal(row["amount"]) for row in overdue), Decimal(0))
     return {
-        "workflow_version": "M4",
+        "workflow_version": "M5",
         "drafting": context.drafting,
         "as_of_date": context.snapshot.as_of_date.isoformat() if context.snapshot else None,
         "currency": context.snapshot.currency if context.snapshot else "USD",

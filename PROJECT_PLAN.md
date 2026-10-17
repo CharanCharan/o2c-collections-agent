@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 code prepared on milestone-4-llm-drafting; live API/learner checks pending.
+Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 code prepared on milestone-5-email-loop; live email/reply checks pending.
 
 ## Goal and scope
 
@@ -20,11 +20,11 @@ This is a hands-on learning project delivered one complete runnable milestone at
 - Read PROJECT_KNOWLEDGE.md, this plan and current code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
 - The original hosted Sites demo is a presentation prototype; this GitHub repository and the local Python application are the working source for the real POC.
 
-## Current implementation — M4 prepared for review
+## Current implementation — M5 prepared for review
 
-M3 merge f3acb263; user reported completion. Two ML risk models and separate queues remain. M4 adds explicit LLM drafting/reply-classification tools, structured schemas, deterministic fact rendering/guards, provider audit and labelled fallback. Groq / openai/gpt-oss-20b is the default for the requested Free account, with opt-in calls, modular adapters and environment-configurable models/keys/limits. LLM_FREE_ONLY blocks paid-provider routing, not paid Groq accounts: verify Free manually. Default templates make no calls; no provider failover. All generated wording requires human review; no semantic correctness guarantee from keyword checks.
+M4 merged; user defers its learning checks until after M5. Groq Free/default model configuration remains unchanged. M5 works with LLM disabled and template drafts. Adds controlled owner-approved Resend sends to one owned test inbox, durable intent/payload/idempotency,10new reservations/UTC day, acceptance separate from verified delivery, signed webhook dedup and strict reply correlation. Owner-reviewed reply extraction creates dated AR follow-up tasks; no automatic email scheduler/payment mutation. Reviewed disputes hold later sends across runs. SQL005 adds mail tables/functions without changing finance snapshots.
 
-SQL004 adds only readiness/review functions. Fixed synthetic reply reviews persist atomically and deduplicate, without actual email receipt, payment/dispute updates or scheduled followups. Provider/sending loop remains M5. Pre-due stays review-only; overdue eligibility/draft rules unchanged.64 tests and local Groq HTTP/SSE/DOM passed using isolated SQL and mocked provider; no live provider/account verification or charges. Setup docs/MILESTONE_4.md. User Python3.13.5/live SQL004/API checks pending.
+Main app stays local; callback-only helper8001 can be forwarded via existing VSCodePorts for Resend. No bought domain/new runtime dependency. docs/MILESTONE_5.md covers private config, live setup, hands-on checks and error/retry limits. 81tests and local HTTP/SSE/DOM passed with mocks/isolated SQL, not real provider accounts. Live delivery/reply/DMARC/tunnel/learnerPython3.13.5 pending. Deferred M4 exercises follow M5; M6 hosting/access/durable LLM quotas/private email-history treatment next.
 
 ## Recommended stack
 
@@ -86,7 +86,7 @@ Separate generated histories with mature labels, chronological gaps, train-only 
 
 PR#4 merged; learner reported done. Optional deeper checks still not separately confirmed: change Harbor history and observe new risk while saved history stays unchanged. Explain timing windows, probability vs urgency, separate queue ranking and synthetic evaluation limits. Optional generator/trainer exercise for both models. Detailed steps docs/MILESTONE_3.md.
 
-### M4 — Add language reasoning and policy [CODE PREPARED; LIVE API/LEARNER CHECKS PENDING]
+### M4 — Add language reasoning and policy [MERGED; LEARNER CHECKS DEFERRED BY USER UNTIL AFTER M5]
 
 Use an LLM for reminder drafts and structured reply classification. Use SQL/Python for finance calculations and policy checks. Validate LLM output against invoice facts. Implement explicit tools and state transitions; no multi-agent expansion unless a demonstrated need arises.
 
@@ -94,9 +94,9 @@ Implemented: modular Groq Chat Completions/default Free model and optional expli
 
 Acceptance pending: successful live API draft/evidence, invalid-output fallback understanding, sample classification/dedup/restart persistence, user can explain policy and limitations. Drafts use validated amounts and dates; disputed accounts pause; invalid output routes to review; tool inputs, outputs, versions, duration, and errors are recorded. Display action summaries and evidence, not private chain-of-thought.
 
-### M5 — Close the email loop
+### M5 — Close the email loop [CODE PREPARED; LIVE/LEARNER CHECKS PENDING]
 
-Connect outbound email, record provider IDs, and verify delivery events. Capture real replies through a signed webhook; match by message/thread ID. Extract intent, promised date/amount, or dispute reason. Schedule a follow-up with an audit record. A customer saying 'paid' must not itself mark an invoice paid: require a payment source/reconciliation.
+Connect outbound email, record provider IDs, and verify delivery events. Capture real replies through a signed webhook; match by message/thread ID. Extract intent, promised date/amount, or dispute reason. Save a human-reviewed follow-up work task with due date and audit record; no unattended follow-up email sending. A customer saying 'paid' must not itself mark an invoice paid: require a payment source/reconciliation.
 
 Use controlled test recipients, server-enforced recipient allowlists, approval, deduplication/idempotency, and rate limits. Public visitors must not be able to use the POC as an arbitrary email relay. Never send to contacts found in public invoice datasets.
 
@@ -155,3 +155,5 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | M4 prepared | LLM-assisted phrasing, bounded API adapter, visible fallbacks and sample reply review;64 local tests/mock providers; live setup pending |
 
 | 2026-10-17 | User requested free model and modular control | PR#5 updated to Groq default, separate provider adapters/keys, env model/limits, free-only routing, no paid failover; account Free status/live output still learner checks |
+
+| 2026-10-17 | M5 authorized and prepared | PR#5 merged a18edaad; user defers M4 checks. Controlled Resend send/verified replies/review/tasks + SQL005; live owner setup pending. Next M6, then visitor editor |
