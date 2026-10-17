@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 deployment code prepared on milestone-6-cloud-demo; actual cloud URL and live loop checks pending.
+Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. Current workspace-preview-v2-plan PR implements business-first layout/read-only preload; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
 ## Goal and scope
 
@@ -159,3 +159,7 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | M5 authorized and prepared | PR#5 merged a18edaad; user defers M4 checks. Controlled Resend send/verified replies/review/tasks + SQL005; live owner setup pending. Next M6, then visitor editor |
 
 | 2026-10-17 | M6 authorized/prepared | PR#6 merged0114b768; user reports Resend Connect error. One RenderFree service, SQL006 session/privacy/quotas, deployment guide and webhook probe. Actual cloud URL/replay/live acceptance pending |
+
+## Latest V2 direction — after user-reported live deployment
+
+User requests a product-facing invoice/email workspace, data on first load and a more autonomous LangGraph workflow with visitor replies and optional voice, retaining zero spend. Follow docs/AGENT_V2_PLAN.md: phase1 UI/preload now; next per-session simulated inbox/case status without visitor owner token; then durable LangGraph/checkpoints/approval modes/automatic reply handling; scenario polish and optional simulated browser voice. Current real email remains owner-controlled. Arbitrary visitor email needs verified sending domain; sustainable real IVR not assumed free. No unsafe blanket send or payment closure from customer claims. Existing future visitor editor remains separate.

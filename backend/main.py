@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .runner import RunService, STAGES
-from . import risk_model
+from . import risk_model, pipeline
 from .language import LanguageService, facts_for
 from .mail.service import MailService
 from .public_demo import PublicConfig, PublicAccess, ACTOR
@@ -123,6 +123,18 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     @app.exception_handler(risk_model.ModelError)
     async def model_error(request, exc):
         return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+    @app.get('/api/portfolio')
+    async def portfolio_preview():
+        source=await backend().store.source()
+        def build():
+            context=pipeline.Context()
+            pipeline.ingest(context,source)
+            for stage in ['validate','assess','predict','prioritize']:
+                getattr(pipeline,stage)(context)
+            return pipeline.result_snapshot(context)
+        return {'mode':'read_only_preview','agent_started':False,
+                'portfolio':await asyncio.to_thread(build)}
 
     @app.get("/api/model")
     async def model_info():

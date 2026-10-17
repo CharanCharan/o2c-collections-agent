@@ -161,13 +161,15 @@ function renderDetail() {
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
       <div class="detail-metric"><label>Suggested action</label><strong>${escapeHTML(row.action)}</strong></div>
     </div>
+    <div class="draft"><div class="draft-head">Reminder <span>${row.draft ? (row.draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : row.draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span></div>
+      ${row.draft ? `<div class="draft-subject">${escapeHTML(row.draft.subject)}</div><pre class="draft-body">${escapeHTML(row.draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Start the agent to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
+    </div>
+    ${row.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(row.draft_audit, null, 2))}</pre></details>` : ''}
+    <details class="explain"><summary>Why this action and risk evidence</summary>
     <div class="explain"><b>Why this action?</b><ul>${row.reasons.length ? row.reasons.map((reason) => `<li>${escapeHTML(reason)}</li>`).join("") : "<li>Waiting for policy assessment.</li>"}</ul>
       <span>Rule score measures urgency. It is not a predicted probability.</span></div>
     ${mlDetails}
-    <div class="draft"><div class="draft-head">Reminder <span>${row.draft ? (row.draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : row.draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span></div>
-      ${row.draft ? `<div class="draft-subject">${escapeHTML(row.draft.subject)}</div><pre class="draft-body">${escapeHTML(row.draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Drafts are prepared for eligible invoices with urgency scores of at least 35."}</div>`}
-    </div>
-    ${row.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(row.draft_audit, null, 2))}</pre></details>` : ''}
+    </details>
     <div class="detail-actions"><button class="secondary" id="record-btn" ${canApprove ? "" : "disabled"}>${row.contacted ? "Dry run already recorded" : "Approve & record dry run"}</button></div>
     <p class="panel-sub">This saves an approval in Supabase. Use the separate controlled email panel to send to your configured test inbox.</p>
     <div class="explain"><b>Review a synthetic reply example</b><p>No email was received. This only tests classification; payment and dispute status stay unchanged.</p>
@@ -266,6 +268,7 @@ function clearRun() {
 async function startRun() {
   if (state.status === "running") return;
   clearRun();
+  $("preview-caption").hidden = true;
   state.status = "running";
   $("start-run").disabled = true;
   banner("STARTING", "Requesting a Python collections run…");
@@ -463,15 +466,17 @@ $("email-owner-token").oninput = () => {ownerRecipient = ''; $("email-target").t
 setInterval(refreshEmail,5000);
 
 clearRun();
-api("/api/health").then((health) => {
+api("/api/health").then(async (health) => {
   publicMode = Boolean(health.public_demo?.enabled);
   $("demo-access-note").textContent = publicMode ? 'Public demo · synthetic invoices · this browser gets 3 runs and 8 LLM attempts per UTC day. Shared daily caps also apply; templates remain available when LLM quota is used.' : 'Local learning mode · keep this instance private.';
   const language = health.language;
   mailEnabled = Boolean(health.email?.ready);
   $("email-mode").textContent = mailEnabled ? "Live email configured. Owner approval sends only to the server-configured test inbox. Ten reservations per UTC day." : (health.email?.configuration_error || "Live email disabled. See M5 setup.");
   $("backend-label").textContent = language ? (language.configuration_error ? "Supabase · LLM configuration blocked" : language.enabled ? (language.key_configured ? `Supabase · ${language.provider} · ${language.model}` : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";
+  const preview = await api('/api/portfolio');
+  if (state.status === 'idle' && !state.currentRun) {applySnapshot(preview.portfolio); $("preview-caption").hidden = false;}
   $("start-run").disabled = false;
-  banner("READY", "Start a run to process the demo dataset");
+  banner("READY", "Current portfolio loaded. Start the agent to prepare and save a collection run.");
   refreshSavedRuns();
 }).catch((error) => {
   $("backend-label").textContent = "Backend unavailable";

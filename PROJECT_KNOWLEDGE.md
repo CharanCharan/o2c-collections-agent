@@ -3,14 +3,22 @@ document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
 implementation_milestone: M6_cloud_public_demo
-implementation_branch: milestone-6-cloud-demo
+implementation_branch: workspace-preview-v2-plan
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: M6_Render_URL_health_webhook_replay_M5_loop_then_deferred_M4
+pending_learning_check: workspace_preview_redeploy_then_V2_inbox_graph_cases
 next_milestone: live_acceptance_then_optional_visitor_editor
 ---
 
 # Project knowledge — continuation context
+
+## Current workspace/V2 checkpoint — latest user direction
+
+User reports live site working (2026-10-17); PR#7 mergedb8c0bc96fb4ce7254733c54d5ed0027f2fa97165. Compare main to ea4cb16e showed only merge/no file changes. Actual public URL not supplied; do not claim independent live verification or infer external callback/Groq acceptance. User requests invoice/email-first UI, preload current data, LangGraph/autonomous modes/visitor inbox without token and IVR ideas, zero spend. docs/AGENT_V2_PLAN.md is the proposed design/roadmap and distinguishes implemented immediate fixes from future graph/inbox changes.
+
+Current branch workspace-preview-v2-plan implements only phase1: invoice queue/detail/reminder/existingmail before collapsed lower technicalexecution/history/model/admin section; business-focusedcopy. NewGET/api/portfolio computes read-only source/validation/urgency/dualML/ranking preview, no draft/LLM/email/run/event/quota. Startup waits for preview before enablingStart, clearly labelled preview, no fakecompletedrun. Existingprivacy/ownerrealmail/budgets unchanged. NoSQL/env/dependency change. Newtestpreviewzero-sideeffects pluspublicDOMinitial9rows431700/0events/diagnosticsclosed/order andexistingownerloop. 98tests passed Python3.12.14 (prior97+previewzero-sideeffects test), syntaxchecks andpubliccookie-awareHTTP/SSE/DOM passed initial9rows/431700/0events/previewlabel/diagnosticsclosed/order plusownerloop. Model/providerresponsesmocked; noexternalAPIcalls/liveUIverification. ExistingStarlette/httpxwarning.
+
+Proposednext: per-session simulatedcustomerinbox withboundedtypedreplies andcase collectionStatus separatefinancialstatus, novisitorownerToken; then LangGraph state/branching/checkpoints/interrupt/resume +Reviewactions vsAutopilotdemo permissions. Modelchooseallowedaction, Pythongatesfinance/disputes/cooldown/quotas; auto delivery onlyisolateddemochannel. Nevercall simulatedwebreply aResendwebhook. RealResendtestsenderownsignupaddressonly, arbitraryrecipientrequiresverifieddomain; no promisefreeexternaldelivery/IVR. No removalofrealprovider-ownersecuritybeforeisolation/replacement. Existingprivatehistoryretained. Realvoice optionaldisabledadapter; inbrowservoiceonlyoptionalclearlysimulated. DurableGraphcheckpointerSupabaseplannednotimplemented; no ephemeralSQLite/paidLangSmithneeded. No24/7schedulerclaimonRenderFree. Keep7daycookies/globalcaps and boundedLLMcalls perbusiness event, no modelonpageload/poll. Detailedsteps/acceptanceandsources docs/AGENT_V2_PLAN.md.
 
 ## Current M6 checkpoint — supersedes historical local-only/pending-M6 notes below
 
