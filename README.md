@@ -24,6 +24,8 @@ On macOS/Linux, create the environment with `python3 -m venv .venv`, then use `.
 
 ## Learn and verify
 
+- [Project knowledge](PROJECT_KNOWLEDGE.md): current implementation, decisions, formulas, API contracts, learner checkpoint and troubleshooting.
+- [Milestone 2 checklist](docs/MILESTONE_2_PLAN.md): planned database and ingestion work; not implemented yet.
 - [Milestone 1 guide](docs/MILESTONE_1.md): expected results, code map, event flow and an input-edit exercise.
 - [Project plan](PROJECT_PLAN.md): scope, decisions, progress and remaining work.
 - [Working instructions](AGENTS.md): instructions for continuing this project.
