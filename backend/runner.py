@@ -15,7 +15,7 @@ from . import pipeline
 from .storage import StorageError
 
 
-STAGES = ["ingest", "validate", "assess", "prioritize", "draft"]
+STAGES = ["ingest", "validate", "assess", "predict", "prioritize", "draft"]
 
 
 def timestamp():

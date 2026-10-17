@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "model_type": "standardized_logistic_regression",
+  "feature_version": "ar-predue-7d-features-v1",
+  "features": [
+    "late_rate",
+    "broken_promises_capped",
+    "log_balance",
+    "no_history"
+  ],
+  "target": "Invoice is not fully paid by the end of its due date",
+  "horizon_days": 7,
+  "mean": [
+    0.3487296737576248,
+    0.5688811188811189,
+    8.54507477781208,
+    0.12552447552447552
+  ],
+  "scale": [
+    0.26924431593863923,
+    0.910972434312405,
+    2.2790562780931505,
+    0.3313126643652192
+  ],
+  "coefficients": [
+    0.7840895611169706,
+    0.5600292632533165,
+    0.2635583261552551,
+    0.1730720771654644
+  ],
+  "intercept": -0.7711810477677501,
+  "training_data": {
+    "synthetic": true,
+    "generator": "ml/generate_pre_due.py v1",
+    "seed": 123,
+    "source": "ml/data/pre_due_history.csv",
+    "sha256": "e01d656ea50157b8cbd9ab22d4d4ea80f6db24cfbcd87e576725b08d73c6aa21",
+    "total_rows": 4000,
+    "embargo_rows": 276,
+    "observation_cutoff": "2026-09-08",
+    "provenance": "Project-generated synthetic records; no real customers or public ERP data.",
+    "snapshot_assumption": "History counts and balances are known at snapshot time; settlement follows snapshot."
+  },
+  "training_environment": {
+    "python": "3.12.14",
+    "scikit_learn": "1.9.1",
+    "numpy": "2.5.4"
+  },
+  "evaluation": {
+    "selection_metric": "validation Brier (lower is better)",
+    "selected_C": 10.0,
+    "candidates": [
+      {
+        "C": 0.1,
+        "validation_brier": 0.17300814552908783
+      },
+      {
+        "C": 1.0,
+        "validation_brier": 0.1727512232495975
+      },
+      {
+        "C": 10.0,
+        "validation_brier": 0.17272627629758555
+      }
+    ],
+    "split_policy": "Chronological; December 2025 and April 2026 embargo; 30-day label maturity gaps.",
+    "splits": {
+      "train": {
+        "rows": 2860,
+        "snapshot_start": "2024-01-01",
+        "snapshot_end": "2025-11-29",
+        "positive_rate": 0.3395104895104895,
+        "logistic": {
+          "roc_auc": 0.7395763537505609,
+          "average_precision": 0.5873043200534729,
+          "brier": 0.18873286022917654,
+          "log_loss": 0.5581870897327208,
+          "top_20_percent_precision": 0.6293706293706294,
+          "top_20_percent_lift": 1.8537590113285274,
+          "calibration_bins": [
+            {
+              "range": [
+                0,
+                0.2
+              ],
+              "count": 848,
+              "mean_prediction": 0.14394149547069704,
+              "observed_rate": 0.12028301886792453
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 1062,
+              "mean_prediction": 0.29206839708177584,
+              "observed_rate": 0.3192090395480226
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 612,
+              "mean_prediction": 0.48947835299631365,
+              "observed_rate": 0.48856209150326796
+            },
+            {
+              "range": [
+                0.6,
+                0.8
+              ],
+              "count": 280,
+              "mean_prediction": 0.6773619158824943,
+              "observed_rate": 0.6571428571428571
+            },
+            {
+              "range": [
+                0.8,
+                1.0
+              ],
+              "count": 58,
+              "mean_prediction": 0.8519476721230043,
+              "observed_rate": 0.8103448275862069
+            }
+          ]
+        },
+        "constant_baseline": {
+          "roc_auc": 0.5,
+          "average_precision": 0.3395104895104895,
+          "brier": 0.22424311702283733,
+          "log_loss": 0.6407102543659163,
+          "top_20_percent_precision": 0.3395104895104895,
+          "top_20_percent_lift": 1.0,
+          "calibration_bins": [
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 2860,
+              "mean_prediction": 0.33951048951048957,
+              "observed_rate": 0.3395104895104895
+            }
+          ]
+        }
+      },
+      "validation": {
+        "rows": 353,
+        "snapshot_start": "2026-01-01",
+        "snapshot_end": "2026-03-31",
+        "positive_rate": 0.3286118980169972,
+        "logistic": {
+          "roc_auc": 0.7785537610941364,
+          "average_precision": 0.66982341658041,
+          "brier": 0.17272627629758555,
+          "log_loss": 0.5222291792576096,
+          "top_20_percent_precision": 0.676056338028169,
+          "top_20_percent_lift": 2.0573093734822727,
+          "calibration_bins": [
+            {
+              "range": [
+                0,
+                0.2
+              ],
+              "count": 96,
+              "mean_prediction": 0.14254916433499193,
+              "observed_rate": 0.125
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 147,
+              "mean_prediction": 0.2864068555528437,
+              "observed_rate": 0.23809523809523808
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 68,
+              "mean_prediction": 0.48192979140774717,
+              "observed_rate": 0.5588235294117647
+            },
+            {
+              "range": [
+                0.6,
+                0.8
+              ],
+              "count": 39,
+              "mean_prediction": 0.7021145337741842,
+              "observed_rate": 0.717948717948718
+            },
+            {
+              "range": [
+                0.8,
+                1.0
+              ],
+              "count": 3,
+              "mean_prediction": 0.8776326167458803,
+              "observed_rate": 1.0
+            }
+          ]
+        },
+        "constant_baseline": {
+          "roc_auc": 0.5,
+          "average_precision": 0.3286118980169972,
+          "brier": 0.22074489779520587,
+          "log_loss": 0.6334574989423644,
+          "top_20_percent_precision": 0.3286118980169972,
+          "top_20_percent_lift": 1.0,
+          "calibration_bins": [
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 353,
+              "mean_prediction": 0.33951048951048957,
+              "observed_rate": 0.3286118980169972
+            }
+          ]
+        }
+      },
+      "test": {
+        "rows": 511,
+        "snapshot_start": "2026-05-01",
+        "snapshot_end": "2026-08-31",
+        "positive_rate": 0.3424657534246575,
+        "logistic": {
+          "roc_auc": 0.7384863945578231,
+          "average_precision": 0.553646234930746,
+          "brier": 0.19484535564700853,
+          "log_loss": 0.5720150268550652,
+          "top_20_percent_precision": 0.5631067961165048,
+          "top_20_percent_lift": 1.6442718446601943,
+          "calibration_bins": [
+            {
+              "range": [
+                0,
+                0.2
+              ],
+              "count": 170,
+              "mean_prediction": 0.1476564966876656,
+              "observed_rate": 0.12941176470588237
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 202,
+              "mean_prediction": 0.2991239950432921,
+              "observed_rate": 0.35148514851485146
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 91,
+              "mean_prediction": 0.4911956917703126,
+              "observed_rate": 0.5824175824175825
+            },
+            {
+              "range": [
+                0.6,
+                0.8
+              ],
+              "count": 42,
+              "mean_prediction": 0.691993743427035,
+              "observed_rate": 0.6190476190476191
+            },
+            {
+              "range": [
+                0.8,
+                1.0
+              ],
+              "count": 6,
+              "mean_prediction": 0.851800534567352,
+              "observed_rate": 0.5
+            }
+          ]
+        },
+        "constant_baseline": {
+          "roc_auc": 0.5,
+          "average_precision": 0.3424657534246575,
+          "brier": 0.22519169474074158,
+          "log_loss": 0.6426769127542328,
+          "top_20_percent_precision": 0.3424657534246575,
+          "top_20_percent_lift": 1.0,
+          "calibration_bins": [
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 511,
+              "mean_prediction": 0.3395104895104896,
+              "observed_rate": 0.3424657534246575
+            }
+          ]
+        }
+      }
+    },
+    "max_export_probability_difference": 2.220446049250313e-16
+  },
+  "limitation": "Trained and evaluated only on synthetic history; not validated on real customer receivables.",
+  "model_version": "ar-predue-7d-v1-5f467038df08"
+}

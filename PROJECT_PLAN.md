@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 complete. M1 merged and normal local execution verified by Charan on 2026-10-17. M2 implementation ready in PR #3; user created Supabase project. Live setup and M2 exercises pending. M1 amount-edit exercise superseded by M2 database exercise.
+Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 implementation prepared on milestone-3-payment-risk; learner run/exercises pending.
 
 ## Goal and scope
 
@@ -20,11 +20,13 @@ This is a hands-on learning project delivered one complete runnable milestone at
 - Read PROJECT_KNOWLEDGE.md, this plan and current code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
 - The original hosted Sites demo is a presentation prototype; this GitHub repository and the local Python application are the working source for the real POC.
 
-## Current implementation — M2 ready for review
+## Current implementation — M3 prepared for review
 
-Supabase Postgres replaces runtime JSON and process-memory history. Python reads a fresh source snapshot, validates, calculates policy urgency/priorities and prepares template drafts. Events/results/input/approvals are persisted transactionally; SSE and saved-run controls display them. No trained model, LLM or real email yet. One backend process per database; restart recovers abandoned jobs as interrupted, not resumed. Public access remains M6.
+Supabase remains source/history store. Six Python stages include two saved logistic models: at due-7 predict becoming overdue; after due predict remaining unpaid another30days. Each is trained/evaluated on separate synthetic history. Persist target-specific inputs/explanations/model identity and evidence. Prevention and recovery rank separately; disputes/policy gates remain. Pre-due reviews do not yet create reminder approvals. Existing overdue rule urgency and threshold35 draft policy remain. No LLM or actual email.
 
-Fourteen local tests passed including actual PostgreSQL-function checks; HTTP/SSE + frontend DOM checks passed. Live Supabase configuration and learner acceptance are pending. Read docs/MILESTONE_2.md for setup/exercises and PROJECT_KNOWLEDGE.md for contracts. M1 normal local run is confirmed; its JSON edit exercise is superseded by M2's DB edit.
+M2 PR #3 merged ea7a5fb and learner-confirmed. M3 PR #4 remains the review branch; user requested adding prevention before moving to M4. SQL003 adds three pre-due source examples without schema change/history deletion. No new credentials or runtime ML packages. With full seeds:9invoices/open431700/pastdue372200/eligible recovery308000. M3 learner verification pending. docs/MILESTONE_3.md and ml/MODEL_CARD.md are current.
+
+Local checks:29tests, actual SQL/HTTP/SSE/DOM. Prevention holdout511 AUC.738/Brier.195 versus .5/.225 baseline; recovery500 .808/.180 versus .5/.249. Synthetic tests do not prove real-world accuracy. Prior single-model22-test evidence remains historical.
 
 ## Recommended stack
 
@@ -55,7 +57,7 @@ Keep secrets in local environment variables and host-managed secrets. Never put 
 
 Acceptance: Charan can start the site locally, edit it, and identify which parts are simulated.
 
-### M1 — Execute a real backend run [LOCAL RUN VERIFIED; EXERCISE PENDING]
+### M1 — Execute a real backend run [LOCAL RUN VERIFIED; INPUT EXERCISE SUPERSEDED BY M2]
 
 Build a small FastAPI service. First serve the existing frontend and a health endpoint. Then add a run endpoint and an event stream. Replace timer-driven claims with backend-produced results calculated from the six sample invoices. Calculate displayed totals and counts from the data.
 
@@ -70,21 +72,21 @@ Events should contain `run_id`, `event_id`, `stage`, `status`, `message`, `times
 
 Acceptance: Browser Start triggers Python execution. Changing the input changes actual results. No invented load counts or timer-only completion claims.
 
-### M2 — Supabase data source and persistence [CODE READY; LEARNER CHECKS PENDING]
+### M2 — Supabase data source and persistence [LEARNER COMPLETE]
 
 Use Supabase Free, a hosted Postgres database, as both the invoice data source and durable store. Replace runtime invoice JSON reads with Supabase reads; seed the same synthetic rows once using SQL. Keep a simple five-table design for settings, invoices, runs, events and interactions. M1's amount remains the outstanding balance; normalized payment/credit ledgers are deferred unless a later feature needs them.
 
-The revised checklist is docs/MILESTONE_2_PLAN.md. CSV import and a second hosted-source connector are removed from this milestone. Charan created the project. M2 code is ready in PR #3; executing SQL, private backend API configuration and live acceptance remain pending. Follow docs/MILESTONE_2.md.
+The revised checklist is docs/MILESTONE_2_PLAN.md. CSV import and a second hosted-source connector are removed from this milestone. PR #3 merged; Charan confirmed Supabase setup, expected outputs, source edits/immutable history and restart/approval persistence. docs/MILESTONE_2.md preserves the original setup lesson.
 
 Acceptance: the Supabase rows produce the expected portfolio; owner data edits affect the next run; records/events/approvals survive Python restart; duplicate actions stay idempotent; failures are visible without JSON fallback. Historical run snapshots remain immutable.
 
-### M3 — Train and evaluate payment risk
+### M3 — Train and evaluate payment risk [CODE PREPARED; LEARNER CHECKS PENDING]
 
-Define target and prediction time first. Recommended initial target: probability that an invoice remains unpaid 30 days after its due date, measured at a documented scoring date. Compare a basic baseline with a small interpretable classifier. Build features only from information available at prediction time. Split by time; do not leak future payment dates into features. Evaluate ranking quality and calibration; record model version and dataset provenance.
+Two stage-specific targets: (1) at exactly seven days before due, not fully paid by end of due date; (2) positive overdue balance remains at snapshot+30days. The second replaces the original due+30 candidate for recovery; the first adds Charan's requested prevention use case. A date outside the pre-due checkpoint is explicitly not scored, rather than backdating features. No current-invoice aging/future outcomes in pre-due features.
 
-Separate risk prediction from collection priority. Priority also reflects exposure, aging, disputes, recent contact, and promises to pay. Synthetic-data accuracy demonstrates pipeline behavior, not proven performance on real customer receivables.
+Separate generated histories with mature labels, chronological gaps, train-only scaling, validation C choice and untouched later-date tests. Save/version numeric artifacts, model card, parameters and evidence. Website labels targets, shows separate queues and calibration/holdout evidence; never combines probabilities or calls one independent proof of the other. Disputes/zero balances/policy gates stay enforced. M3 preventive risk is review-only; actual reminder policy/sending is later work.
 
-Acceptance: Scores come from a saved trained artifact; documented holdout results and limitations; reasons and model version visible in the run history.
+Acceptance pending from learner: merge updated PR#4, pull main, run SQL003, see nine invoices/two target labels, change Harbor history and observe new risk while saved history stays unchanged. Explain timing windows, probability vs urgency, separate queue ranking and synthetic evaluation limits. Optional generator/trainer exercise for both models. Detailed steps docs/MILESTONE_3.md.
 
 ### M4 — Add language reasoning and policy
 
@@ -145,5 +147,7 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | M1 normal local run verified | Charan reported expected results; amount-edit exercise/understanding check pending |
 | 2026-10-17 | Knowledge and M2 checklist prepared | PROJECT_KNOWLEDGE.md and docs/MILESTONE_2_PLAN.md; no M2 implementation yet |
 | 2026-10-17 | M2 scope simplified by user | Supabase Free source/store; runtime JSON replaced in M2; minimal schema; visitor edits deferred until after M6 |
-
 | 2026-10-17 | M2 implementation ready in PR #3 | Supabase source/history, SQL scripts, saved-run UI; 14 local tests + HTTP/SSE/DOM passed; cloud setup and learner exercises pending |
+| 2026-10-17 | M2 learner complete | User confirmed all working and both source-change/persistence checks; PR #3 merge ea7a5fb |
+| 2026-10-17 | M3 implementation prepared | Synthetic-trained logistic model, saved evidence, risk ranking and lesson; 22 local tests + HTTP/SSE/DOM; learner verification pending |
+| 2026-10-17 | M3 extended at user request | PR#4 now includes due-7 prevention plus overdue recovery, SQL003 examples and separate queues; 29 local checks; learner confirmation pending |

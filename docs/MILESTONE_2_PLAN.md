@@ -1,6 +1,6 @@
 # Milestone 2 checklist
 
-Status: CODE READY in PR #3; live Supabase setup and learner acceptance pending. Detailed steps: [M2 setup and exercise](MILESTONE_2.md). Scope: Supabase Free hosted Postgres as sole invoice source/store, minimal five ca_ tables, SQL seed, existing Python/frontend. No JSON fallback, CSV importer, second source connector, normalized finance ledger or visitor editor.
+Status: LEARNER COMPLETE on 2026-10-17. PR #3 merged; user confirmed live Supabase operation and both exercises. M3 is the next implementation. Detailed steps: [M2 setup and exercise](MILESTONE_2.md). Scope: Supabase Free hosted Postgres as sole invoice source/store, minimal five ca_ tables, SQL seed, existing Python/frontend. No JSON fallback, CSV importer, second source connector, normalized finance ledger or visitor editor.
 
 ## Completed implementation
 
@@ -17,14 +17,14 @@ Status: CODE READY in PR #3; live Supabase setup and learner acceptance pending.
 
 ## Learner/live checks — do not infer from implementation tests
 
-- [ ] Review/merge PR #3 and pull canonical main; preserve any local edits.
-- [ ] Execute SQL001 and SQL002 in user's Supabase project.
-- [ ] Configure local ignored .env using project URL and backend API secret, not DB password.
-- [ ] Health shows M2/supabase_postgres/six rows; Start yields expected seeded totals.
-- [ ] Owner DB edit changes next run to 382,200 open / 318,000 eligible; old run stays unchanged.
-- [ ] Restore Northstar source balance to 86,400.
-- [ ] Approval, events and results survive Python restart; duplicate is not recorded twice.
-- [ ] User can trace source → rules → committed evidence → SSE and explain no automatic job resume.
+- [x] Review/merge PR #3 and pull canonical main; preserve any local edits.
+- [x] Execute SQL001 and SQL002 in user's Supabase project.
+- [x] Configure local ignored .env using project URL and backend API secret, not DB password.
+- [x] Health shows M2/supabase_postgres/six rows; Start yields expected seeded totals.
+- [x] Owner DB edit changes next run to 382,200 open / 318,000 eligible; old run stays unchanged.
+- [x] Restore Northstar source balance to 86,400.
+- [x] Approval, events and results survive Python restart; duplicate is not recorded twice.
+- User understanding explanation remains an ongoing learning check; successful operation does not prove mastery of every component.
 
 Supabase Free pricing reference: https://supabase.com/pricing . Plan selected for zero-cost POC; actual account billing state not independently inspected. Free projects can pause after inactivity; check/resume before demos. Run only one backend process per DB. No paid upgrade or keepalive assumed.
 

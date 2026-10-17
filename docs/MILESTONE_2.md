@@ -1,6 +1,8 @@
+> Historical M2 setup lesson. Learner confirmed Supabase source edits and restart persistence on 2026-10-17. Current M3 adds a sixth prediction stage (13/14 events); use [Milestone 3](MILESTONE_3.md) for current behavior.
+
 # Milestone 2 — connect your Supabase database
 
-Implementation is ready for review in PR #3. Local automated checks passed; your live Supabase connection and learning exercises are still pending. Use your existing project. Do not create another repository or another Python installation.
+M2 was delivered in PR #3 and merged. Charan subsequently confirmed live setup and the two exercises. The setup below remains useful for a fresh project. Use your existing project. Do not create another repository or another Python installation.
 
 ## 1. Synchronize code
 

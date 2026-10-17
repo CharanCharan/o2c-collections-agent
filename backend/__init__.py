@@ -1,1 +1,1 @@
-"""Milestone 2: observable collections with a Supabase source and saved history."""
+"""M3: Supabase collections workflow with synthetic-trained payment risk."""

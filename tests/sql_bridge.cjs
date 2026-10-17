@@ -21,6 +21,8 @@ const {PGlite} = require('@electric-sql/pglite');
           await db.exec(seed);data=true;
         } else if(q.command==='sql') {
           data=(await db.query(q.sql,q.params||[])).rows;
+        } else if(q.command==='exec') {
+          await db.exec(q.sql);data=true;
         } else if(q.command==='rpc') {
           if(!/^ca_[a-z_]+$/.test(q.name))throw Error('Invalid test function name');
           const entries=Object.entries(q.params||{});

@@ -1,0 +1,317 @@
+{
+  "schema_version": 1,
+  "model_type": "standardized_logistic_regression",
+  "feature_version": "ar-snapshot-features-v1",
+  "features": [
+    "days_overdue_capped",
+    "late_rate",
+    "broken_promises_capped",
+    "log_balance",
+    "no_history"
+  ],
+  "target": "Outstanding balance remains 30 days after the snapshot date",
+  "horizon_days": 30,
+  "mean": [
+    89.8184967093869,
+    0.3524501711211818,
+    0.5452026324904745,
+    8.49968817512868,
+    0.114998268098372
+  ],
+  "scale": [
+    52.220300483324046,
+    0.18395117925161356,
+    0.9033385057639298,
+    2.2276280972529268,
+    0.3190198527251061
+  ],
+  "coefficients": [
+    0.9378351160295881,
+    0.2801107834788301,
+    0.4795988959876693,
+    0.1473790386470804,
+    0.11673094434419208
+  ],
+  "intercept": -0.26367687661530514,
+  "training_data": {
+    "synthetic": true,
+    "generator": "ml/generate.py v1",
+    "seed": 42,
+    "source": "ml/data/synthetic_history.csv",
+    "sha256": "02a0ffbc8d61a77e804bc8a16175fa30a042b56eedc4a4723e56d9f3b0f6ef36",
+    "total_rows": 4000,
+    "embargo_rows": 223,
+    "observation_cutoff": "2026-09-30",
+    "provenance": "Project-generated synthetic records; no real customers or public ERP data.",
+    "snapshot_assumption": "History counts and balances are known at snapshot time; settlement follows snapshot."
+  },
+  "training_environment": {
+    "python": "3.12.14",
+    "scikit_learn": "1.9.1",
+    "numpy": "2.5.4"
+  },
+  "evaluation": {
+    "selection_metric": "validation Brier (lower is better)",
+    "selected_C": 0.1,
+    "candidates": [
+      {
+        "C": 0.1,
+        "validation_brier": 0.2019574689935056
+      },
+      {
+        "C": 1.0,
+        "validation_brier": 0.20215085294558063
+      },
+      {
+        "C": 10.0,
+        "validation_brier": 0.20217288576290776
+      }
+    ],
+    "split_policy": "Chronological; December 2025 and April 2026 embargo; 30-day label maturity gaps.",
+    "splits": {
+      "train": {
+        "rows": 2887,
+        "snapshot_start": "2024-01-01",
+        "snapshot_end": "2025-11-30",
+        "positive_rate": 0.4454450987183928,
+        "logistic": {
+          "roc_auc": 0.7660390133305098,
+          "average_precision": 0.7305785416664963,
+          "brier": 0.19414139695813806,
+          "log_loss": 0.571827035169746,
+          "top_20_percent_precision": 0.7941176470588235,
+          "top_20_percent_lift": 1.7827508919586497,
+          "calibration_bins": [
+            {
+              "range": [
+                0,
+                0.2
+              ],
+              "count": 519,
+              "mean_prediction": 0.14659020477614315,
+              "observed_rate": 0.17341040462427745
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 824,
+              "mean_prediction": 0.2957154877087523,
+              "observed_rate": 0.27063106796116504
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 704,
+              "mean_prediction": 0.5020602118622826,
+              "observed_rate": 0.4928977272727273
+            },
+            {
+              "range": [
+                0.6,
+                0.8
+              ],
+              "count": 655,
+              "mean_prediction": 0.6919043333210461,
+              "observed_rate": 0.7022900763358778
+            },
+            {
+              "range": [
+                0.8,
+                1.0
+              ],
+              "count": 185,
+              "mean_prediction": 0.8629181341400423,
+              "observed_rate": 0.8972972972972973
+            }
+          ]
+        },
+        "constant_baseline": {
+          "roc_auc": 0.5,
+          "average_precision": 0.4454450987183928,
+          "brier": 0.24702376274615412,
+          "log_loss": 0.687182838797882,
+          "top_20_percent_precision": 0.4454450987183928,
+          "top_20_percent_lift": 1.0,
+          "calibration_bins": [
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 2887,
+              "mean_prediction": 0.4454450987183928,
+              "observed_rate": 0.4454450987183928
+            }
+          ]
+        }
+      },
+      "validation": {
+        "rows": 390,
+        "snapshot_start": "2026-01-01",
+        "snapshot_end": "2026-03-31",
+        "positive_rate": 0.4717948717948718,
+        "logistic": {
+          "roc_auc": 0.7498680878007598,
+          "average_precision": 0.7407487046813589,
+          "brier": 0.2019574689935056,
+          "log_loss": 0.5878460553240481,
+          "top_20_percent_precision": 0.7564102564102564,
+          "top_20_percent_lift": 1.6032608695652173,
+          "calibration_bins": [
+            {
+              "range": [
+                0,
+                0.2
+              ],
+              "count": 63,
+              "mean_prediction": 0.1434560262228294,
+              "observed_rate": 0.14285714285714285
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 107,
+              "mean_prediction": 0.28876148537913615,
+              "observed_rate": 0.3177570093457944
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 96,
+              "mean_prediction": 0.5121226154465915,
+              "observed_rate": 0.5416666666666666
+            },
+            {
+              "range": [
+                0.6,
+                0.8
+              ],
+              "count": 94,
+              "mean_prediction": 0.6983042295646066,
+              "observed_rate": 0.6595744680851063
+            },
+            {
+              "range": [
+                0.8,
+                1.0
+              ],
+              "count": 30,
+              "mean_prediction": 0.8664272713743536,
+              "observed_rate": 0.9
+            }
+          ]
+        },
+        "constant_baseline": {
+          "roc_auc": 0.5,
+          "average_precision": 0.4717948717948718,
+          "brier": 0.24989878128411425,
+          "log_loss": 0.692955858226845,
+          "top_20_percent_precision": 0.4717948717948718,
+          "top_20_percent_lift": 1.0,
+          "calibration_bins": [
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 390,
+              "mean_prediction": 0.44544509871839283,
+              "observed_rate": 0.4717948717948718
+            }
+          ]
+        }
+      },
+      "test": {
+        "rows": 500,
+        "snapshot_start": "2026-05-01",
+        "snapshot_end": "2026-08-31",
+        "positive_rate": 0.466,
+        "logistic": {
+          "roc_auc": 0.8079760814003953,
+          "average_precision": 0.7987932619470184,
+          "brier": 0.18016906333285437,
+          "log_loss": 0.5399139253168431,
+          "top_20_percent_precision": 0.84,
+          "top_20_percent_lift": 1.8025751072961371,
+          "calibration_bins": [
+            {
+              "range": [
+                0,
+                0.2
+              ],
+              "count": 79,
+              "mean_prediction": 0.14061981464632442,
+              "observed_rate": 0.1518987341772152
+            },
+            {
+              "range": [
+                0.2,
+                0.4
+              ],
+              "count": 154,
+              "mean_prediction": 0.2935107497174212,
+              "observed_rate": 0.2077922077922078
+            },
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 123,
+              "mean_prediction": 0.48939182578863094,
+              "observed_rate": 0.6097560975609756
+            },
+            {
+              "range": [
+                0.6,
+                0.8
+              ],
+              "count": 119,
+              "mean_prediction": 0.6913521262270255,
+              "observed_rate": 0.7478991596638656
+            },
+            {
+              "range": [
+                0.8,
+                1.0
+              ],
+              "count": 25,
+              "mean_prediction": 0.873084648590772,
+              "observed_rate": 1.0
+            }
+          ]
+        },
+        "constant_baseline": {
+          "roc_auc": 0.5,
+          "average_precision": 0.466,
+          "brier": 0.24926650396669664,
+          "log_loss": 0.6916862492870244,
+          "top_20_percent_precision": 0.466,
+          "top_20_percent_lift": 1.0,
+          "calibration_bins": [
+            {
+              "range": [
+                0.4,
+                0.6
+              ],
+              "count": 500,
+              "mean_prediction": 0.44544509871839283,
+              "observed_rate": 0.466
+            }
+          ]
+        }
+      }
+    },
+    "max_export_probability_difference": 2.220446049250313e-16
+  },
+  "limitation": "Trained and evaluated only on synthetic history; not validated on real customer receivables.",
+  "model_version": "ar-logreg-30d-v1-4e1935af6cbd"
+}

@@ -30,8 +30,8 @@ def test_source_totals_events_and_immutable_history(store_factory):
         assert c.get("/assets/app.js").status_code == 200
         run, events = finish(c)
     assert run["status"] == "completed", run
-    assert len(events) == 11
-    assert [e["event_id"] for e in events] == list(range(1, 12))
+    assert len(events) == 13
+    assert [e["event_id"] for e in events] == list(range(1, 14))
     s = run["result"]["summary"]
     assert s["invoice_count"] == 6
     assert s["open_balance"] == "372200.00"
@@ -64,11 +64,11 @@ def test_restart_preserves_history_and_idempotent_approval(store_factory):
     # New Python application and HTTP client; only the test database is shared.
     with TestClient(create_app(store_factory())) as fresh:
         saved = fresh.get(f"/api/runs/{rid}").json()
-        assert len(saved["events"]) == 12
+        assert len(saved["events"]) == 14
         assert len(saved["interactions"]) == 1
         assert saved["interactions"][0]["email_sent"] is False
         assert fresh.post(route).json()["recorded"] is False
-        assert len(fresh.get(f"/api/runs/{rid}").json()["events"]) == 12
+        assert len(fresh.get(f"/api/runs/{rid}").json()["events"]) == 14
         assert fresh.get("/api/runs").json()["runs"][0]["run_id"] == rid
 
 
@@ -90,7 +90,7 @@ def test_persisted_sse_resume_and_unknown_run(store_factory):
         run, _ = finish(c)
     with TestClient(create_app(store_factory())) as fresh:
         stream = fresh.get(f"/api/runs/{run['run_id']}/events", headers={"Last-Event-ID": "8"})
-        assert [e["event_id"] for e in decode_events(stream.text)] == [9, 10, 11]
+        assert [e["event_id"] for e in decode_events(stream.text)] == [9, 10, 11, 12, 13]
         assert fresh.get(f"/api/runs/{uuid4()}").status_code == 404
         assert fresh.get(f"/api/runs/{run['run_id']}/events", headers={"Last-Event-ID": "bad"}).status_code == 400
 
