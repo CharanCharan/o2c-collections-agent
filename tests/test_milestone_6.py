@@ -125,7 +125,7 @@ def test_public_mode_blocks_paid_provider_even_if_run_skips_health(store_factory
 
 
 @pytest.mark.parametrize('config',[
-    replace(PUBLIC,secret=''),replace(PUBLIC,owner_token=''),
+    replace(PUBLIC,secret=''),
     replace(PUBLIC,secret=TOKEN),replace(PUBLIC,enabled=False,cloud=True),replace(PUBLIC,invalid=True),
 ])
 def test_cloud_configuration_fail_closed(store_factory,config):

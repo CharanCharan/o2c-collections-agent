@@ -165,6 +165,14 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         backend()
         return await cases.reply(public.actor(request)[0],str(case_id),str(body.request_id),body.text)
 
+    @app.post('/api/cases/{case_id}/send-email')
+    async def send_case_email(case_id: UUID,request: Request):
+        backend()
+        # No recipient/body/mode overrides. This endpoint authorizes one explicit user action.
+        if await request.body():
+            raise HTTPException(422,'This action takes no message or recipient overrides.')
+        return await mail.send_case(public.actor(request)[0],str(case_id))
+
     @app.get("/api/model")
     async def model_info():
         return risk_model.model_card(risk_model.load_model())

@@ -3,14 +3,29 @@ document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
 implementation_milestone: M6_cloud_public_demo
-implementation_branch: v2-visitor-cases
+implementation_branch: draft-email-action
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: SQL007_case_reply_reload_then_graph
+pending_learning_check: SQL008_draft_send_delivery_reload_then_graph
 next_milestone: durable_langgraph_control_modes_fixed_recipient_real_email
 ---
 
 # Project knowledge — continuation context
+
+## Latest V2.2 checkpoint — overrides earlier UI/token/send directions
+
+PR#9 merged0012886799cedb30729d5ba8a6b57933ad1311db; main verified identical. User explicitly rejects controlled-email owner-token UX and asks for one Send email button beside draft, later callable by agent in auto mode or user in limited/dispute workflows. Dry run explained: SQL approval/event and contacted flag only, no Resend send. Remove its UI/modal and token/private email panel; preserve legacy history/API, not claim old approvals were sends.
+
+Implemented branch draft-email-action: direct draft Send email; click opens case if needed and POST/api/cases/{UUID}/send-email (no payload or token), calls MailService.send_case with server-derived session. Existing configured project test recipient/sender/body from saved case only. SQL008 adds private ca_case_mail link, atomic case policy+existing send reservation, actor-neutral audit wording and case awaiting_response after acceptance. Accepted intent repeats return stored result; same immutable retry/key and global10/day mail cap retained. SQL007 plus008 required; no new deps/services. EMAIL_OWNER_TOKEN no longer required by MailConfig/public config/render.yaml; optional legacy admin endpoints retain auth, no owner credential in UI/requests. Public DEMO_SESSION_SECRET remains to restore session cases. Prior public test requiring owner token updated to latest user direction.
+
+Case projection shows only linked outbound subject/body/status/providerid/verified delivery event types/times, not addresses, private inbound content, owner activity or unrelated mail. Cases restore on initial load, draft from originating snapshot is displayed and sent; a concurrently restored existing case is shown for review before Send. Accepted notdelivered, errors uncertain, noauto retry. Status polling makes only DB reads, preserves reply composer. UI no owner panel/dryrun action; backend legacy APIs remain for saved contracts. Holds/pending reply/manual review block new reminder/retry; source-dispute/no draft blocked. Accepted duplicate returns state without egress even after a reply. No new financial writes or modelcalls from send/poll/load.
+
+Current implementation is MANUAL send tool only. LangGraph/autopilot/limited-mode interrupt still next; graph must call same server method, not literally click browser button. No fake mode selector/autosend claim. Dispute resolution/document email needs a separately reviewed action; don't send a chasing reminder on a held invoice. Next graph integrates actual event-triggered case actions/durable checkpoints.
+
+Validation:119-test full regression passed, including7 new token-free-send tests and revised optional-owner contract; final targeted mail/public suite rerun after tightening optional legacy auth. Actual local HTTP/SSE/cookie-aware DOM passed initial9rows431700, no owner/dryrun UI, one-click automatic case+send, provider acceptance, signed delivery status via poll, typed reply and full reload restoration. Providers mocked; no real emails/LLM/deploy. Existing Starlette/httpx deprecation warning only.
+
+Lesson docs/MILESTONE_V2_2.md: merge/pull, runSQL008 after007, manually deploy Render, no packages/new cloud secrets. Existing Resend settings remain; owner token may be removed, session secret retained. Learner delivery/reload acceptance pending. No live sends/keys/deployment by assistant.
+
 
 ## Latest V2.1 checkpoint — authoritative continuation
 

@@ -1,3 +1,5 @@
+> Current send UX is documented in [V2.2](MILESTONE_V2_2.md): Send email beside the draft, no owner token required. Older token/dry-run UI instructions below are historical. Existing Resend/webhook setup still applies.
+
 # Milestone 5 — Send a controlled email and capture its reply
 
 M5 PR#6 is now merged; M6 cloud deployment supersedes the temporary forwarding instructions below when hosting. See docs/MILESTONE_6.md for the direct cloud callback and Resend Connect troubleshooting.

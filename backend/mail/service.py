@@ -27,7 +27,7 @@ class MailService:
         self.lock=asyncio.Lock()
 
     def authorize(self,token):
-        if not self.config.owner_token or not hmac.compare_digest((token or '').encode(),self.config.owner_token.encode()):
+        if len(self.config.owner_token)<32 or not hmac.compare_digest((token or '').encode(),self.config.owner_token.encode()):
             raise HTTPException(401,'Owner token required for live email actions.')
         self.config.check()
 
@@ -74,6 +74,40 @@ class MailService:
             else:
                 await self.store.rpc('ca_mail_finish',{'p_id':job['id'],'p_provider_id':provider_id,'p_error':None})
             return await self.activity(run_id)
+
+    async def send_case(self,session_key,case_id):
+        """Shared send tool for a visitor's case; future graph calls the same tool.
+
+        Recipient, sender and draft come only from server config/stored snapshot.
+        SQL reserves and binds the intent while enforcing the current case hold.
+        """
+        self.config.check()
+        await self.readiness()
+        async with self.lock:
+            case=await self.store.rpc('ca_case_get',{'p_session_key':session_key,'p_case_id':case_id})
+            if not case:raise HTTPException(404,'Case not found in this browser session.')
+            row=case['snapshot']['invoice']
+            if not row.get('draft'):raise HTTPException(409,'No sendable reminder in this case.')
+            ident=str(uuid4())
+            reply_to='collections-'+ident+'@'+self.config.receiving_domain
+            payload={'from':self.config.sender,'to':[self.config.recipient],
+                'reply_to':reply_to,'subject':'[O2C DEMO] '+row['draft']['subject'],
+                'text':'SYNTHETIC COLLECTIONS DEMO — no real debt or payment request.\n\n'+row['draft']['body']}
+            job=await self.store.rpc('ca_case_mail_prepare',{'p_session_key':session_key,'p_case_id':case_id,
+                'p_id':ident,'p_payload':payload,'p_reply_to':reply_to})
+            if job['state']!='accepted':
+                if job['payload']['to']!=[self.config.recipient] or job['payload']['from']!=self.config.sender:
+                    raise HTTPException(409,'Stored recipient/sender changed. Review the existing intent before retrying.')
+                age=datetime.now(timezone.utc)-datetime.fromisoformat(job['created_at'].replace('Z','+00:00'))
+                if age>timedelta(hours=20):
+                    raise HTTPException(409,'Unresolved email is older than20hours. Reconcile it in Resend before retrying.')
+                try:
+                    provider_id=await self.provider.send(job)
+                except HTTPException as exc:
+                    await self.store.rpc('ca_mail_finish',{'p_id':job['id'],'p_provider_id':None,'p_error':exc.detail})
+                else:
+                    await self.store.rpc('ca_mail_finish',{'p_id':job['id'],'p_provider_id':provider_id,'p_error':None})
+            return {'case':await self.store.rpc('ca_case_get',{'p_session_key':session_key,'p_case_id':case_id})}
 
     async def webhook(self,raw,headers):
         self.config.check()

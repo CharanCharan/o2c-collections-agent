@@ -19,8 +19,6 @@ services:
         sync: false
       - key: SUPABASE_SECRET_KEY
         sync: false
-      - key: EMAIL_OWNER_TOKEN
-        sync: false
       - key: COLLECTIONS_LLM_ENABLED
         value: 'false'
       - key: LLM_PROVIDER

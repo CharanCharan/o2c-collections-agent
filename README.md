@@ -1,4 +1,4 @@
-> Latest: PR#8 preload is learner-confirmed. V2.1 adds saved visitor cases and typed simulated replies; run [the V2.1 lesson](docs/MILESTONE_V2_1.md) after merging. SQL007 required. This is the conversation foundation; LangGraph/control modes and visitor-triggered real Resend sending are next.
+> Latest V2.2: **Send email** beside the draft sends through Resend without an owner-token panel or dry-run step. [Setup and hands-on lesson](docs/MILESTONE_V2_2.md): SQL008 after007, then manual Render deploy. LangGraph/control modes are next.
 
 # Charan's O2C Collections Agent
 

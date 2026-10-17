@@ -41,9 +41,9 @@ class PublicConfig:
     def check(self):
         if self.invalid or (self.cloud and not self.enabled):
             raise HTTPException(503,'Cloud deployment requires PUBLIC_DEMO=true. Check server environment.')
-        if self.enabled and (len(self.secret)<32 or len(self.owner_token)<32):
-            raise HTTPException(503,'Public demo requires separate private session secret and owner token, each32+characters.')
-        if self.enabled and hmac.compare_digest(self.secret,self.owner_token):
+        if self.enabled and len(self.secret)<32:
+            raise HTTPException(503,'Public demo requires a private session secret of32+characters.')
+        if self.enabled and self.owner_token and hmac.compare_digest(self.secret,self.owner_token):
             raise HTTPException(503,'Use different session and owner secrets.')
 
 
@@ -54,7 +54,7 @@ class PublicAccess:
         self.session_secret=config.secret or secrets.token_hex(32)
 
     def owner(self,token):
-        return bool(token and self.config.owner_token and hmac.compare_digest(token.encode(),self.config.owner_token.encode()))
+        return bool(token and len(self.config.owner_token)>=32 and hmac.compare_digest(token.encode(),self.config.owner_token.encode()))
 
     def encode(self,session):
         body=base64.urlsafe_b64encode(json.dumps(session,separators=(',',':')).encode()).decode().rstrip('=')
