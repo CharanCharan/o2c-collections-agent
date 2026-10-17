@@ -1,32 +1,37 @@
-# Payment-risk model card — M3
+# M3 model cards — prevention and recovery
 
-Purpose: educational collections POC. Predict an outstanding balance remaining 30 days after the scoring snapshot for a positive overdue invoice. Not a production credit or cash forecast model. Six Supabase demo invoices are inference examples, never training/evaluation rows.
+Educational collections POC, two separate probability targets. Trained/evaluated on **synthetic history only**, no actual customer or business-uplift validation. Neither model independently confirms the other's predictions; do not combine their probabilities.
 
-## Provenance and artifact
+## Prevention — due-7 checkpoint
 
-- Project-authored synthetic generator: `ml/generate.py`, v1, seed 42, 4,000 independent customer/invoice observations. No outside/private data or dataset license obligations introduced.
-- Data hash: `02a0ffbc8d61a77e804bc8a16175fa30a042b56eedc4a4723e56d9f3b0f6ef36`.
-- Artifact model version: `ar-logreg-30d-v1-4e1935af6cbd`; actual SHA-256 returned by `/api/model` and persisted per run.
-- Scikit-learn 1.9.1, Python 3.12.14, NumPy 2.5.4. Optional training dependencies are separate from serving dependencies.
-- Trained means/scales/coefficients/intercept and full evaluation: `artifacts/payment_risk.json`. Numeric JSON inference; no pickled object. Model identity binds parameters and report; it is a consistency check, not a signature against a malicious repository author.
-- Regenerate ignored data and manifest with `python -m ml.generate`; fit/export with `python -m ml.train`. No training during visitor runs. Metadata/floating-point differences can change identity across environments.
+- Target: invoice not fully settled by end of due date; predict exactly seven days before due. Settlement on due date is on-time; next-day settlement is late. Observation must extend through due+1day. No arbitrary-day pre-due inference/backdating of features.
+- Artifact: `artifacts/pre_due_risk.json`; model `ar-predue-7d-v1-5f467038df08`.
+- Project-authored generator `ml/generate_pre_due.py v1`, seed123, 4,000 independent invoices/customers. Source hash `e01d656ea50157b8cbd9ab22d4d4ea80f6db24cfbcd87e576725b08d73c6aa21`. Observation cutoff2026-09-08.
+- Features: prior late-payment rate; broken promises capped4; log(1+balance capped250000USD); no-history indicator. No current-invoice overdue days, future payments, IDs or urgency score.
+- Train2,860; validation353; test511; embargo276. Selected C10 by validation Brier.
+- Test AUC .738486 vs .5 constant; AP .553646 vs .342466; Brier .194845 vs .225192. Tail calibration uncertain: six predictions in .8–1 bin, .852 mean predicted vs .500 observed. No real calibration claim.
+- Decision: rank preventive reviews within stage by balance × probability_overdue. M3 does not allow pre-due reminder approval through the overdue approval tool.
 
-## Target and assumptions
+## Recovery — overdue snapshot
 
-Scoring date t is source snapshot as_of_date. Only positive overdue balances qualify. Label 1 = not fully settled by t+30; 0 = fully settled by that horizon. Labels require observation through t+30. Settlement dates/labels never enter features. No-history rate uses zero plus a separate indicator. Historical counts must be known at t; assumed in this generator, not independently auditable from the simplified live schema. A real implementation needs dated events and balances to enforce this.
+- Target: positive overdue balance remains at snapshot+30days; mature outcomes required.
+- Artifact: `artifacts/payment_risk.json`; model `ar-logreg-30d-v1-4e1935af6cbd`, unchanged from initial M3.
+- Generator `ml/generate.py v1`, seed42, 4,000 independent snapshots. Data hash `02a0ffbc8d61a77e804bc8a16175fa30a042b56eedc4a4723e56d9f3b0f6ef36`. Observation cutoff2026-09-30.
+- Features: prevention's four plus overdue days capped180.
+- Train2,887; validation390; test500; embargo223. Selected C.1 by validation Brier.
+- Test AUC .807976 vs .5; AP .798793 vs .466; Brier .180169 vs .249267. Middle-bin calibration .489 predicted vs .610 observed (n123). Not validated on real receivables.
+- Decision: eligible-first recovery ranking by balance × probability_unpaid_30d. Policy urgency still controls the threshold35 draft rule. Disputes always pause regardless of risk.
 
-Features: days overdue capped180; prior late-payment rate; broken promises capped4; log(1+balance capped250000 USD); no-history indicator. Amount below100, above250000, overdue above180, previous count above40 or promises above4 is outside declared synthetic support and warned. Fixed caps precede training/serving; StandardScaler learns only from train. Disputes are policy gates, not model features. Partial settlements, credits, write-offs, collector interventions and payment reconciliation are absent.
+## Shared engineering and statistical boundaries
 
-## Evaluation protocol
+Training Python3.12.14/scikit-learn1.9.1/NumPy2.5.4. Numeric JSON export, no pickle. Export matches independent sklearn inference to 1e-12. Exact reports, learned parameters, versions and source/artifact hashes are persisted per run, so later retraining cannot rewrite history. Version binds payload for consistency, not cryptographic authenticity against a malicious author.
 
-2,887 training snapshots Jan2024–Nov2025; 390 validation Jan–Mar2026; 500 untouched test May–Aug2026; 223 embargo rows excluded. December2025 and April2026 gaps allow 30-day labels to mature. Independent unique customers/invoices across all splits. Choose C from .1/1/10 using validation Brier; selected .1; no refit on validation/test. Constant baseline uses train prevalence, not test prevalence. Latest outcome observation Sep30 2026.
+Train snapshots Jan2024–Nov2025; validation Jan–Mar2026; test May–Aug2026; December2025/April2026 gaps allow outcome maturity. StandardScaler/model fit only on train; C selected among .1/1/10 using validation, no refit on validation/test. Constant baseline uses train prevalence. One unique customer/invoice per row avoids entity duplicates; real repeated-customer use needs a suitable grouping/time design. Synthetic generators and datasets are independent of the nine source demo invoices.
 
-Test ROC AUC .807976 vs .5 baseline; average precision .798793 vs .466; Brier .180169 vs .249267. Top20% precision .84 vs prevalence .466. Baseline has no ranking, so its expected top20% rate is prevalence. Full bins show imperfect calibration (e.g. .489 predicted vs .610 observed in the middle bin). No post-hoc probability calibration or real-world calibration claim. Export probability difference from sklearn maximum 2.22e-16 on generated splits.
+Prior history/amounts are assumed known at scoring time; the simplified source schema cannot audit that assumption. No-history defaults rate0 with a separate flag. Fixed clipping and out-of-support warnings disclosed. Contributions are additive standardized log-odds relative to training means, not causal effects, percentage-point changes, confidence in an AI action or expected cash recovery.
 
-## Decision use and limitations
+Synthetic settlement mechanisms deliberately contain the signal types available to the models; favorable test results are not evidence of real ERP accuracy. Full-settlement labels simplify partial payments, credits, write-offs and collector interventions. No macro drift, fairness, intervention effect, economic benefit or real calibration validated. A real deployment requires permitted dated snapshots/reconciled outcomes, mature labels, appropriate temporal/group splits, business baselines, calibration/group/drift evaluation and owner review.
 
-Priority = balance × predicted probability among eligible invoices, a ranking index. Policy urgency remains separate; existing threshold35 controls templates. Disputes always pause regardless of model output; zero/not-due balances not scored. A prediction never authorizes email. Contribution explanations are additive log-odds relative to training means, not causal effects or confidence in an action.
+Serving never retrains, stores no scheduled historical pre-due scores and runs one backend per demo database. Dates outside the fixed pre-due window are explicitly not scored; overdue model starts only after due. Zero balances not scored. Both artifacts are required for a new dual-model run; failures never silently substitute the other model or urgency rules. Older saved M2 and single-model M3 results remain unchanged/readable.
 
-Synthetic labels are sampled from an invented noisy mechanism using overlapping signal types, so favorable scores are expected. Temporal tests do not simulate genuine ERP drift, collection-policy changes or economic shocks. No real outcomes, business uplift, subgroup fairness, interventions, portfolio calibration or cost benefit validated. Dates beyond the training window and new portfolios need validation. No runtime learning/drift monitor/retraining scheduler. Six synthetic demo invoices do not establish these properties.
-
-Before real use: use permitted historical snapshots and reconciled settlement labels; ensure cutoff/maturity and customer/time split choices suit deployment; compare business baselines, evaluate probability calibration and group outcomes; test drift and intervention bias; define human ownership and validation/monitoring. This is future work, not required infrastructure for the throwaway POC.
+Reproduce both datasets/training using docs/MILESTONE_3.md. CSV/manifests ignored/reproducible; artifacts tracked. Metadata/floating-point differences can change identities across environments. No real private dataset, license dependency, paid model endpoint or new runtime ML dependency introduced.

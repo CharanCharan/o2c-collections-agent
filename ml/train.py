@@ -11,7 +11,7 @@ import platform
 from datetime import date, timedelta
 from pathlib import Path
 
-from backend.risk_model import FEATURES, FEATURE_VERSION, TARGET, LIMITATION, canonical, feature_values, score
+from backend.risk_model import LIMITATION, canonical, feature_values, pre_due_features, model_spec, score
 
 CANDIDATES = [.1, 1.0, 10.0]
 
@@ -26,23 +26,29 @@ def split_name(snapshot):
     return 'embargo'
 
 
-def labeled_row(row):
+def labeled_row(row, stage='overdue'):
     snapshot, due, observed = (date.fromisoformat(row[key]) for key in
                               ['snapshot_date', 'due_date', 'outcome_observed_through'])
-    horizon = snapshot + timedelta(days=30)
-    if observed < horizon:
-        raise ValueError('Immature outcome: cannot label a snapshot before its 30-day horizon.')
+    if stage == 'pre_due' and due - snapshot != timedelta(days=7):
+        raise ValueError('Pre-due training snapshots must be exactly seven days before due.')
+    horizon = due if stage == 'pre_due' else snapshot + timedelta(days=30)
+    required_observation = due + timedelta(days=1) if stage == 'pre_due' else horizon
+    if observed < required_observation:
+        raise ValueError('Immature outcome: cannot label before the required observation horizon.')
     settled = date.fromisoformat(row['settled_date']) if row['settled_date'] else None
     if settled is not None and (settled <= snapshot or settled > observed):
         raise ValueError('Settlement must follow the scoring snapshot and be observed.')
     # Blank settlement + adequate observation means still outstanding at horizon.
     label = int(settled is None or settled > horizon)
-    features = feature_values((snapshot - due).days, row['amount'], int(row['previous_invoices']),
-                              int(row['late_payments']), int(row['broken_promises']))
+    if stage == 'pre_due':
+        features = pre_due_features(row['amount'], int(row['previous_invoices']), int(row['late_payments']), int(row['broken_promises']))
+    else:
+        features = feature_values((snapshot - due).days, row['amount'], int(row['previous_invoices']),
+                                  int(row['late_payments']), int(row['broken_promises']))
     return snapshot, features, label
 
 
-def load_history(path):
+def load_history(path, stage='overdue'):
     groups = {name: [] for name in ['train', 'validation', 'test', 'embargo']}
     ids, customers = set(), set()
     with Path(path).open(newline='', encoding='utf-8') as stream:
@@ -50,7 +56,7 @@ def load_history(path):
             if row['invoice_id'] in ids or row['customer_id'] in customers:
                 raise ValueError('This POC expects independent, unique invoice/customer snapshots.')
             ids.add(row['invoice_id']); customers.add(row['customer_id'])
-            snapshot, features, label = labeled_row(row)
+            snapshot, features, label = labeled_row(row, stage)
             groups[split_name(snapshot)].append((snapshot.isoformat(), features, label))
     for name in ['train', 'validation', 'test']:
         values = groups[name]
@@ -89,7 +95,7 @@ def math_ceil(value):
     return math.ceil(value)
 
 
-def train(source, output):
+def train(source, output, stage='overdue'):
     import numpy as np
     import sklearn
     from sklearn.linear_model import LogisticRegression
@@ -99,7 +105,11 @@ def train(source, output):
     digest = hashlib.sha256(Path(source).read_bytes()).hexdigest()
     if manifest.get('synthetic') is not True or manifest.get('sha256') != digest:
         raise ValueError('This lesson expects generated synthetic history with a matching manifest. Regenerate it.')
-    groups = load_history(source)
+    expected_generator = 'ml/generate_pre_due.py v1' if stage == 'pre_due' else 'ml/generate.py v1'
+    if manifest.get('generator') != expected_generator:
+        raise ValueError('Training stage does not match the synthetic generator manifest.')
+    _, feature_version, features, target, prefix, horizon_days = model_spec(stage)
+    groups = load_history(source, stage)
     if sum(map(len, groups.values())) != manifest['rows']:
         raise ValueError('Manifest row count mismatch.')
     arrays = {name: (np.asarray([r[1] for r in rows]), np.asarray([r[2] for r in rows]))
@@ -133,7 +143,7 @@ def train(source, output):
         raise ValueError('Exported inference differs from sklearn.')
     evaluation['max_export_probability_difference'] = max_difference
     artifact = {'schema_version': 1, 'model_type': 'standardized_logistic_regression',
-        'feature_version': FEATURE_VERSION, 'features': FEATURES, 'target': TARGET, 'horizon_days': 30,
+        'feature_version': feature_version, 'features': features, 'target': target, 'horizon_days': horizon_days,
         **export, 'training_data': {'synthetic': True, 'generator': manifest['generator'], 'seed': manifest['seed'],
             'source': str(Path(source).as_posix()), 'sha256': digest,
             'total_rows': sum(map(len, groups.values())), 'embargo_rows': len(groups['embargo']),
@@ -142,7 +152,7 @@ def train(source, output):
             'snapshot_assumption': 'History counts and balances are known at snapshot time; settlement follows snapshot.'},
         'training_environment': {'python': platform.python_version(), 'scikit_learn': sklearn.__version__, 'numpy': np.__version__},
         'evaluation': evaluation, 'limitation': LIMITATION}
-    artifact['model_version'] = 'ar-logreg-30d-v1-' + hashlib.sha256(canonical(artifact)).hexdigest()[:12]
+    artifact['model_version'] = prefix + hashlib.sha256(canonical(artifact)).hexdigest()[:12]
     output = Path(output); output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(artifact, indent=2, allow_nan=False) + '\n', encoding='utf-8')
     print(json.dumps({'model_version': artifact['model_version'], 'selected_C': chosen_c,
@@ -152,7 +162,10 @@ def train(source, output):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', default='ml/data/synthetic_history.csv')
-    parser.add_argument('--output', default='artifacts/payment_risk.json')
+    parser.add_argument('--stage', choices=['overdue', 'pre_due'], default='overdue')
+    parser.add_argument('--source')
+    parser.add_argument('--output')
     args = parser.parse_args()
-    train(args.source, args.output)
+    source = args.source or ('ml/data/pre_due_history.csv' if args.stage == 'pre_due' else 'ml/data/synthetic_history.csv')
+    output = args.output or ('artifacts/pre_due_risk.json' if args.stage == 'pre_due' else 'artifacts/payment_risk.json')
+    train(source, output, args.stage)

@@ -22,9 +22,11 @@ This is a hands-on learning project delivered one complete runnable milestone at
 
 ## Current implementation — M3 prepared for review
 
-Supabase remains source/history store. Six Python stages now include prediction using a saved standardized logistic model trained offline on 4,000 synthetic historical records. Target: positive overdue balance remains 30 days after snapshot. Artifact/version, input features, contributions and holdout evidence persist per run. Priority changes to eligible-first balance × predicted risk; policy urgency, threshold35 templates and dispute gates remain separate. No LLM or real email yet.
+Supabase remains source/history store. Six Python stages include two saved logistic models: at due-7 predict becoming overdue; after due predict remaining unpaid another30days. Each is trained/evaluated on separate synthetic history. Persist target-specific inputs/explanations/model identity and evidence. Prevention and recovery rank separately; disputes/policy gates remain. Pre-due reviews do not yet create reminder approvals. Existing overdue rule urgency and threshold35 draft policy remain. No LLM or actual email.
 
-M2 PR #3 merged at ea7a5fb; user confirmed live setup and both exercises. M3 local validation: 22 tests plus actual SQL/HTTP/SSE/DOM checks; synthetic test AUC .808 and Brier .180 vs constant .500/.249. These do not prove real-world accuracy. M3 learner verification pending. See docs/MILESTONE_3.md, ml/MODEL_CARD.md and PROJECT_KNOWLEDGE.md. No SQL migration/new key or runtime ML dependency in M3.
+M2 PR #3 merged ea7a5fb and learner-confirmed. M3 PR #4 remains the review branch; user requested adding prevention before moving to M4. SQL003 adds three pre-due source examples without schema change/history deletion. No new credentials or runtime ML packages. With full seeds:9invoices/open431700/pastdue372200/eligible recovery308000. M3 learner verification pending. docs/MILESTONE_3.md and ml/MODEL_CARD.md are current.
+
+Local checks:29tests, actual SQL/HTTP/SSE/DOM. Prevention holdout511 AUC.738/Brier.195 versus .5/.225 baseline; recovery500 .808/.180 versus .5/.249. Synthetic tests do not prove real-world accuracy. Prior single-model22-test evidence remains historical.
 
 ## Recommended stack
 
@@ -80,11 +82,11 @@ Acceptance: the Supabase rows produce the expected portfolio; owner data edits a
 
 ### M3 — Train and evaluate payment risk [CODE PREPARED; LEARNER CHECKS PENDING]
 
-Target: an already overdue positive balance remains outstanding 30 days after the snapshot. This replaces the earlier due-date+30 candidate because that horizon is already in the past for some queue invoices. Features use facts known at snapshot. Independent synthetic history has mature settlement labels, chronological train/validation/test and month-long gaps; compare constant prevalence with interpretable logistic regression. Fit scaler on train only, choose C on validation Brier, report untouched test plus calibration bins. Save JSON artifact and provenance/hash.
+Two stage-specific targets: (1) at exactly seven days before due, not fully paid by end of due date; (2) positive overdue balance remains at snapshot+30days. The second replaces the original due+30 candidate for recovery; the first adds Charan's requested prevention use case. A date outside the pre-due checkpoint is explicitly not scored, rather than backdating features. No current-invoice aging/future outcomes in pre-due features.
 
-Implemented: separate predict stage, risk percentage/contributions/version, model evidence UI, risk-weighted exposure ranking with policy gates, stored historical evidence. See docs/MILESTONE_3.md for actual split sizes, metrics, source-input and optional retraining exercises. Serving does not retrain or depend on scikit-learn. Synthetic metrics demonstrate the pipeline only.
+Separate generated histories with mature labels, chronological gaps, train-only scaling, validation C choice and untouched later-date tests. Save/version numeric artifacts, model card, parameters and evidence. Website labels targets, shows separate queues and calibration/holdout evidence; never combines probabilities or calls one independent proof of the other. Disputes/zero balances/policy gates stay enforced. M3 preventive risk is review-only; actual reminder policy/sending is later work.
 
-Acceptance still needed from learner: M3 runs on user's Python 3.13.5/Supabase; visible predictions/evidence, changed history affects next prediction, previous saved outputs remain unchanged; user can distinguish risk from urgency/priority. Optional hands-on generator/trainer exercise deepens understanding.
+Acceptance pending from learner: merge updated PR#4, pull main, run SQL003, see nine invoices/two target labels, change Harbor history and observe new risk while saved history stays unchanged. Explain timing windows, probability vs urgency, separate queue ranking and synthetic evaluation limits. Optional generator/trainer exercise for both models. Detailed steps docs/MILESTONE_3.md.
 
 ### M4 — Add language reasoning and policy
 
@@ -148,3 +150,4 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | M2 implementation ready in PR #3 | Supabase source/history, SQL scripts, saved-run UI; 14 local tests + HTTP/SSE/DOM passed; cloud setup and learner exercises pending |
 | 2026-10-17 | M2 learner complete | User confirmed all working and both source-change/persistence checks; PR #3 merge ea7a5fb |
 | 2026-10-17 | M3 implementation prepared | Synthetic-trained logistic model, saved evidence, risk ranking and lesson; 22 local tests + HTTP/SSE/DOM; learner verification pending |
+| 2026-10-17 | M3 extended at user request | PR#4 now includes due-7 prevention plus overdue recovery, SQL003 examples and separate queues; 29 local checks; learner confirmation pending |

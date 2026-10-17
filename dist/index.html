@@ -36,10 +36,10 @@
     <div class="top-actions"><div class="pill"><i class="dot"></i><span id="backend-label">Connecting to Python…</span></div><div class="pill" id="as-of">Start to load the demo snapshot</div><div class="avatar">CS</div></div>
   </header>
   <section class="intro">
-    <div><div class="eyebrow">Order to cash · Milestone 3</div><h1>Charan's Collections Agent</h1><p>Watch Python load invoices from Supabase, predict payment risk, prioritize collections and save each run.</p></div>
+    <div><div class="eyebrow">Order to cash · Milestone 3</div><h1>Charan's Collections Agent</h1><p>Watch Python load invoices from Supabase, predict overdue risk before due dates, prioritize recovery after due dates and save the evidence.</p></div>
     <div class="run-wrap"><div class="last-run" id="last-run">No active run</div><button class="primary" id="start-run" disabled><span class="play">▶</span> Start collections run</button></div>
   </section>
-  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices from Supabase, real Python execution and persistent history. Payment risk uses a model trained on synthetic history. Urgency uses rules; reminders use templates. No LLM or email provider yet.</span></div>
+  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices from Supabase, real Python execution and persistent history. Two models trained on synthetic history cover prevention and overdue recovery. Urgency uses rules; reminders use templates. No LLM or email provider yet.</span></div>
   <div class="error-box" id="error-box" role="alert" hidden></div>
   <section class="stats" aria-label="Accounts receivable summary">
     <div class="stat"><div class="stat-top">Open receivables <span class="stat-icon">◌</span></div><div class="stat-value" id="metric-open">—</div><div class="stat-foot" id="open-note">Calculated after loading data</div></div>
@@ -49,11 +49,12 @@
     <div class="stat"><div class="stat-top">Eligible exposure <span class="stat-icon">↗</span></div><div class="stat-value" id="metric-eligible">—</div><div class="stat-foot" id="eligible-note">Calculated after loading data</div></div>
   </section>
   <section class="history-bar" aria-label="Saved run history"><label for="saved-runs">Saved runs</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open saved run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · stored in Supabase</span></section>
+  <p class="panel-sub" id="preventive-caption">Start to inspect the preventive review queue.</p>
   <details id="model-evidence" class="model-evidence"><summary>Payment-risk model evidence</summary><p>Start a run to inspect the model used for that snapshot.</p></details>
   <main class="grid">
     <section class="panel">
-      <div class="panel-head"><div><div class="panel-title">Collections work queue</div><div class="panel-sub" id="queue-sub">Start to load invoices</div></div><button class="filter" id="filter-btn">All invoices ▾</button></div>
-      <div class="table-wrap"><table><thead><tr><th>Customer / invoice</th><th>Open balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · 30 days</th><th>Next action</th></tr></thead><tbody id="queue"></tbody></table></div>
+      <div class="panel-head"><div><div class="panel-title">Collections work queue</div><div class="panel-sub" id="queue-sub">Start to load invoices</div></div><label for="queue-stage" class="panel-sub">Stage</label><select class="filter" id="queue-stage"><option value="all">All stages</option><option value="overdue">Overdue recovery</option><option value="pre_due">Before due · prevention</option></select><button class="filter" id="filter-btn">All invoices ▾</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Customer / invoice</th><th>Open balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Next action</th></tr></thead><tbody id="queue"></tbody></table></div>
     </section>
     <div class="right-stack">
       <section class="panel run-panel">

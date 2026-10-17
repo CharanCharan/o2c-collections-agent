@@ -1,160 +1,176 @@
-# Milestone 3 — train, explain and use payment risk
+# Milestone 3 — prevent overdue invoices and prioritize recovery
 
-M2 is learner-complete: Charan confirmed Supabase operation, source edits/immutable results, and restart persistence. M3 adds a genuine trained model; local tests are complete but Charan's M3 run/exercises remain pending. Canonical repository remains CharanCharan/o2c-collections-agent.
+Current delivery: **PR #4**, extended to two models at Charan's request. M2 is learner-complete. M3 local checks pass; Charan's live M3 run/exercises remain pending. Only repository: CharanCharan/o2c-collections-agent.
 
-## Run the new milestone
+## 1. Update your code and add the new examples
 
-Review and merge the M3 pull request. Stop Python with Ctrl+C. From your existing VS Code project terminal:
+Review and merge https://github.com/CharanCharan/o2c-collections-agent/pull/4 . Stop Python with Ctrl+C. In your existing VS Code project terminal:
 
 ```powershell
 git status
 git switch main
 git pull --ff-only origin main
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Preserve/push local edits before pulling. Reuse your `.env`, Python environment and Supabase project.
+
+In Supabase **SQL Editor**, paste and run **`sql/003_seed_pre_due.sql`**. This adds/restores three synthetic invoices; it changes no schema and does not delete history. Run it after the existing 001/002 setup. Dates are relative to `ca_demo_settings.as_of_date`: Harbor and Willow are due in seven days, Vista in fourteen. Re-running does not duplicate rows. It does not reset your original six invoices or their edits.
+
+Restart:
+
+```powershell
 .\.venv\Scripts\python.exe -m uvicorn backend.main:app --reload --port 8000
 ```
 
-Preserve and push local edits before pulling. Reuse your existing `.env` and Supabase project. No new SQL migration, API key, paid service or runtime ML installation is needed. The trained artifact is included; Python serves its coefficients using standard-library math. Supabase remains the online source and history store.
+Refresh http://localhost:8000 and click **Start**. No new API key or paid service is needed. Both trained artifacts are committed; ML packages are optional for retraining, not serving.
 
-Open http://localhost:8000 , refresh the page, and Start. Look for:
+## 2. What you should see
 
-- Six stages, including **Predict payment risk**; 13 events on a completed run, 14 after one dry-run approval.
-- A new **ML risk · 30 days** column beside the separate rule urgency.
-- A **Model evidence** panel with a synthetic holdout comparison and calibration bins.
-- Invoice detail with prediction horizon, actual feature values, model contributions, version and artifact hash.
-- Existing USD 372,200 open AR / 308,000 eligible exposure / four template drafts when source rows are restored to the seed values.
+With the original six rows restored and SQL003 run:
 
-With the committed model and original seed, Cedar shows about **71.1%**, Northstar **35.7%**, Meridian **25.9%**, BluePeak **24.6%**, Atlas **9.1%**, and disputed Solace **44.9%**. These are synthetic-trained estimates, not real-world validated probabilities. Solace stays paused. Opening an M2 run shows its original rule-based evidence, with no retroactive predictions.
-
-Health: http://localhost:8000/api/health reports M3, six stages and model_version. Current model card: http://localhost:8000/api/model . A saved run's own model metadata is in its result; it may differ from the current artifact after retraining.
-
-## What are we predicting?
-
-At snapshot date **t**, an invoice already has a positive overdue outstanding balance. Target = **some outstanding balance remains at t + 30 days**. Label 1 means not fully settled by that horizon; label 0 means fully settled by it. Example: scoring on 2026-10-17 gives a horizon of 2026-11-16. The date comes from the saved snapshot, not the laptop clock.
-
-The earlier plan suggested unpaid 30 days after due date. Many of our invoices are already past that date, so that would classify an outcome already known at scoring time. M3 uses a forward 30-day horizon from the snapshot instead. This keeps the prediction useful for an overdue collections queue.
-
-This is not predicting exact payment date, amount recovered, customer creditworthiness, or the confidence that an AI action was correct. No payment reconciliation or partial-payment ledger is implemented. The synthetic generator assumes full-settlement outcomes; a production target would require audited balances/settlements and write-off treatment.
-
-## Follow the code
-
-| Read in order | What happens |
+| Check | Expected |
 |---|---|
-| `ml/generate.py` | Creates 4,000 independent synthetic historical invoice snapshots and later settlement observations |
-| `ml/train.py` | Builds labels, splits by time, fits/scales on training only, chooses regularization on validation, evaluates holdout |
-| `artifacts/payment_risk.json` | Learned means, scales, coefficients, intercept, metadata and measured reports |
-| `backend/risk_model.py` | Shared feature transformations, artifact validation, logistic inference and contributions |
-| `backend/pipeline.py` → `predict` | Scores the actual Supabase invoice snapshot; records date, horizon, inputs and model identity |
-| `backend/pipeline.py` → `prioritize` | Ranks eligible balances using balance × predicted probability |
-| `backend/runner.py`, `main.py` | Six-stage execution, persisted events/SSE, health/model endpoints |
-| `dist/app.js` | Shows model evidence and selected invoice explanation |
+| Invoice count | 9: six overdue, three before due |
+| Open receivables | USD 431,700 |
+| Past due | USD 372,200 |
+| Eligible recovery exposure | USD 308,000 |
+| Before-due balance | USD 59,500 |
+| At seven-day preventive checkpoint | 2 invoices, USD 47,500 |
+| Overdue reminder templates | 4; no actual emails |
+| Completed stages / events | 6 stages / 13 events; one approval adds event 14 |
 
-Training is offline, done before the visitor clicks Start. Start does inference with the saved model, not retraining. There is no scikit-learn dependency in serving, no pickle loading, no hosted model fee, and no LLM yet.
+Choose **Stage → Before due · prevention**. Harbor shows about **71.9% becomes-overdue risk**; Willow about **14.7%**. Vista reports no matching prediction because it is fourteen days before due. Click Harbor to inspect its target, due-date horizon, inputs, contributions and model identity. Its overdue rule urgency is marked **Not overdue**.
 
-## How the model learns
+Choose **Overdue recovery**. Cedar retains about **71.1% risk of still being unpaid another 30 days later**. Disputed Solace stays paused. The two percentages have different meanings; do not average them or describe one as proof of the other.
 
-Scikit-learn `StandardScaler` + `LogisticRegression`, with five explicit inputs:
+**Model evidence** shows separate training/holdout evidence for each model. Saved runs retain their own model parameters and results, even after source changes or retraining. M2 history opens without invented ML scores; the earlier single-model M3 history also remains readable.
 
-| Feature | Transformation at scoring time |
+## 3. Understand the two questions
+
+| | Prevention model | Recovery model |
+|---|---|---|
+| When scored | Exactly seven days before due | Any positive overdue snapshot |
+| Target | Not fully paid by end of due date | Outstanding balance remains at snapshot + 30 days |
+| Example scoring date | 2026-10-17 | 2026-10-17 |
+| Example horizon | Due 2026-10-24; check overdue on Oct25 | 2026-11-16 |
+| Decision support | Review before the invoice becomes overdue | Prioritize recovery efforts |
+| Output field | probability_overdue | probability_unpaid_30d |
+
+The prevention model is not applied at arbitrary pre-due dates. At six days before due, due today, or fourteen days before due, this POC does not possess the required historical due-7 snapshot, so it reports no matching prediction. It does not reconstruct or backdate features. After the invoice becomes overdue, the recovery model applies. A future enhancement could store repeated dated snapshots and score at additional validated checkpoints.
+
+Each run scores the actual source snapshot date, not your laptop clock. Source history counts are assumed known at that date. Neither model is independent confirmation of the other: they use related history and predict different events at different times.
+
+## 4. Prediction versus business policy
+
+- Prevention and recovery are **separate queues**, each ordered by balance × its own relevant probability. Queue order across stages is a display grouping, not a claim that the probabilities are comparable.
+- Existing rule urgency remains for overdue invoices, controlling the current template threshold of 35. A probability is not an urgency score or confidence that an agent action is correct.
+- Disputes, zero balances and other policy exceptions override contact eligibility. A pre-due prediction may be displayed for a dispute, but it cannot authorize a reminder.
+- Pre-due results support **review only in M3**. Reminder drafting/approval remains in the overdue workflow; pre-due invoices cannot use its approval endpoint. M4/M5 can extend controlled reminder policy after the model demonstration.
+- No LLM, actual email, payment reconciliation or cash-loss forecast is implemented here.
+
+## 5. Follow the code
+
+| Read in order | Responsibility |
 |---|---|
-| Days overdue | min(days, 180) |
-| Previous late-payment rate | late / previous; zero when no history |
-| Broken promises | min(count, 4) |
-| Balance | log(1 + min(outstanding USD, 250,000)) |
-| No history | 1 if no previous invoices, else 0 |
+| `ml/generate_pre_due.py` | 4,000 independent synthetic due-7 snapshots and later settlement observations |
+| `ml/generate.py` | Separate 4,000 synthetic overdue snapshots and 30-day outcomes |
+| `ml/train.py` | Stage-specific labels/features; chronological split, train-only scaling, validation selection, test evaluation |
+| `artifacts/pre_due_risk.json` | Learned prevention parameters and measured report |
+| `artifacts/payment_risk.json` | Existing learned recovery parameters and measured report |
+| `backend/risk_model.py` | Shared scoring math, separate feature/target/artifact contracts and explanations |
+| `backend/pipeline.py` | Route by invoice dates, preserve eligibility, score, rank separately, persist snapshots |
+| `backend/main.py`, `runner.py` | HTTP/SSE and six-stage orchestration |
+| `dist/app.js` | Stage filter, target labels, details and two model-evidence sections |
+| `sql/003_seed_pre_due.sql` | Three online source examples, repeatable without deleting history |
 
-All history is assumed known at snapshot time. Current counts cannot be reconstructed retrospectively from a real ERP without dated records; this synthetic setup assumes they are historical snapshots. No settlement date, future outcome, invoice/customer ID or rule urgency score is a feature. Dispute status is an explicit policy gate, not a learned permission to contact someone.
+Training happens offline before a visitor starts a run. Serving reads exported numeric JSON means/scales/coefficients/intercept and computes a sigmoid using Python's standard library. No runtime fitting, pickle loading or hosted model bill. JSON artifacts contain trained parameters; runtime invoices still come only from Supabase.
 
-Training learns means/scales and coefficients. Serving computes:
+## 6. Features and label boundaries
 
-`z = intercept + sum(coefficient × (feature - training_mean) / training_scale)`
+Prevention features: prior late-payment rate, capped broken promises, log balance, no-history indicator. **Current-invoice days overdue is not a feature** because the invoice is not overdue at the fixed scoring point. The recovery model additionally uses overdue days.
 
-`probability = 1 / (1 + exp(-z))`
+Transformations: min(broken promises,4), log(1+min(balance,250000)), rate=late/previous (zero with a separate no-history flag), recovery days capped180. Outside synthetic ranges is flagged. No settlement dates, future outcomes, customer/invoice IDs or rule scores enter feature vectors. All prior history must already be known at snapshot. Real ERP integration would require dated events to verify that assumption.
 
-Explanations show each feature's contribution to **log-odds relative to its training mean**. They are not percentage-point effects, causal claims, or private LLM reasoning. Contributions plus the intercept reconstruct the prediction. Inputs outside synthetic ranges are flagged; defined caps apply. Zero balances and invoices not overdue are not scored.
+Prevention label0 = fully settled on or before due date; label1 = settled after due or still outstanding. A payment dated on due date counts on-time; next-day payment counts overdue. Observations must extend through the following day. Snapshots not exactly due-7 are rejected by the trainer. Recovery labels require full observation through snapshot+30. Synthetic data assumes full settlement; partial payments/credits/write-offs need a richer real-world label definition.
 
-## Evaluate honestly
+Explanations show coefficient × standardized feature, relative to training feature means. Contributions plus intercept reconstruct log-odds; sigmoid converts that to probability. These are statistical associations, not causal effects or percentage-point changes.
 
-The seed-42 generator creates independent invoices/customers from an invented noisy settlement mechanism. It is authored for this project and contains no real customer data. Learning a generator is easier than handling real ERP processes: test results demonstrate engineering mechanics, not a successful collections intervention.
+## 7. Evaluation and limitations
 
-| Split | Snapshot dates | Rows | Purpose |
-|---|---|---:|---|
-| Train | 2024-01-01 to 2025-11-30 | 2,887 | Learn scaler and coefficients |
-| Validation | 2026-01-01 to 2026-03-31 | 390 | Choose C from 0.1 / 1 / 10 using Brier error |
-| Test | 2026-05-01 to 2026-08-31 | 500 | Report later-date holdout, no model selection |
-| Embargo | December 2025 and April 2026 | 223 | Ensure 30-day labels mature before next split starts |
+The datasets are project-authored, independent synthetic records with invented noisy settlement mechanisms. They are not real ERP data, and neither includes the nine live demo invoices. Good results on a generator demonstrate a working engineering pipeline, not finance-business uplift or validated real-world probabilities.
 
-Outcomes observed through at most 2026-09-30; immature labels rejected. One invoice and customer per row avoids duplicate entity overlap. Scaler is fitted only on train; validation/test are transform-only. Selected model uses C=0.1 and is not refitted on validation/test. Comparison baseline predicts training prevalence for every invoice.
+Both use chronological splits with December2025/April2026 gaps. StandardScaler/model fit only on train. Select C from .1/1/10 by validation Brier; do not refit on validation/test. Test is an untouched later period. Constant baseline predicts training prevalence.
 
-| Test metric | Constant baseline | Logistic model |
-|---|---:|---:|
-| ROC AUC (ranking; higher better) | 0.500 | 0.808 |
-| Average precision (higher better) | 0.466 | 0.799 |
-| Brier error (probabilities; lower better) | 0.249 | 0.180 |
-| Top fifth observed non-settlement rate | 46.6% expected, no ranking | 84.0% |
+| Dataset | Train | Validation | Test | Embargo | Latest observation |
+|---|---:|---:|---:|---:|---|
+| Prevention, seed123 | 2,860 | 353 | 511 | 276 | 2026-09-08 |
+| Recovery, seed42 | 2,887 | 390 | 500 | 223 | 2026-09-30 |
 
-84% is not model accuracy. It is the observed label rate among the top 100 ranked synthetic test invoices. Overall holdout prevalence is 46.6%. Brier measures probability error and is affected by discrimination as well as calibration; calibration bins are shown separately. For example, the 0.4–0.6 bin averaged 48.9% predicted versus 61.0% observed over 123 records. Calibration is imperfect; there is no claim of accurate real-world probabilities.
+Training snapshots: Jan2024–Nov2025. Validation: Jan–Mar2026. Test: May–Aug2026. One unique invoice/customer per row, with labels matured before next split. Full provenance/hashes and environment are in each artifact.
 
-Full measured values and provenance: `artifacts/payment_risk.json`. [Model card](../ml/MODEL_CARD.md) records limits and training environment. Exported inference matches scikit-learn within 1e-12 on generated splits.
+| Test metric | Prevention baseline / model | Recovery baseline / model |
+|---|---|---|
+| ROC AUC · higher better | 0.500 / 0.738 | 0.500 / 0.808 |
+| Average precision · higher better | 0.342 / 0.554 | 0.466 / 0.799 |
+| Brier error · lower better | 0.225 / 0.195 | 0.249 / 0.180 |
 
-## Business decision versus prediction
+Brier error also reflects discrimination, not calibration alone. Separate calibration bins show prediction/observed rates; calibration is imperfect. For prevention, the .8–1 bin has only six cases and averages .852 predicted versus .500 observed; do not overinterpret the tail. No real portfolio calibration, intervention impact or subgroup assessment is claimed. [Model card](../ml/MODEL_CARD.md) records the limitations.
 
-- **Urgency** stays the documented policy score (aging, history, promises). It controls the existing template threshold of 35; this milestone does not redesign collection cadence.
-- **ML risk** estimates non-settlement within the next 30 days under the synthetic training assumptions.
-- **Priority index** changes to balance × ML probability, with eligible invoices first. This is risk-weighted exposure for ordering, not forecast cash loss or recovery.
-- A dispute, zero balance or not-overdue invoice stays ineligible regardless of probability. Approvals remain dry-run only. A high model score does not authorize email or bypass policy.
+## 8. Hands-on exercise — preventive source edit
 
-## Hands-on exercise 1 — change a known input
-
-Complete a seeded run and note Cedar's prediction. In Supabase SQL Editor:
+Complete a full run and note Harbor's prediction. In Supabase:
 
 ```sql
 update public.ca_invoices
-set late_payments = 0, broken_promises = 0
-where id = 'INV-10287';
+set late_payments=0, broken_promises=0
+where id='INV-10501';
 ```
 
-Start a new run. Cedar's predicted risk and rule urgency should fall; its priority changes. Total open/eligible balances remain the same. With urgency below 35 it becomes monitored; the draft count falls to three. Reopen the first run: its original prediction, version and explanations remain saved.
-
-Restore afterward:
+Start a new run. Harbor's becomes-overdue prediction and preventive rank should fall. Financial totals stay unchanged. Reopen the original saved run: its input/prediction/model evidence must stay unchanged. Restore afterward:
 
 ```sql
 update public.ca_invoices
-set late_payments = 9, broken_promises = 2
-where id = 'INV-10287';
+set late_payments=8, broken_promises=1
+where id='INV-10501';
 ```
 
-## Hands-on exercise 2 — train it yourself (optional after first run)
+Optional date-boundary exercise: change Harbor due to snapshot+6, then snapshot-1. At +6 there is no due-7 prediction; at -1 the recovery model is used. Each case requires a new run. Re-run SQL003 afterward to restore all three future examples, without touching old history. There is no automatic stored daily scoring history or scheduler in M3.
 
-Keep the serving artifact as your starting reference. Stop Python before replacing it. In the same virtual environment:
+## 9. Train the models yourself — optional after first run
+
+Stop Python before replacing artifacts. Install optional training dependencies in the existing virtual environment:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-ml.txt
+
+# Prevention
+.\.venv\Scripts\python.exe -m ml.generate_pre_due
+.\.venv\Scripts\python.exe -m ml.train --stage pre_due
+
+# Recovery
 .\.venv\Scripts\python.exe -m ml.generate
 .\.venv\Scripts\python.exe -m ml.train
 ```
 
-Open `ml/data/synthetic_history.csv`: features describe the snapshot; settlement date/observation-through are later outcomes for labels. Generated data/manifest are reproducible and ignored by Git. The committed JSON artifact includes their hash, generator version, seed and metrics. A matching manifest is required by this synthetic-data trainer.
+Open generated CSVs/manifests in `ml/data/`. They are reproducible and ignored by Git. Artifacts are committed. Generator metadata/hash must match the selected training stage. Default seeds:123prevention/42recovery. Changing a seed is an experiment, not a way to choose flattering test metrics; do not tune on test outcomes. Environment/path metadata and tiny numerical differences may change model identities. Restart Uvicorn after replacement; historical runs retain their original artifacts' parameters/evidence.
 
-Inspect the chosen C and test report. Restart Uvicorn and compare `/api/model` with a new saved run. Change the generator seed (`--seed 43`), regenerate/retrain and observe changed estimates/metrics/model identity. This is an experiment, not a method for selecting a seed that yields a flattering test score. Do not tune on test results. Metadata and floating point differences across Python/library versions may change hashes or tiny output details.
-
-To restore the original committed model when finished:
+To discard only experimental model edits and restore the committed parameters (copy them first if you want to keep them):
 
 ```powershell
-git restore -- artifacts/payment_risk.json
+git restore -- artifacts/pre_due_risk.json artifacts/payment_risk.json
 ```
 
-This intentionally discards only your experimental artifact edits; keep a copy first if wanted. Restore the seed-42 data with `python -m ml.generate` if you changed it. Restart Python. Old runs retain their original predictions/metadata. Commit/push any changes you want to keep before the next lesson.
+Restart Python. Commit/push any source experiments you wish to keep before the next lesson.
 
-## Tests, errors and next step
+## 10. Checks and next checkpoint
 
-22 tests passed locally on Python 3.12.14, including exported/sklearn parity, mature chronological labels, input sensitivity, independent risk/urgency ranking, immutable history, database persistence, policy gates and truthful model failure. Actual Uvicorn HTTP/SSE + DOM checks passed model display, six rows/13 events, approval/14 events and reopening history. Live cloud/Python 3.13.5 M3 verification awaits your run.
+Local Python3.12.14: **29 tests passed**, including previous persistence/policy checks, two-model routing, due-day/next-day label boundaries, fixed-window rejection, independent sklearn export parity, source sensitivity/immutable history, seed idempotence, disputes and truthful missing-model failures. HTTP/SSE + frontend DOM checks passed nine-row totals, separate model display, prevention/recovery filters, approvals and saved/legacy history. User Python3.13.5/live M3 setup still needs the run above.
 
-App tests: install requirements-dev and run pytest. SQL integration tests require optional Node/PGlite (`npm install --prefix tests`); the training parity test requires requirements-ml. Without those, affected tests skip explicitly. Neither Node nor ML packages are required to serve the app. One known upstream Starlette/httpx deprecation warning remains.
+Runtime needs existing requirements only. Full tests use optional Node/PGlite (`npm install --prefix tests`) for isolated SQL and requirements-ml for training parity; otherwise corresponding tests skip explicitly. One existing upstream Starlette/httpx deprecation warning remains.
 
-If artifact is missing/incompatible/changed without a matching identity, health returns an actionable 503. If a model fails mid-run, predict fails and later stages do not report success; no fallback to rule-only predictions. Restore the committed artifact or retrain. Existing Supabase configuration/pause and single-backend-process limits still apply.
+Health verifies both artifacts and database readiness; missing/invalid artifact returns actionable503 and predict fails without silent single-model fallback. `/api/model` remains the recovery card; `/api/model/pre-due` is the prevention card. Saved-run `result.models` stores both. Supabase single-process, pause and secrets rules remain unchanged.
 
-After confirming your M3 run and exercise, M4 adds LLM drafting with invoice-fact validation and explicit review/fallback policy. Actual sending/replies remain M5; public hosting M6; visitor data editing after M6.
+After learner M3 confirmation: M4 LLM drafting/fact validation and policy, M5 controlled sending/replies/followups, M6 public hosting, visitor editing afterward. Do not move ahead merely because tests pass.
 
 Official technical references:
 

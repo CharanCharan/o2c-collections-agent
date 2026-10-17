@@ -2,15 +2,15 @@
 
 Canonical repository: https://github.com/CharanCharan/o2c-collections-agent
 
-Milestone 3 reads invoices from Supabase and applies a saved logistic-regression model to predict an overdue balance remaining 30 days after the snapshot. The website shows actual predictions, feature contributions, model version and evaluation evidence. Results/events/approvals remain saved in Postgres.
+Milestone 3 uses two trained models: **becomes overdue** at seven days before due, and **still unpaid in another 30 days** once overdue. Supabase remains the source/history store. The website labels each target, shows explanations/evaluation and ranks prevention/recovery separately.
 
-The model is trained on clearly disclosed synthetic history, not real customer outcomes. Urgency remains rules; drafts remain templates; dry-run approvals send no email. LLMs, controlled email and public deployment remain later milestones. The older hosted presentation prototype is separate from this local app.
+Both models learn from synthetic history, not real customer outcomes. Rule urgency applies to overdue invoices; drafts remain templates and approvals remain dry-run. Pre-due risk is review-only in M3. LLMs, controlled email and public deployment remain later milestones.
 
 ## Start here
 
 For a fresh setup, follow [Milestone 2 database setup](docs/MILESTONE_2.md): run the two SQL scripts in your own Supabase project, create a private local `.env`, install dependencies, then start Python. The database password is not used by this app. The backend uses a project URL and server API secret.
 
-If M2 already works, no new SQL or keys are needed. Follow [Milestone 3 lesson and exercises](docs/MILESTONE_3.md). The committed trained artifact runs without installing ML packages.
+If M2 already works, run `sql/003_seed_pre_due.sql` in Supabase SQL Editor to add the three future-invoice examples. No schema change or new keys are needed. Follow [Milestone 3 lesson and exercises](docs/MILESTONE_3.md). The two committed trained artifacts run without installing ML packages.
 
 After database and environment setup, from the repository root in Windows / Anaconda:
 
@@ -23,7 +23,7 @@ python -m venv .venv
 
 Open http://localhost:8000 . Health: http://localhost:8000/api/health . API explorer: http://localhost:8000/docs . Direct environment Python avoids PowerShell activation-policy issues; no extra Python installation is needed. On macOS/Linux use `.venv/bin/python` instead.
 
-Expected seeded output: six stages / 13 stored events; ML-risk percentages beside rule urgency. Financial totals: USD 372,200 open AR, USD 308,000 eligible exposure, four template drafts, one monitored invoice and one paused dispute. Fixed snapshot date: 2026-10-17.
+Expected after SQL003 plus original seed values: nine invoices, USD 431,700 open AR, USD 372,200 past due, USD 308,000 eligible recovery exposure, three not-yet-due invoices (two at the scoring checkpoint), four overdue templates. Six stages / 13 events; separate prevention/recovery risk labels. Fixed snapshot date: 2026-10-17.
 
 ## Code and learning map
 
@@ -38,7 +38,8 @@ Expected seeded output: six stages / 13 stored events; ML-risk percentages besid
 | `sql/002_seed_demo.sql` | Repeatable synthetic source data |
 | `backend/risk_model.py` | Shared features, JSON logistic inference and explanations |
 | `ml/generate.py`, `ml/train.py` | Optional offline synthetic history, chronological training and holdout evaluation |
-| `artifacts/payment_risk.json` | Learned parameters, dataset hash and measured metrics |
+| `artifacts/payment_risk.json`, `pre_due_risk.json` | Separate trained recovery/prevention parameters and measured metrics |
+| `sql/003_seed_pre_due.sql` | Three additional online source examples, no schema change |
 | `tests/` | Storage, API, PostgreSQL, ML export/label/policy checks |
 
 - [Project knowledge](PROJECT_KNOWLEDGE.md): implementation contracts and continuation context.
@@ -55,17 +56,19 @@ Expected seeded output: six stages / 13 stored events; ML-risk percentages besid
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-The SQL integration tests use optional Node.js and an isolated PostgreSQL/WASM engine. To run them too, install Node.js then run `npm install --prefix tests` before pytest. Without that dependency SQL tests skip explicitly. The training/export parity test also requires optional `requirements-ml.txt`; otherwise it skips. Node is not needed to run the application. Tests do not access your live Supabase project.
+The SQL integration tests use optional Node.js and an isolated PostgreSQL/WASM engine. To run them too, install Node.js then run `npm install --prefix tests` before pytest. Without that dependency SQL tests skip explicitly. The training/export parity tests also require optional `requirements-ml.txt`; otherwise they skip. Node is not needed to run the application. Tests do not access your live Supabase project.
 
 ## Optional offline training
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-ml.txt
+.\.venv\Scripts\python.exe -m ml.generate_pre_due
+.\.venv\Scripts\python.exe -m ml.train --stage pre_due
 .\.venv\Scripts\python.exe -m ml.generate
 .\.venv\Scripts\python.exe -m ml.train
 ```
 
-This generates 4,000 synthetic historical records, fits on past data and evaluates later dates. Dataset/manifest are ignored and reproducible; artifact is versioned. Stop/restart Python around artifact replacement. Full instructions and measured metrics are in the M3 lesson. No new paid service is involved.
+This generates two independent sets of 4,000 synthetic records each, fits on past data and evaluates later dates. Dataset/manifest are ignored and reproducible; artifact is versioned. Stop/restart Python around artifact replacement. Full instructions and measured metrics are in the M3 lesson. No new paid service is involved.
 
 ## Boundaries and shared workflow
 

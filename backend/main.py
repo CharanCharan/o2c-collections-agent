@@ -60,15 +60,21 @@ def create_app(store=None):
     async def model_info():
         return risk_model.model_card(risk_model.load_model())
 
+    @app.get("/api/model/pre-due")
+    async def pre_due_model_info():
+        return risk_model.model_card(risk_model.load_model(stage='pre_due'))
+
     @app.get("/api/health")
     async def health():
         s = backend()
         await s.initialize()
         info = await s.store.health()
         model = risk_model.load_model()
+        preventive = risk_model.load_model(stage='pre_due')
         return {"status": "ok", "milestone": "M3", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
-                "model_version": model["model_version"], "model_training_data": "synthetic"}
+                "model_version": model["model_version"], "model_training_data": "synthetic",
+                "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
 
     @app.post("/api/runs", status_code=202)
     async def start_run():
