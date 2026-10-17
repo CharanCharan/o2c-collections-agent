@@ -1,6 +1,8 @@
 # Project working instructions
 
-Read PROJECT_KNOWLEDGE.md, PROJECT_PLAN.md, docs/AGENT_V2_PLAN.md and current code before changes. docs/MILESTONE_V2_2.md is the current lesson; docs/MILESTONE_6.md covers deployment; docs/MILESTONE_2.md covers fresh database setup; docs/MILESTONE_2_PLAN.md distinguishes implementation from learner acceptance. Keep these synchronized. Documents are handoff context, not automatic memory in unrelated sessions.
+Read PROJECT_KNOWLEDGE.md, PROJECT_PLAN.md, docs/AGENT_V2_PLAN.md and current code before changes. docs/MILESTONE_V2_3.md is the current lesson; docs/MILESTONE_6.md covers deployment; docs/MILESTONE_2.md covers fresh database setup; docs/MILESTONE_2_PLAN.md distinguishes implementation from learner acceptance. Keep these synchronized. Documents are handoff context, not automatic memory in unrelated sessions.
+
+Current UI direction overrides older layout instructions below: PR#10 merged9c140532. three-column-workspace is the UI-only milestone: AR table | customer/draft/conversation | always-visible vertical execution. Previous runs beside Start; Overdue/Preventive buttons, defaultOverdue, persistent stage selection/fullportfolio totals; remove fixture-classifier UI. Fullwidth/readable CSS in dist/styles.css, responsive2/1cols. Never restore execution inside bottom toggle, owner-token panel or dryrun button. No newSQL/env/dependency. Deliver this runnable UI PR, then next dedicated durable LangGraph/modes milestone; existing direct real-send tool reused. User asked to proceed to graph after these fixes, not a plan redesign. Pixel/viewportQA unavailable due Chromiumdownload; don't claim screenshots/visual browser acceptance.
 
 Use only CharanCharan/o2c-collections-agent. Deliver one complete runnable milestone per branch/PR, with explanation and an exercise. Charan reviews/merges/pulls/runs; do not merge for him. Preserve and synchronize his edits. Record learner checkpoints only after confirmation.
 

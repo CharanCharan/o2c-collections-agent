@@ -15,7 +15,7 @@ const riskFeatureLabels = {
 };
 const state = {
   invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
-  highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null,
+  highOnly: false, queueStage: "overdue", events: [], eventIds: new Set(), stageStatus: {}, source: null,
 };
 let visitorCases = [];
 let sendBusy = false;
@@ -122,9 +122,15 @@ const timingLabel = row => row.days > 0 ? `${row.days} days overdue` : row.days_
 function renderQueue() {
   $("filter-btn").disabled = state.queueStage === "pre_due";
   const rows = state.invoices.filter(row => (!state.highOnly || (row.level === 'high' && row.eligible)) &&
-    (state.queueStage === 'all' || (state.queueStage === 'pre_due' ? row.lifecycle === 'pre_due' : row.days > 0)));
-  if (rows.length && !rows.some(row => row.id === state.selectedId)) state.selectedId = rows[0].id;
-  $("queue-sub").textContent = `${rows.length} invoices shown · recovery and prevention ranked separately`;
+    (state.queueStage === 'pre_due' ? ['pre_due','due_today'].includes(row.lifecycle) : row.days > 0));
+  if (!rows.length) state.selectedId = null;
+  else if (!rows.some(row => row.id === state.selectedId)) state.selectedId = rows[0].id;
+  $("queue-sub").textContent = `${rows.length} invoices shown · ${state.queueStage === 'pre_due' ? 'preventive review' : 'overdue recovery'}. Totals above cover the full portfolio.`;
+  $("stage-overdue").setAttribute('aria-pressed', String(state.queueStage === 'overdue'));
+  $("stage-preventive").setAttribute('aria-pressed', String(state.queueStage === 'pre_due'));
+  $("overdue-count").textContent = state.invoices.filter(r => r.days > 0).length;
+  $("preventive-count").textContent = state.invoices.filter(r => ['pre_due','due_today'].includes(r.lifecycle)).length;
+  $("filter-btn").setAttribute('aria-pressed', String(state.highOnly));
   $("queue").innerHTML = rows.length ? rows.map((row) => `
     <tr tabindex="0" data-id="${escapeHTML(row.id)}" aria-label="Inspect ${escapeHTML(row.customer)}"
         class="${row.id === state.selectedId ? "selected" : ""}">
@@ -134,7 +140,7 @@ function renderQueue() {
       <td><span class="tag ${row.score === null ? "state" : row.level}">${row.score === null ? (row.days === 0 ? "Not overdue" : "Awaiting rules") : `${row.score}/100 · ${row.level}`}</span></td>
       <td>${row.prediction?.status === 'scored' ? `<strong>${(100 * probability(row.prediction)).toFixed(1)}%</strong><div class="subline">${isPreDue(row.prediction) ? "Becomes overdue" : "Unpaid in 30 days"}</div>` : '<span class="subline">No matching prediction</span>'}</td>
       <td><span class="tag ${row.dispute ? "warn" : row.contacted ? "done" : "state"}">${escapeHTML(row.action)}</span>${visitorCases.some(c => c.invoice_id === row.id) ? `<div class="subline">${escapeHTML(caseLabels[visitorCases.find(c => c.invoice_id === row.id).collection_status] || "Case saved")}</div>` : ""}</td>
-    </tr>`).join("") : '<tr><td colspan="6" class="empty-state">Start a run to load invoices, or change the queue filter.</td></tr>';
+    </tr>`).join("") : `<tr><td colspan="6" class="empty-state">${state.invoices.length ? 'No invoices match this filter.' : 'Waiting for invoice data.'}</td></tr>`;
   $("queue").querySelectorAll("tr[data-id]").forEach((row) => {
     const select = () => {state.selectedId = row.dataset.id; renderQueue(); renderDetail();};
     row.addEventListener("click", select);
@@ -148,7 +154,7 @@ function renderDetail() {
   renderCase();
   const row = state.invoices.find((r) => r.id === state.selectedId);
   if (!row) {
-    $("detail").innerHTML = '<div class="panel-title">Invoice detail</div><p class="explain">Start a run, then select an invoice to inspect its data, policy score and draft.</p>';
+    $("detail").innerHTML = '<div class="panel-title">Invoice detail</div><p class="explain">Select an invoice from the current queue to inspect its data and reminder.</p>';
     return;
   }
   const prediction = row.prediction;
@@ -184,20 +190,7 @@ function renderDetail() {
       <span>Rule score measures urgency. It is not a predicted probability.</span></div>
     ${mlDetails}
     </details>
-    <div class="explain"><b>Review a synthetic reply example</b><p>No email was received. This only tests classification; payment and dispute status stay unchanged.</p>
-      <select id="reply-example"><option value="promise">Promise to pay</option><option value="paid">Customer claims paid</option><option value="dispute">Dispute</option><option value="documents">Request documents</option><option value="injection">Untrusted instructions</option></select>
-      <button class="secondary" id="classify-reply" ${state.status === 'completed' ? '' : 'disabled'}>Classify example</button>
-      <pre id="reply-output">${escapeHTML(JSON.stringify(row.reply_reviews || {}, null, 2))}</pre></div>`;
-  $("classify-reply").onclick = async () => {
-    const button = $("classify-reply"); button.disabled = true;
-    try {
-      const response = await api(`/api/runs/${state.currentRun}/invoices/${encodeURIComponent(row.id)}/classify-example`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({example_id: $("reply-example").value})});
-      applySnapshot(response.run.result);
-      for (const event of response.run.events) if (!state.eventIds.has(event.event_id)) addEvent(event);
-      toast(response.recorded ? 'Example review saved; no payment status changed.' : 'Saved review reopened; no duplicate call.');
-    } catch (error) {showError(error.message); button.disabled = false;}
-  };
+    `;
   $("send-draft").onclick = sendDraft;
   renderSendState();
 }
@@ -259,18 +252,19 @@ function handleEvent(event) {
 
 function clearRun() {
   state.source?.close();
+  const selectedStage = state.queueStage;
   Object.assign(state, {invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
-    highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null});
+    highOnly: false, queueStage: selectedStage, events: [], eventIds: new Set(), stageStatus: {}, source: null});
   $("feed").innerHTML = "";
   $("event-count").textContent = "0 events";
   $("error-box").hidden = true;
-  $("filter-btn").textContent = "All invoices ▾";
+  $("filter-btn").textContent = "All urgency";
   $("inspect-run").hidden = true;
   for (const id of ["metric-open", "metric-past-due", "metric-ninety", "metric-high", "metric-eligible"]) $(id).textContent = "—";
   for (const id of ["open-note", "past-due-note", "ninety-note", "eligible-note"]) $(id).textContent = "Calculated after loading data";
   $("as-of").textContent = "Start to load the demo snapshot";
   $("last-run").textContent = "No active run";
-  $("queue-stage").value = "all"; $("preventive-caption").textContent = "Start to inspect the preventive review queue.";
+  $("preventive-caption").textContent = "Prevention is scored seven days before due.";
   renderModel(null); renderQueue(); renderDetail(); renderFlow();
 }
 
@@ -333,7 +327,7 @@ async function refreshSavedRuns() {
   try {
     const data = await api("/api/runs");
     const previous = $("saved-runs").value;
-    $("saved-runs").innerHTML = '<option value="">Choose a saved run…</option>' + data.runs.map((run) =>
+    $("saved-runs").innerHTML = `<option value="">${data.runs.length ? 'Choose a previous run…' : 'No previous runs in this browser'}</option>` + data.runs.map((run) =>
       `<option value="${escapeHTML(run.run_id)}">${escapeHTML(run.run_id.slice(0, 8))} · ${escapeHTML(run.status)} · ${escapeHTML(new Date(run.created_at).toLocaleString())}</option>`).join("");
     if (data.runs.some((run) => run.run_id === previous)) $("saved-runs").value = previous;
   } catch (error) {
@@ -348,13 +342,14 @@ async function openSavedRun() {
   try {
     const run = await api(`/api/runs/${id}`);
     if (["queued", "running"].includes(run.status)) {toast("That run is still active. Refresh history after it finishes."); return;}
-    clearRun(); state.currentRun = run.run_id; state.status = run.status;
+    clearRun(); $("preview-caption").hidden = true; state.currentRun = run.run_id; state.status = run.status;
     state.legacyRun = !["M3", "M4", "M5", "M6"].includes(run.result.workflow_version);
     for (const event of run.events) handleEvent(event);
     state.status = run.status;
     applySnapshot(run.result);
     banner(run.status.toUpperCase(), `Opened saved run ${id.slice(0, 8)} from Supabase`);
     $("last-run").textContent = `Saved run ${id.slice(0, 8)}`;
+    $("previous-runs").open = false;
     $("inspect-run").href = `/api/runs/${id}`;
     $("inspect-run").hidden = false;
   } catch (error) {showError(error.message);}
@@ -363,8 +358,20 @@ async function openSavedRun() {
 $("open-saved-run").onclick = openSavedRun;
 $("refresh-runs").onclick = refreshSavedRuns;
 $("start-run").onclick = startRun;
-$("queue-stage").onchange = () => {state.queueStage = $("queue-stage").value; state.highOnly = false; $("filter-btn").textContent = "All urgency levels ▾"; renderQueue(); renderDetail();};
-$("filter-btn").onclick = () => {state.highOnly = !state.highOnly; $("filter-btn").textContent = state.highOnly ? "High urgency ×" : "All invoices ▾"; renderQueue();};
+for (const [id,stage] of [['stage-overdue','overdue'],['stage-preventive','pre_due']]) {
+  $(id).onclick = () => {
+    state.queueStage = stage; state.highOnly = false;
+    $("filter-btn").textContent = 'All urgency';
+    renderQueue(); renderDetail();
+  };
+}
+$("filter-btn").onclick = () => {
+  state.highOnly = !state.highOnly;
+  $("filter-btn").textContent = state.highOnly ? 'High urgency only' : 'All urgency';
+  renderQueue(); renderDetail();
+};
+document.addEventListener('click',event => {if (!$('previous-runs').contains(event.target)) $('previous-runs').open = false;});
+document.addEventListener('keydown',event => {if (event.key === 'Escape') $('previous-runs').open = false;});
 $("reset-link").onclick = (event) => {
   event.preventDefault();
   if (state.status === "running") {toast("Let the active run finish before resetting the page."); return;}

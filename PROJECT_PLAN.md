@@ -175,3 +175,8 @@ Latest approved channel choice: real Resend outbound to project test inbox with 
 ## Latest V2.2 correction — simplify the actual send flow
 
 PR#9 merged00128867. User rejects token/private controlled-email panel and dry-run UI. Prepared draft-email-action: direct manual Send email beside saved draft, case auto-open, actual Resend send/status projection without visitor token. SQL008 after007; no newpackage/service. Legacy approvals never sent email and UI is removed, history retained. EMAIL_OWNER_TOKEN no longer needed for website readiness. Holds/idempotency/global10mailreservations/day kept server-side. Next remains durable LangGraph/modes: auto calls same send tool, limited pauses for actual Send; disputes need reviewed response tools, no blind chase. See docs/MILESTONE_V2_2.md. Live acceptance pending.
+
+
+## Latest V2.3 UI milestone — before LangGraph
+
+PR#10 merged9c140532. three-column-workspace implements user-requested fixture-classifier removal, readable fullwidth styling, desktopAR/customer/liveexecution columns, expandedexecution, headerPrevious runs andOverdue/Preventivebuttons. DefaultOverdue, fullportfolio totals, selectionfilter persists acrossStart/history; responsive2/1columns. No newbackend/SQL/packages/env.23 regressiontests + actuallocalHTTP/SSE/cookieDOM flows passed; no realviewport rendering available, responsiveCSSreviewed. User reviews/merges/pulls/manuallydeploys; currentlesson docs/MILESTONE_V2_3.md. Next dedicatedPR: durableLangGraph/checkpoint/controlmodes/actions/resume usingexisting real-send tool. No cosmetic LangChainclaim or paid infrastructure.

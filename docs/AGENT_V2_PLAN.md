@@ -1,3 +1,5 @@
+> Latest V2.3 UI overrides earlier layout: three desktop columns AR|customer/draft/conversation|live execution, execution always expanded, header Previous runs, Overdue/Preventive buttons and larger type. Fixture classifier UI removed; typed conversation stays. This UI PR requires no new SQL/packages/env. LangGraph/checkpoint/modes follows as the next dedicated milestone.
+
 > Latest V2.2 implementation supersedes earlier token/send phasing below: direct Send email beside draft, automatic case opening, real Resend send to fixed project test inbox and session-only status projection are implemented on draft-email-action. Owner/dry-run UI removed; owner token optional legacy API only. SQL008 after007. Graph/autopilot/limited-mode interrupts remain next. docs/MILESTONE_V2_2.md is current.
 
 # Collections workspace V2 — business-first, autonomous within a policy

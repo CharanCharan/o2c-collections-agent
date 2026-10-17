@@ -2,15 +2,30 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
-implementation_milestone: M6_cloud_public_demo
-implementation_branch: draft-email-action
+implementation_milestone: V2_3_workspace_ui
+implementation_branch: three-column-workspace
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: SQL008_draft_send_delivery_reload_then_graph
+pending_learning_check: three_column_UI_redeploy_then_LangGraph
 next_milestone: durable_langgraph_control_modes_fixed_recipient_real_email
 ---
 
 # Project knowledge — continuation context
+
+## Latest V2.3 UI checkpoint — authoritative continuation
+
+PR#10 merged9c1405329d0bb40f2d94a73cedaa624c528ae2e1; compare implementation568c6f6b to main showed merge only/no file changes. User requests removing fixture classifier, larger text/use width, three desktop columns AR|customer/draft/conversation|visible vertical execution, Previous runs beside Start and two stage-filter buttons. User authorizes LangGraph after UI fixes; retain one runnable milestone perPR/Charan merge-deploy workflow. No separate skill/agent delegation used.
+
+Current three-column-workspace changes only dist/index.html, dist/app.js, new dist/styles.css and docs. Full-width24px gutters, three columns above1180px, two with execution full width below at<=1180, stacked<=760. Live execution is never hidden in a details toggle; desktop sticky/scrollable, actual persisted run SSE stages/events unchanged. Font body16, draft15/customer22, minimummetadata13. All old minified inline styles replaced by readable CSS file; asset versionworkspace-3 refreshes browser cache. Small-screen AR table scrolls within its panel; no browser pixel measurements claimed.
+
+Previous runs native details menu adjacent Start retains existing session-scoped list/open/refresh APIs; outsideclick/Escape/open success closes menu. Saved playback hides read-only preview caption and never starts run/send. Overdue/Preventive aria-pressed buttons+counts replace dropdown, defaultoverdue; prevention includes pre_due/due_today (no matching model target still honestly unscored). Preserve selected stage across Start/history; high-only resets on stage change and disabledforprevention. All five totals remain fullportfolio, seed9rows431700 (6overdue/3preventive shown separately). Empty filter clears selectedinvoice instead of showing hiddenrow.
+
+Remove fixture reply example select/button/output/handler from customer detail; typed session conversation remains. Legacy classifier endpoint/history/tests retained, no new model call onload. Keep direct Send email and no token/dryrun UI; no backend/schema/env/dependency change.
+
+Validation:23 existing preview/visitor-case/email API+actualSQL tests passed. Actual local HTTP/SSE+cookie-aware JSdom/CSS checks passed computedbody16/customer15,3 main columns,execution outside details,header history,6/3 stagecounts/filter persistence,6 completedstages and actualstarted/completedevents,history playback without extra run, email accept/signed delivery poll,typedreply/reload, no fiscal mutation. Providers mocked, no live API/send/deploy. Chromium install failed due download archive response; responsive CSS reviewed but no real pixel/viewport rendering claimed. JSsyntax passed, existing Starlette/httpxwarning only. User UI/live acceptance pending.
+
+Setup/lesson docs/MILESTONE_V2_3.md: merge/pull and manual Render deploy, noSQL/env/packages. Existing SQL007/008 prerequisite for priorfeatures. Next dedicated milestone durable LangGraph checkpointadapter/limited-autopilot dialog/structured allowlistedactionchoice/policy/approvalresume and event-drivenreplytools. Existing shared MailService.send_case supplies realfixed-recipient sending. Do not add cosmetic graph branding or fakeauto. Keep free-only quotas/privacy/idempotency, truthfully separate claimsfromreconciliation and realoutboundfromsimulatedwebsite replies. Optionalvoice/editor later.
+
 
 ## Latest V2.2 checkpoint — overrides earlier UI/token/send directions
 
