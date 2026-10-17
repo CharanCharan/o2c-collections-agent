@@ -9,3 +9,5 @@ node_modules/
 .DS_Store
 site-package.tar.gz
 *.log
+.pytest_cache/
+
