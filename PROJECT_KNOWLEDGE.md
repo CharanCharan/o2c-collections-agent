@@ -2,16 +2,39 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
-implementation_milestone: M3_dual_stage
-implementation_branch: milestone-3-payment-risk
-implementation_pr: 4
+implementation_milestone: M4_language_tools
+implementation_branch: milestone-4-llm-drafting
 implementation_status: ready_for_review_not_learner_verified
-learner_status: M2_complete_cloud_source_edit_restart_confirmed
-pending_learning_check: dual_model_M3_run_Harbor_edit_and_understanding
-next_milestone: M4_LLM_drafting_and_policy
+learner_status: M3_merged_user_reported_done_normal_run
+pending_learning_check: M4_SQL004_template_and_live_API_reply_review
+next_milestone: M5_controlled_email_and_replies
 ---
 
 # Project knowledge — continuation context
+
+## Current M4 checkpoint — supersedes historical M3 setup notes below
+
+M3 PR#4 merged f3acb263a4ce64d35e534d77136a8158eac3f6b5. User said "done next step please"; record normal setup/run reported, not independent proof of optional source-edit/retraining mastery. M4 is prepared on milestone-4-llm-drafting, learner/cloud/OpenAI checks pending. Read docs/MILESTONE_4.md first. Canonical repo only; preserve edits and user merge/pull workflow.
+
+M4 keeps both models and overdue eligibility unchanged. It adds backend/language.py: explicit draft_reminder and classify_reply tools via OpenAI Responses POST https://api.openai.com/v1/responses. Model gpt-5.6-luna, reasoning none, JSON Schema strict, store false, max output1024, timeout30sec, no retries. Checked current official docs on2026-10-17. Request includes only bounded facts/fixed sample text, no keys in input/browser/logs. Lazy HTTP client avoids initializing paid-provider transport in disabled mode. No live API key obtained, no paid requests made by assistant.
+
+Opt-in: COLLECTIONS_LLM_ENABLED=true plus private OPENAI_API_KEY in existing ignored.env. Default false makes no API calls and labels template_no_llm. Do not overwrite existing Supabase.env. Fixed code caps4draft attempts/run,20total attempts/process (includes replies). Lock protects aggregate count; resets on restart and is not account/public spending control. Model/caps explicit code, no arbitrary browser override. Official price listed $.20/Minput,$1.20/Moutput: illustrative4×(1000input+500output)=$.0032, actual usage differs. API billing separate from subscription. Provider account access/quota not verified. No paid hosting/database upgrades added.
+
+Draft workflow first builds existing Python templates; policy-ineligible/disputed/pre-due/monitor rows skip provider. If enabled, call once per eligible draft subject to caps. Structured Facts must exactly match saved invoice_id,amount,currency,due_date,as_of_date; strict opening/request/closing bounds. Numeric/date/currency/payment-route and selected unsupported policy/payment-claim prose guards. Python builds subject,greeting,fact block,signature, LLM supplies short nonfinancial phrasing. Keyword guards are not semantic correctness proof: human review always. No actual send. Valid generation_mode=llm_assisted_validated_facts; failed/config/missingkey/refused/incomplete/invalid/capped output retains template_fallback_no_llm_approval with redacted reason/review_required. Disabled template_no_llm never claims generation. No fallback to fake provider success.
+
+Persist row.draft_audit: status,tool,provider,requested/returned model,prompt/validator versions,facts,input/output hashes,response ID,usage,duration,API-attempt flag when known. No raw provider error bodies/keys. context/result.drafting stores mode/counts/config. Six stages stay; enabled eligible tools add llm_draft started/completed or warning events, each with committed result snapshot.4eligible calls →21events instead13, approval adds1. Warnings do not stop run; actual database failure still stops. Disabled13events. Workflow_version M4, renderer supports oldM2/M3/M4; never rewrite history.
+
+SQL004 is additive backend-only ca_language_health + ca_record_reply_example(uuid,text,text,jsonb). No new tables/action constraints/data deletion. Health/start initialization require readiness, preventing paid run before required schema. Reply RPC locks completed run, verifies invoice, dedupes example_id in row.reply_reviews, atomically appends event+result. No changes to balance, eligible, dispute, contacted or payment fields. Same run/invoice/example reopens review; per-process reply_lock avoids concurrent duplicate calls. Provider call and DB write cannot be one distributed transaction: a failed write after paid response can charge again on retry; do not claim exactly-once billing.
+
+Fixtures/replies.json has5synthetic cases: promise,paidclaim,dispute,documents,injection. Browser selects fixed example, no visitor data editor/arbitrary reply endpoint. GET /api/reply-examples returns inputs without expected test labels. POST /api/runs/{UUID}/invoices/{id}/classify-example accepts only example_id, requires completed run. Unknown404, extra fields422. Returned strict intent+literal evidence+optional promise fields; date future/literalISO,amountliteral2decimalpositive≤balance, promise fields only for promise intent. These support extraction, not prove intent correctness. Always review_required/simulated_input, invoice_payment_updated=false. Disabled/provider-invalid/capped =>manual_review,classificationnull. Actual email/webhooks/promises/followup scheduling remain M5; a claim paid is not reconciliation. Reviews persist as result row map and reply_classification event; repeat after enabling still returns old review, use new run to re-evaluate.
+
+New API health includes language.enabled/key_configured/provider/model/caps/counter without key, plus existing models/source. New.sql readiness errors actionable503. UI LLM/TEMPLATE/FALLBACK badges, tool evidence, fixed sample reply display. Runtime requirements unchanged. Tests autouse fixture forces paid API off/empty key even with learner.env, injected httpx mocks only.42localtests passed; real local HTTP/SSE/DOM template+mock-provider modes cover labels/reviews/dedup/history. No live provider or learnerPython3.13.5/cloudSQL004 proof. Existing Starlette/httpx warning remains. Full SQL/training tests optional deps as before.
+
+Next learner checks: merge/pull M4, SQL004, template run, privately configure billing/key+enable, successful live draft/usage evidence, paid example leaves invoice unchanged, duplicate does not call again, restart/history. Do not mark live success from mocks or a fallback badge. Optional M3 exercises remain unconfirmed.
+
+Next M5 TODO: select controlled outbound provider/test recipient and sender/domain policy, explain cost before requirements; server allowlist/approval/idempotency before send; provider IDs/delivery events; signed inbound webhook+thread match; structured human-reviewed promises/disputes and followup audit/scheduling; payment claim never closes invoice without reconciliation. Provider secrets local/server only. No publishing until M6 auth/quotas/cost controls. Visitor editing afterM6. Update knowledge/plan with actual code and learner evidence.
+
+## Historical M3 contracts and model background (unchanged unless overridden above)
 
 ## Read first / delivery agreement
 
@@ -25,7 +48,7 @@ Goal: publicly shareable interview O2C POC showing genuine backend actions and i
 - M0 complete, M1 normal run confirmed. Its unconfirmed JSON-edit exercise was superseded by M2 DB edit.
 - M2 PR#3 merge ea7a5fb7c3d1d2747c35182c97d4280f63f70d2f. User confirmed Supabase operation, source edit with immutable history, restart/approval persistence. Learner-complete based on his report, not assistant live-cloud access.
 - M3 initial single-model PR#4 head76aa354 added overdue recovery. PR was still open/unmerged when this extension started. User explicitly requested predicting becoming overdue first, retaining recovery as additional decision support; approved extending M3 before M4. Continue same branch/PR if still open, never silently merge. Inspect status if user merged during work.
-- Current M3 includes two models and optional SQL003 source examples. M3 learner run/exercises still pending; do not infer understanding/cloud success from local tests.
+- M3 includes two models and SQL003 examples; user later reported done/next. Optional deeper exercises unconfirmed; current M4 checks above are pending.
 - Only canonical repo. Duplicate CharanCharan/collections-agent unused; user handles deletion, not verified. M1 merge af9944b; docs PR#2 merge692f03d.
 - Old static URL https://collections-agent-live-demo.blithecomet33.chatgpt.site/ is a presentation prototype. Current Python/Supabase/ML app is local; public hosting M6, not silently deployed through Sites.
 
@@ -146,13 +169,13 @@ States queued/running/completed/failed/cancelled/interrupted. UUIDvalidation; ab
 
 ## Setup / validation / troubleshooting
 
-Current lesson docs/MILESTONE_3.md: review updated PR#4, pullmain, runSQL003, restartexistingUvicorn/env, refreshStart. Freshproject useM2guideSQL001/002first. Existing.env andrequirements; no newpaidservice/runtimeMLdependency. Optional retraining requirements-ml, sourcegeneration commands above.
+Historical M3 lesson docs/MILESTONE_3.md: review updated PR#4, pullmain, runSQL003, restartexistingUvicorn/env, refreshStart. Freshproject useM2guideSQL001/002first. Existing.env andrequirements; no newpaidservice/runtimeMLdependency. Optional retraining requirements-ml, sourcegeneration commands above.
 
 Local Python3.12.14:29tests including prior22regressions, prelabel boundaries/maturity, generator reproducibility, train-onlyscale/sklearnparity, SQL003idempotence, stage routing/date transition, no-window refusal, guards, source change/immutable snapshots, missingmodel truthful failure. Actual Uvicorn HTTP/SSE+DOM9rows/totals/two modelcards,preventivefilter/risklabel,approval14events,savedreopen,legacyM2 rendering. UserM3cloud/Python3.13.5 stillpending. Isolated PGlite is not live Supabase. OptionalNode/PGliteSQL and optional sklearntraining; tests skip affectedchecks ifmissing. One upstreamStarlette/httpxdeprecationwarning remains.
 
 Troubleshoot missingpreexamples→runSQL003inURLproject; 503model→restorecommittedmatchingartifactortraincorrectstage; 503schema/key→sameprojectURL+serversecretSQL001/002; pause→manualresume; envignored→restart/checkterminalvars; wrongwindow→sourceasof/due difference7; oldresultsunchanged→expected; interrupted→newrun; staticpage/portbusy→stopoldserverrunUvicornatroot; wrongrepo/unpushededits→gitstatus/remote/log,preservechanges.
 
-## Next TODO — M4 after learner M3 check
+## Historical M3 next-step plan — implemented in M4 above
 
 1. Record9rowrun,Harborinputedit/savedhistory and user's explanation of two targets, fixedwindow, risk vs urgency, separatequeues, syntheticlimits. Do not markcomplete from tests.
 2. Inspect pushedcode/plan and preserveedits; choose lowcostLLMprovider/model, explain APIbilling separatefromChatGPT before requiringkey.

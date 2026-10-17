@@ -7,7 +7,7 @@ const stages = [
   ["assess", "Assess collection urgency", "Apply documented rules; pause disputes"],
   ["predict", "Predict payment risk", "Apply trained model; inspect evidence"],
   ["prioritize", "Prioritize accounts", "Rank eligible balance × predicted risk"],
-  ["draft", "Prepare reminder templates", "Prepare factual drafts for review"],
+  ["draft", "Draft and check reminders", "LLM phrasing or labelled template fallback"],
 ];
 const riskFeatureLabels = {
   days_overdue_capped: "Invoice aging", late_rate: "Previous late payments",
@@ -155,11 +155,26 @@ function renderDetail() {
     <div class="explain"><b>Why this action?</b><ul>${row.reasons.length ? row.reasons.map((reason) => `<li>${escapeHTML(reason)}</li>`).join("") : "<li>Waiting for policy assessment.</li>"}</ul>
       <span>Rule score measures urgency. It is not a predicted probability.</span></div>
     ${mlDetails}
-    <div class="draft"><div class="draft-head">Reminder <span>${row.draft ? "TEMPLATE · REVIEW REQUIRED" : "NO DRAFT"}</span></div>
-      ${row.draft ? `<div class="draft-subject">${escapeHTML(row.draft.subject)}</div><pre class="draft-body">${escapeHTML(row.draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval remains in the overdue workflow in M3." : "Drafts are prepared for eligible invoices with urgency scores of at least 35."}</div>`}
+    <div class="draft"><div class="draft-head">Reminder <span>${row.draft ? (row.draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : row.draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span></div>
+      ${row.draft ? `<div class="draft-subject">${escapeHTML(row.draft.subject)}</div><pre class="draft-body">${escapeHTML(row.draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Drafts are prepared for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
+    ${row.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(row.draft_audit, null, 2))}</pre></details>` : ''}
     <div class="detail-actions"><button class="secondary" id="record-btn" ${canApprove ? "" : "disabled"}>${row.contacted ? "Dry run already recorded" : "Approve & record dry run"}</button></div>
-    <p class="panel-sub">This saves an approval in Supabase. Email sending arrives in Milestone 5.</p>`;
+    <p class="panel-sub">This saves an approval in Supabase. Email sending arrives in Milestone 5.</p>
+    <div class="explain"><b>Review a synthetic reply example</b><p>No email was received. This only tests classification; payment and dispute status stay unchanged.</p>
+      <select id="reply-example"><option value="promise">Promise to pay</option><option value="paid">Customer claims paid</option><option value="dispute">Dispute</option><option value="documents">Request documents</option><option value="injection">Untrusted instructions</option></select>
+      <button class="secondary" id="classify-reply" ${state.status === 'completed' ? '' : 'disabled'}>Classify example</button>
+      <pre id="reply-output">${escapeHTML(JSON.stringify(row.reply_reviews || {}, null, 2))}</pre></div>`;
+  $("classify-reply").onclick = async () => {
+    const button = $("classify-reply"); button.disabled = true;
+    try {
+      const response = await api(`/api/runs/${state.currentRun}/invoices/${encodeURIComponent(row.id)}/classify-example`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({example_id: $("reply-example").value})});
+      applySnapshot(response.run.result);
+      for (const event of response.run.events) if (!state.eventIds.has(event.event_id)) addEvent(event);
+      toast(response.recorded ? 'Example review saved; no payment status changed.' : 'Saved review reopened; no duplicate call.');
+    } catch (error) {showError(error.message); button.disabled = false;}
+  };
   $("record-btn").onclick = () => {state.approvalId = row.id; $("modal").classList.add("show");};
 }
 
@@ -185,7 +200,7 @@ function addEvent(event) {
   item.className = "event";
   const facts = {run_id: event.run_id, event_id: event.event_id, stage: event.stage,
     status: event.status, duration_ms: event.duration_ms, result: event.result, error: event.error};
-  item.innerHTML = `<div class="event-icon">${event.status === "failed" ? "!" : event.status === "started" ? "↗" : "✓"}</div>
+  item.innerHTML = `<div class="event-icon">${["failed", "warning"].includes(event.status) ? "!" : event.status === "started" ? "↗" : "✓"}</div>
     <div class="event-text"><b>${escapeHTML(event.stage)} · ${escapeHTML(event.status)}</b><div>${escapeHTML(event.message)}</div>
       <details><summary>Inspect output</summary><pre>${escapeHTML(JSON.stringify(facts, null, 2))}</pre></details></div>
     <div class="event-time">${new Date(event.timestamp).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"})}</div>`;
@@ -310,7 +325,7 @@ async function openSavedRun() {
     const run = await api(`/api/runs/${id}`);
     if (["queued", "running"].includes(run.status)) {toast("That run is still active. Refresh history after it finishes."); return;}
     clearRun(); state.currentRun = run.run_id; state.status = run.status;
-    state.legacyRun = run.result.workflow_version !== "M3";
+    state.legacyRun = !["M3", "M4"].includes(run.result.workflow_version);
     for (const event of run.events) handleEvent(event);
     state.status = run.status;
     applySnapshot(run.result);
@@ -347,13 +362,14 @@ $("confirm-send").onclick = async () => {
 };
 
 clearRun();
-api("/api/health").then(() => {
-  $("backend-label").textContent = "Supabase + Python connected";
+api("/api/health").then((health) => {
+  const language = health.language;
+  $("backend-label").textContent = language ? (language.enabled ? (language.key_configured ? "Supabase · LLM enabled" : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";
   $("start-run").disabled = false;
   banner("READY", "Start a run to process the demo dataset");
   refreshSavedRuns();
 }).catch((error) => {
   $("backend-label").textContent = "Backend unavailable";
   banner("OFFLINE", "Check Supabase setup and the FastAPI server");
-  showError(`${error.message}. See docs/MILESTONE_2.md for SQL setup and local .env configuration.`);
+  showError(`${error.message}. See docs/MILESTONE_4.md for SQL004 and language configuration; docs/MILESTONE_2.md for database setup.`);
 });

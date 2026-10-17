@@ -12,6 +12,8 @@ from fastapi.staticfiles import StaticFiles
 
 from .runner import RunService, STAGES
 from . import risk_model
+from .language import LanguageService, facts_for
+from pydantic import BaseModel, ConfigDict
 from .storage import StorageError, StoreRequestError, SupabaseStore
 
 
@@ -19,14 +21,14 @@ ROOT = Path(__file__).resolve().parents[1]
 TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
 
 
-def create_app(store=None):
+def create_app(store=None, language=None):
     config_error = None
     if store is None:
         try:
             store = SupabaseStore.from_env(ROOT)
         except StorageError as exc:
             config_error = str(exc)
-    service = RunService(store) if store is not None else None
+    service = RunService(store, language=language) if store is not None else None
 
     @asynccontextmanager
     async def lifespan(app):
@@ -39,7 +41,7 @@ def create_app(store=None):
         if service:
             await service.close()
 
-    app = FastAPI(title="Collections Agent · Milestone 3", lifespan=lifespan)
+    app = FastAPI(title="Collections Agent · Milestone 4", lifespan=lifespan)
     app.state.runs = service
 
     def backend():
@@ -69,12 +71,48 @@ def create_app(store=None):
         s = backend()
         await s.initialize()
         info = await s.store.health()
+        await s.store.rpc("ca_language_health")
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "milestone": "M3", "storage": "supabase_postgres",
+        return {"status": "ok", "milestone": "M4", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
-                "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
+                "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
+
+    @app.get('/api/reply-examples')
+    async def reply_examples():
+        return {'examples': [{k: v for k, v in e.items() if k != 'expected_intent'}
+                for e in json.loads((ROOT / 'fixtures/replies.json').read_text())]}
+
+    class ExampleRequest(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+        example_id: str
+
+    @app.post('/api/runs/{run_id}/invoices/{invoice_id}/classify-example')
+    async def classify_example(run_id: UUID, invoice_id: str, body: ExampleRequest):
+        s = backend()
+        await s.store.rpc('ca_language_health')
+        examples = json.loads((ROOT / 'fixtures/replies.json').read_text())
+        example = next((e for e in examples if e['id'] == body.example_id), None)
+        if example is None:
+            raise HTTPException(404, 'Unknown synthetic example.')
+        # Local single-process POC: serialize reviews to avoid concurrent duplicate calls.
+        async with s.language.reply_lock:
+            run = await s.store.get_run(str(run_id))
+            if run is None:
+                raise HTTPException(404, 'Run not found.')
+            if run['status'] != 'completed':
+                raise HTTPException(409, 'Finish a successful run first.')
+            row = next((r for r in run['result']['invoices'] if r['id'] == invoice_id), None)
+            if row is None:
+                raise HTTPException(404, 'Invoice not found in this run.')
+            if body.example_id in row.get('reply_reviews', {}):
+                return {'recorded': False, 'run': run}
+            facts = facts_for(row, run['result'])
+            review = await s.language.classify(facts, example['text'])
+            review.update({'example_id': body.example_id, 'example_text': example['text']})
+            return await s.store.rpc('ca_record_reply_example', {'p_run_id': str(run_id),
+                'p_invoice_id': invoice_id, 'p_example_id': body.example_id, 'p_review': review})
 
     @app.post("/api/runs", status_code=202)
     async def start_run():

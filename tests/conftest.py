@@ -81,3 +81,9 @@ def store_factory(database):
         return SupabaseStore("https://testproject.supabase.co", "sb_secret_test_only",
                              transport=httpx.MockTransport(request_handler))
     return factory
+
+@pytest.fixture(autouse=True)
+def disable_paid_api_in_tests(monkeypatch):
+    """Never inherit a learner's live .env opt-in/API key during pytest."""
+    monkeypatch.setenv('COLLECTIONS_LLM_ENABLED', 'false')
+    monkeypatch.setenv('OPENAI_API_KEY', '')

@@ -69,7 +69,7 @@ class SupabaseStore:
             if data.get("code") in allowed:
                 raise StoreRequestError(int(data["code"][2:]), allowed[data["code"]])
             if response.status_code == 404:
-                raise StorageError("Supabase schema function missing. Run sql/001_schema.sql, then sql/002_seed_demo.sql.")
+                raise StorageError("Supabase schema function missing. Run the required schema SQL (001/002 for setup; 004_language_review.sql for M4).")
             raise StorageError("Supabase could not complete the database operation. Check schema setup and project availability.")
         try:
             return response.json()

@@ -6,6 +6,7 @@ const {PGlite} = require('@electric-sql/pglite');
   const db = new PGlite();
   await db.exec('create role anon; create role authenticated; create role service_role;');
   await db.exec(fs.readFileSync('sql/001_schema.sql','utf8'));
+  await db.exec(fs.readFileSync('sql/004_language_review.sql','utf8'));
   const seed=fs.readFileSync('sql/002_seed_demo.sql','utf8');
   await db.exec(seed);
   console.log(JSON.stringify({ready:true}));
