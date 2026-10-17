@@ -1,3 +1,5 @@
+> Current send UX is documented in [V2.2](MILESTONE_V2_2.md): Send email beside the draft, no owner token required. Older token/dry-run UI instructions below are historical. Existing Resend/webhook setup still applies.
+
 # Milestone 6 — Publish the live demo and repair webhook connectivity
 
 M5 PR#6 merged as0114b768. User reports Resend events sent/delivered/received are attempting with `client error (Connect)`, and authorizes cloud deployment. Exact existing endpoint URL/logs have not been supplied: a specific root cause is not verified. The error points to endpoint reachability; signature failures normally produce an HTTP response instead.

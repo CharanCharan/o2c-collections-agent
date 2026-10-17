@@ -37,8 +37,8 @@ class MailConfig:
     def check(self):
         if self.error or not self.enabled:
             raise HTTPException(409,self.error or 'Live email is disabled. No email attempted.')
-        if not self.key or len(self.owner_token)<32 or not self.webhook_secret.startswith('whsec_'):
-            raise HTTPException(503,'Set private Resend key, webhook secret and owner token (at least32characters).')
+        if not self.key or not self.webhook_secret.startswith('whsec_'):
+            raise HTTPException(503,'Set private Resend API key and webhook secret.')
         if not address(self.sender) or address(self.recipient)!=self.recipient:
             raise HTTPException(503,'Configure one valid EMAIL_TEST_RECIPIENT and EMAIL_FROM.')
         if not re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]{0,180})\.resend\.app',self.receiving_domain):
@@ -51,4 +51,4 @@ class MailConfig:
             ready=False; reason=exc.detail
         # Recipient is disclosed only after owner authentication by a separate route.
         return {'enabled':self.enabled,'ready':ready,'provider':'resend',
-                'mode':'controlled_test_inbox','daily_reservation_cap':10,'configuration_error':reason}
+                'mode':'project_test_inbox','daily_reservation_cap':10,'configuration_error':reason}

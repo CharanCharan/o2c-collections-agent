@@ -15,14 +15,16 @@ const riskFeatureLabels = {
 };
 const state = {
   invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
-  highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null, approvalId: null,
+  highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null,
 };
 let visitorCases = [];
+let sendBusy = false;
 let caseLoadError = '';
 let casesLoaded = false;
 let pendingCaseReply = null;
 const caseLabels = {
-  awaiting_outreach: 'Awaiting outreach · draft is unsent',
+  awaiting_outreach: 'Ready for outreach',
+  awaiting_response: 'Awaiting customer response',
   reply_received_review_required: 'Reply saved · processing incomplete; review required',
   dispute_hold_review_required: 'Demo dispute hold · review required',
   reconciliation_required: 'Payment claim · reconciliation required',
@@ -32,11 +34,6 @@ const caseLabels = {
 };
 let mailEnabled = false;
 let publicMode = false;
-let ownerLoggedIn = false;
-let ownerRecipient = "";
-let emailState = null;
-let emailRun = null;
-let emailRefreshBusy = false;
 const $ = (id) => document.getElementById(id);
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -49,8 +46,7 @@ const dateLabel = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-US
 });
 
 async function api(path, options = {}) {
-  const token = document.getElementById('email-owner-token')?.value || '';
-  const headers = {...(token ? {'X-Collections-Owner':token} : {}), ...(options.headers || {})};
+  const headers = options.headers || {};
   const response = await fetch(path, {cache: "no-store", ...options, headers});
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
@@ -165,7 +161,9 @@ function renderDetail() {
       <p>Ranking index: ${row.priority_index ? money(row.priority_index) : 'Awaiting ranking'} = balance × predicted risk; ranked only within this invoice stage, not a cash forecast. Disputes stay paused.</p>
       <details><summary>Inspect model inputs and version</summary><pre>${escapeHTML(JSON.stringify(prediction, null, 2))}</pre></details></div>`
     : `<p class="explain">${escapeHTML(prediction?.reason || 'No trained risk prediction in this historical snapshot.')}</p>`;
-  const canApprove = state.status === "completed" && row.eligible && row.draft && !row.contacted;
+  const currentCase = visitorCases.find(c => c.invoice_id === row.id);
+  const draftRow = currentCase?.snapshot.invoice || row;
+  const draft = draftRow.draft;
   $("detail").innerHTML = `
     <div class="detail-top"><div><div class="detail-name">${escapeHTML(row.customer)}</div><div class="detail-id">${escapeHTML(row.id)} · ${escapeHTML(row.segment)}</div></div>
       <span class="tag ${row.score === null ? "state" : row.level}">${row.score ?? "—"}/100</span></div>
@@ -175,17 +173,17 @@ function renderDetail() {
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
       <div class="detail-metric"><label>Suggested action</label><strong>${escapeHTML(row.action)}</strong></div>
     </div>
-    <div class="draft"><div class="draft-head">Reminder <span>${row.draft ? (row.draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : row.draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span></div>
-      ${row.draft ? `<div class="draft-subject">${escapeHTML(row.draft.subject)}</div><pre class="draft-body">${escapeHTML(row.draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Start the agent to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
+    <div class="draft"><div class="draft-head">Reminder <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send email</button></div>
+      ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Start the agent to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
-    ${row.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(row.draft_audit, null, 2))}</pre></details>` : ''}
+    <p class="explain" id="draft-email-status"></p>
+    ${currentCase ? `<p class="panel-sub">Draft saved with case snapshot ${escapeHTML(currentCase.snapshot.as_of_date)} · run ${escapeHTML(currentCase.run_id.slice(0,8))}. Sending uses this displayed draft.</p>` : ''}
+    ${draftRow.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(draftRow.draft_audit, null, 2))}</pre></details>` : ''}
     <details class="explain"><summary>Why this action and risk evidence</summary>
     <div class="explain"><b>Why this action?</b><ul>${row.reasons.length ? row.reasons.map((reason) => `<li>${escapeHTML(reason)}</li>`).join("") : "<li>Waiting for policy assessment.</li>"}</ul>
       <span>Rule score measures urgency. It is not a predicted probability.</span></div>
     ${mlDetails}
     </details>
-    <div class="detail-actions"><button class="secondary" id="record-btn" ${canApprove ? "" : "disabled"}>${row.contacted ? "Dry run already recorded" : "Approve & record dry run"}</button></div>
-    <p class="panel-sub">This saves an approval in Supabase. Use the separate controlled email panel to send to your configured test inbox.</p>
     <div class="explain"><b>Review a synthetic reply example</b><p>No email was received. This only tests classification; payment and dispute status stay unchanged.</p>
       <select id="reply-example"><option value="promise">Promise to pay</option><option value="paid">Customer claims paid</option><option value="dispute">Dispute</option><option value="documents">Request documents</option><option value="injection">Untrusted instructions</option></select>
       <button class="secondary" id="classify-reply" ${state.status === 'completed' ? '' : 'disabled'}>Classify example</button>
@@ -200,8 +198,8 @@ function renderDetail() {
       toast(response.recorded ? 'Example review saved; no payment status changed.' : 'Saved review reopened; no duplicate call.');
     } catch (error) {showError(error.message); button.disabled = false;}
   };
-  $("record-btn").onclick = () => {state.approvalId = row.id; $("modal").classList.add("show");};
-  renderMail();
+  $("send-draft").onclick = sendDraft;
+  renderSendState();
 }
 
 function renderFlow() {
@@ -260,12 +258,9 @@ function handleEvent(event) {
 }
 
 function clearRun() {
-  emailState = null; emailRun = null;
-  if ($("email-activity")) $("email-activity").textContent = "Complete a run to inspect email activity.";
   state.source?.close();
   Object.assign(state, {invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
-    highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null, approvalId: null});
-  $("modal").classList.remove("show");
+    highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null});
   $("feed").innerHTML = "";
   $("event-count").textContent = "0 events";
   $("error-box").hidden = true;
@@ -375,21 +370,6 @@ $("reset-link").onclick = (event) => {
   if (state.status === "running") {toast("Let the active run finish before resetting the page."); return;}
   clearRun(); loadPreview();
 };
-$("cancel-send").onclick = () => $("modal").classList.remove("show");
-$("modal").onclick = (event) => {if (event.target.id === "modal") $("modal").classList.remove("show");};
-document.addEventListener("keydown", (event) => {if (event.key === "Escape") $("modal").classList.remove("show");});
-$("confirm-send").onclick = async () => {
-  $("confirm-send").disabled = true;
-  try {
-    const response = await api(`/api/runs/${state.currentRun}/invoices/${encodeURIComponent(state.approvalId)}/dry-run`, {method:"POST"});
-    applySnapshot(response.run.result);
-    for (const event of response.run.events) addEvent(event);
-    $("modal").classList.remove("show");
-    toast(response.recorded ? "Approval recorded by Python. No email was sent." : response.message);
-  } catch (error) {showError(error.message);}
-  finally {$("confirm-send").disabled = false;}
-};
-
 async function loadPreview() {
   try {
     const preview = await api('/api/portfolio');
@@ -400,17 +380,18 @@ async function loadPreview() {
   } catch(error) {showError(error.message);}
 }
 
-async function refreshCases() {
+async function refreshCases(repaint = true) {
   try {
     visitorCases = (await api('/api/cases')).cases;
     casesLoaded = true; caseLoadError = '';
   } catch(error) {caseLoadError = error.message;}
-  renderQueue(); renderCase();
+  renderQueue();
+  if (repaint) renderDetail(); else renderSendState();
 }
 
 function saveCase(response) {
   visitorCases = [response.case, ...visitorCases.filter(c => c.id !== response.case.id)];
-  renderQueue(); renderCase();
+  renderQueue(); renderCase(); renderSendState();
 }
 
 function renderCase() {
@@ -419,13 +400,13 @@ function renderCase() {
   const row = state.invoices.find(r => r.id === state.selectedId);
   const current = visitorCases.find(c => c.invoice_id === row?.id);
   if (caseLoadError) {
-    panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${escapeHTML(caseLoadError)} Run sql/007_visitor_cases.sql once for this milestone.</p><button class="secondary" id="case-reload">Reload cases</button>`;
+    panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${escapeHTML(caseLoadError)} Run sql/007_visitor_cases.sql and sql/008_case_email.sql for this milestone.</p><button class="secondary" id="case-reload">Reload cases</button>`;
     $('case-reload').onclick = refreshCases; return;
   }
   if (!current) {
-    panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${!casesLoaded ? 'Loading saved cases…' : row ? 'Open a case after a successful run to test customer replies. This browser’s cases survive reload. No owner token is needed.' : 'Select an invoice to see its saved conversation.'}</p>
+    panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${!casesLoaded ? 'Loading saved cases…' : row ? 'Open a case after a successful run to test customer replies. This browser’s cases survive reload.' : 'Select an invoice to see its saved conversation.'}</p>
       <button class="secondary" id="case-open" ${casesLoaded && row && state.status === 'completed' ? '' : 'disabled'}>Open collection case</button>
-      <p class="explain">Opening a case saves an unsent draft copy. It does not deliver email. Real sending continues through the controlled Resend channel; visitor sending comes in the next milestone.</p>`;
+      <p class="explain">Opening a case saves an unsent draft copy. It does not deliver email. Use Send email beside the draft for a real Resend send to the project test inbox.</p>`;
     $('case-open').onclick = async () => {
       const button = $('case-open'); button.disabled = true;
       try {saveCase(await api('/api/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.currentRun,invoice_id:row.id})}));}
@@ -436,12 +417,12 @@ function renderCase() {
   panel.innerHTML = `<div class="panel-title">Customer conversation · ${escapeHTML(current.invoice_id)}</div>
     <p><span class="tag state">${escapeHTML(caseLabels[current.collection_status] || current.collection_status)}</span></p>
     <p class="explain">Case snapshot: ${escapeHTML(current.snapshot.as_of_date)} · run ${escapeHTML(current.run_id.slice(0,8))}. Current AR is shown alongside it. A new run does not overwrite this case.</p>
-    ${current.messages.map(m => `<article class="case-message"><b>${m.channel === 'draft_preview' ? 'Unsent reminder copy · no email sent' : 'Simulated customer reply · entered on website'}</b><pre>${escapeHTML(m.text)}</pre>
+    ${current.messages.map(m => `<article class="case-message"><b>${m.channel === 'draft_preview' ? (current.outbound ? 'Reminder copy · real email status beside draft' : 'Unsent reminder copy · no email sent') : 'Simulated customer reply · entered on website'}</b><pre>${escapeHTML(m.text)}</pre>
       ${m.review ? `<p class="explain">${m.review.status === 'classified_for_review' ? `LLM classification: ${escapeHTML(m.review.classification.intent)}. Proposal only; human review required.` : m.review.status === 'pending_review' ? 'Saved before classification. Processing did not finish; manual review is required. Retrying this same message will not repeat a model call.' : 'LLM disabled, unavailable, capped or output rejected. Original text saved for manual review.'}</p>
         <details><summary>Classification evidence</summary><pre>${escapeHTML(JSON.stringify(m.review,null,2))}</pre></details>` : ''}</article>`).join('')}
     <form id="case-reply-form"><label for="case-reply-text">Act as the customer · simulated reply</label><textarea id="case-reply-text" maxlength="4000" required placeholder="Example: We believe this invoice was already paid. Please check your records."></textarea>
       <button class="secondary" type="submit">Save reply & classify</button></form>
-    <p class="explain">No email is received or sent by this form. Classification uses the configured free model and existing limits; unavailable models fall back to manual review. No invoice balance changes, promise commitment or follow-up task is created. A demo dispute hold applies to this case; it does not alter the owner’s separate mail workflow yet.</p>`;
+    <p class="explain">No email is received or sent by this form. Classification uses the configured free model and existing limits; unavailable models fall back to manual review. No invoice balance changes, promise commitment or follow-up task is created. Case holds pause further reminders.</p>`;
   $('case-reply-form').onsubmit = async event => {
     event.preventDefault();
     const text = $('case-reply-text').value.trim();
@@ -460,94 +441,52 @@ function renderCase() {
   };
 }
 
-function applyEmailActivity(response) {
-  emailState = response.mail; emailRun = response.run.run_id;
-  if (state.currentRun !== emailRun) return;
-  for (const event of response.run.events) if (!state.eventIds.has(event.event_id)) addEvent(event);
-  renderMail();
+function outboundLabel(outbound) {
+  if (!outbound) return 'No email sent. Destination: project test inbox.';
+  const events = outbound.events || [];
+  const issue = events.findLast(e => ['email.bounced','email.complained','email.failed','email.suppressed'].includes(e.type));
+  if (issue) return `Delivery issue: ${issue.type.replace('email.','')}. Check Resend before further action.`;
+  if (events.some(e => e.type === 'email.delivered')) return 'Delivered · verified Resend webhook · project test inbox.';
+  if (outbound.state === 'accepted') return 'Accepted by Resend · waiting for delivery confirmation · project test inbox.';
+  return 'Send outcome is unknown. Check Resend or retry the same email safely; no automatic retry.';
 }
 
-async function refreshEmail() {
-  if (!state.currentRun || state.status !== 'completed' || emailRefreshBusy || (publicMode && !ownerLoggedIn)) return;
-  emailRefreshBusy = true;
-  const id = state.currentRun;
-  try {
-    const response = await api(`/api/runs/${id}/email`);
-    if (state.currentRun === id && (emailRun !== id || JSON.stringify(emailState) !== JSON.stringify(response.mail))) applyEmailActivity(response);
-  } catch (error) { if (mailEnabled) $("email-activity").textContent = error.message; }
-  finally { emailRefreshBusy = false; }
-}
-
-function renderMail() {
-  const panel = $("email-activity");
-  if (publicMode && !ownerLoggedIn) {panel.textContent = "Private email activity is available to the project owner. You can inspect this browser’s collection runs above."; return;}
-  if (!state.currentRun || state.status !== 'completed') {panel.textContent = 'Complete a run to inspect email activity.'; return;}
+function renderSendState() {
+  const button = $('send-draft');
+  if (!button) return;
   const row = state.invoices.find(r => r.id === state.selectedId);
-  if (!row) return;
-  const saved = emailRun === state.currentRun ? emailState : null;
-  const messages = (saved?.messages || []).filter(m => m.invoice_id === row.id);
-  const mail = messages[0];
-  const replies = (saved?.replies || []).filter(r => messages.some(m => m.id === r.mail_id));
-  const followups = (saved?.followups || []).filter(f => replies.some(r => r.id === f.reply_id));
-  const events = (saved?.delivery_events || []).filter(e => messages.some(m => m.id === e.mail_id));
-  panel.innerHTML = `<div class="panel-title">Controlled email · ${escapeHTML(row.id)}</div>
-    <p class="explain">${mail ? `Resend acceptance: <b>${escapeHTML(mail.state)}</b>. ${mail.state === 'accepted' ? 'Acceptance does not confirm delivery.' : 'Inspect Resend before manually retrying the same intent.'}` : 'No email send intent recorded.'}</p>
-    <button class="secondary" id="live-email-send" ${mailEnabled && ownerRecipient && row.eligible && row.draft && mail?.state !== 'accepted' ? '' : 'disabled'}>${mail ? 'Retry same approved email' : 'Review & send test email'}</button>
-    <button class="secondary" id="email-refresh">Refresh email activity</button>
-    <p class="explain">${ownerRecipient ? `Test inbox: ${escapeHTML(ownerRecipient)}` : 'Unlock owner access above to send.'} All messages are labelled synthetic demos.</p>
-    <details class="explain"><summary>Send and verified delivery evidence</summary><pre>${escapeHTML(JSON.stringify({messages,delivery_events:events},null,2))}</pre></details>
-    ${replies.map(reply => `<div class="draft"><b>Received reply · ${escapeHTML(reply.review.status)}</b><p class="explain">Thread verified: ${reply.review.thread_verified}. Human review required. No payment state changed.</p><pre>${escapeHTML(reply.review.text)}</pre>
-      <details><summary>Classification and receipt evidence</summary><pre>${escapeHTML(JSON.stringify(reply.review,null,2))}</pre></details>
-      ${reply.resolution ? `<p>Review saved: ${escapeHTML(reply.resolution.intent)}</p>` : `<form class="reply-resolution" data-reply="${escapeHTML(reply.id)}">
-        <label>Reviewed intent <select name="intent">${['promise_to_pay','payment_claim','dispute','request_info','other'].map(intent => `<option ${intent === (reply.review.classification?.intent || 'other') ? 'selected' : ''}>${intent}</option>`).join('')}</select></label>
-        <p><label>Promise date (literal YYYY-MM-DD) <input name="promise_date" value="${escapeHTML(reply.review.classification?.promise_date || '')}"></label></p>
-        <p><label>Promise amount (optional exact two decimals) <input name="promise_amount" value="${escapeHTML(reply.review.classification?.promise_amount || '')}"></label></p>
-        <p><label>Exact supporting quote <textarea name="evidence_quote" maxlength="500">${escapeHTML(reply.review.classification?.evidence_quote || '')}</textarea></label></p>
-        <button class="secondary" ${ownerRecipient ? '' : 'disabled'}>Confirm review & schedule follow-up task</button></form>`}</div>`).join('')}
-    <p class="explain">Follow-ups are saved AR work tasks, not automatically sent emails. Promise checks fall on the day after the promised date; other reviews on tomorrow's UTC date.</p>
-    <pre>${escapeHTML(JSON.stringify(followups,null,2))}</pre>`;
-  $("email-refresh").onclick = refreshEmail;
-  $("live-email-send").onclick = async () => {
-    if (!window.confirm(`I reviewed ${row.id}'s displayed draft. Send this synthetic demo only to ${ownerRecipient}?`)) return;
-    $("live-email-send").disabled = true;
-    try {
-      applyEmailActivity(await api(`/api/runs/${state.currentRun}/invoices/${encodeURIComponent(row.id)}/send-email`, {
-        method:'POST',headers:{'Content-Type':'application/json','X-Collections-Owner':$("email-owner-token").value},body:JSON.stringify({confirm_reviewed:true})}));
-      toast('Email outcome saved. Inspect acceptance and delivery evidence.');
-    } catch(error) {showError(error.message); renderMail();}
-  };
-  for (const form of panel.querySelectorAll('.reply-resolution')) form.onsubmit = async event => {
-    event.preventDefault();
-    if (!window.confirm('Confirm human review and save one follow-up task? No invoice payment state will change.')) return;
-    const body = {intent:form.elements.intent.value,promise_date:form.elements.promise_date.value || null,
-      promise_amount:form.elements.promise_amount.value || null,evidence_quote:form.elements.evidence_quote.value};
-    form.querySelector('button').disabled = true;
-    try {applyEmailActivity(await api(`/api/runs/${state.currentRun}/replies/${form.dataset.reply}/resolve`, {
-      method:'POST',headers:{'Content-Type':'application/json','X-Collections-Owner':$("email-owner-token").value},body:JSON.stringify(body)}));}
-    catch(error) {showError(error.message); form.querySelector('button').disabled = false;}
-  };
+  const c = visitorCases.find(c => c.invoice_id === row?.id);
+  const draftRow = c?.snapshot.invoice || row;
+  const held = c && !['awaiting_outreach','awaiting_response'].includes(c.collection_status);
+  button.disabled = sendBusy || !mailEnabled || !casesLoaded || Boolean(caseLoadError) || !(c || state.status === 'completed') || !draftRow?.draft || !draftRow.eligible || draftRow.dispute || held || c?.outbound?.state === 'accepted';
+  button.textContent = sendBusy ? 'Sending…' : c?.outbound?.state === 'accepted' ? 'Email sent' : c?.outbound ? 'Retry same email' : 'Send email';
+  $('draft-email-status').textContent = held && !c.outbound ? 'Reminder paused: review this case before further outreach.' : !mailEnabled ? 'Email is disabled or not configured on the server.' : outboundLabel(c?.outbound);
 }
-$("email-unlock").onclick = async () => {
+
+async function sendDraft() {
+  const row = state.invoices.find(r => r.id === state.selectedId);
+  if (sendBusy) return;
+  sendBusy = true;
+  const button = $('send-draft'); button.disabled = true; button.textContent = 'Sending…';
   try {
-    if (publicMode) {
-      await api('/api/operator/login',{method:'POST'});
-      ownerLoggedIn = true;
-      await refreshSavedRuns();
-      if (!mailEnabled) {$("email-target").textContent = 'Owner history unlocked. Live email is disabled.'; renderMail(); return;}
+    let c = visitorCases.find(c => c.invoice_id === row.id);
+    if (!c) {
+      const opened = await api('/api/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.currentRun,invoice_id:row.id})});
+      c = opened.case;
+      visitorCases = [c,...visitorCases.filter(x => x.id !== c.id)];
+      if (!opened.recorded) {renderDetail(); toast('Existing case restored. Review its displayed draft, then click Send email.'); return;}
     }
-    const config = await api('/api/email/owner-config' ,{headers:{'X-Collections-Owner':$("email-owner-token").value}});
-    ownerRecipient = config.recipient; $("email-target").textContent = `Only ${config.recipient} can receive this demo. Sender: ${config.sender}`;
-    renderMail(); await refreshEmail();
-  } catch(error) {ownerRecipient = ''; $("email-target").textContent = error.message; renderMail();}
-};
-$("email-logout").onclick = async () => {
-  $("email-owner-token").value = ''; ownerRecipient = ''; ownerLoggedIn = false;
-  if (publicMode) await api('/api/operator/logout',{method:'POST'});
-  clearRun(); await loadPreview(); await refreshSavedRuns();
-  $("email-target").textContent = 'Owner access closed.';
-};
-$("email-owner-token").oninput = () => {ownerRecipient = ''; $("email-target").textContent = ''; renderMail();};
-setInterval(refreshEmail,5000);
+    const response = await api(`/api/cases/${c.id}/send-email`,{method:'POST'});
+    saveCase(response); renderDetail();
+    toast(outboundLabel(response.case.outbound));
+  } catch(error) {
+    showError(error.message); await refreshCases(false);
+  } finally {sendBusy = false; renderSendState();}
+}
+
+setInterval(() => {
+  if (visitorCases.some(c => c.outbound && !c.outbound.events.some(e => ['email.delivered','email.bounced','email.complained','email.failed','email.suppressed'].includes(e.type)))) refreshCases(false);
+},5000);
 
 clearRun();
 api("/api/health").then(async (health) => {
@@ -555,7 +494,6 @@ api("/api/health").then(async (health) => {
   $("demo-access-note").textContent = publicMode ? 'Public demo · synthetic invoices · this browser gets 3 runs and 8 LLM attempts per UTC day. Shared daily caps also apply; templates remain available when LLM quota is used.' : 'Local learning mode · keep this instance private.';
   const language = health.language;
   mailEnabled = Boolean(health.email?.ready);
-  $("email-mode").textContent = mailEnabled ? "Live email configured. Owner approval sends only to the server-configured test inbox. Ten reservations per UTC day." : (health.email?.configuration_error || "Live email disabled. See M5 setup.");
   $("backend-label").textContent = language ? (language.configuration_error ? "Supabase · LLM configuration blocked" : language.enabled ? (language.key_configured ? `Supabase · ${language.provider} · ${language.model}` : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";
   const preview = await api('/api/portfolio');
   if (state.status === 'idle' && !state.currentRun) {applySnapshot(preview.portfolio); $("preview-caption").hidden = false;}

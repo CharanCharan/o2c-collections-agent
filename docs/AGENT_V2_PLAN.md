@@ -1,3 +1,5 @@
+> Latest V2.2 implementation supersedes earlier token/send phasing below: direct Send email beside draft, automatic case opening, real Resend send to fixed project test inbox and session-only status projection are implemented on draft-email-action. Owner/dry-run UI removed; owner token optional legacy API only. SQL008 after007. Graph/autopilot/limited-mode interrupts remain next. docs/MILESTONE_V2_2.md is current.
+
 # Collections workspace V2 — business-first, autonomous within a policy
 
 Status: phase1 merged in PR#8 (c5778663), user confirms preloaded data is working. Phase2 case/conversation foundation is implemented on v2-visitor-cases, learner setup pending. Remaining graph/autopilot phases are planned. PR#7 merged b8c0bc96. Actual public URL not supplied for independent verification. User asks for invoice/email-first layout, preloaded data, LangGraph, automatic/limited control, visitor replies without owner token, and voice/IVR ideas. Constraint remains no paid services. This document separates shipped phase1 from proposed V2 work. The case/conversation foundation is implemented below; LangGraph/autopilot are not implemented yet.
