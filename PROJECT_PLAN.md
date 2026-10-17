@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 complete. M1 code prepared and tested; awaiting Charan’s local run and input-edit exercise.
+Current checkpoint: M0 complete. M1 merged and normal local execution verified by Charan on 2026-10-17. Amount-edit exercise/understanding check pending; M2 planned.
 
 ## Goal and scope
 
@@ -17,7 +17,7 @@ This is a hands-on learning project delivered one complete runnable milestone at
 - Use only https://github.com/CharanCharan/o2c-collections-agent .
 - Charan's uploaded baseline: 4777bb5a1d6fa5d7d4fc71507ddf980bd6f87db1.
 - The duplicate CharanCharan/collections-agent is unused; Charan handles its deletion.
-- Read the current repository plan and code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
+- Read PROJECT_KNOWLEDGE.md, this plan and current code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
 - The original hosted Sites demo is a presentation prototype; this GitHub repository and the local Python application are the working source for the real POC.
 
 ## Current implementation — be precise
@@ -29,8 +29,8 @@ This is a hands-on learning project delivered one complete runnable milestone at
 - Urgency is rule-based, not an ML probability. Drafts use templates, not an LLM. No external data/API, database, LLM or email provider is connected yet.
 - Dry-run approval records once per invoice per run and blocks disputed or draft-ineligible invoices. It never sends email.
 - Runs, events and interactions are in Python process memory and clear on restart. M2 adds Postgres. UUID isolation is not production authentication.
-- M1 automated API checks passed on Python 3.12.14; Charan's Python 3.13.5 run and exercise are pending.
-- Walkthrough: docs/MILESTONE_1.md.
+- M1 automated API checks passed on Python 3.12.14. Charan confirmed normal local execution and expected outputs on his Python 3.13.5 setup on 2026-10-17; the amount-edit exercise remains unconfirmed.
+- Implementation knowledge and resume context: PROJECT_KNOWLEDGE.md. Walkthrough: docs/MILESTONE_1.md. Next-milestone checklist: docs/MILESTONE_2_PLAN.md.
 
 Do not describe synthetic records, policy scores, templates or dry-run actions as real ERP ingestion, trained predictions, LLM generation or sent emails.
 
@@ -63,7 +63,7 @@ Keep secrets in local environment variables and host-managed secrets. Never put 
 
 Acceptance: Charan can start the site locally, edit it, and identify which parts are simulated.
 
-### M1 — Execute a real backend run [CODE READY; LEARNER CHECK PENDING]
+### M1 — Execute a real backend run [LOCAL RUN VERIFIED; EXERCISE PENDING]
 
 Build a small FastAPI service. First serve the existing frontend and a health endpoint. Then add a run endpoint and an event stream. Replace timer-driven claims with backend-produced results calculated from the six sample invoices. Calculate displayed totals and counts from the data.
 
@@ -78,7 +78,9 @@ Events should contain `run_id`, `event_id`, `stage`, `status`, `message`, `times
 
 Acceptance: Browser Start triggers Python execution. Changing the input changes actual results. No invented load counts or timer-only completion claims.
 
-### M2 — Ingest and persist AR data
+### M2 — Ingest and persist AR data [PLANNED]
+
+Detailed implementation and acceptance checklist: docs/MILESTONE_2_PLAN.md. No database or online connector is implemented yet.
 
 Create customers, invoices, payment applications, runs, run_events, interactions, disputes, and promises_to_pay tables. Start with a documented hosted synthetic AR source and CSV import, then one REST connector. Capture source, import timestamp, and validation failures. Store amounts accurately; calculate outstanding balance from invoice amounts, credits, and applied payments. Fix a clear as-of date for aging. Avoid mixing currencies in totals.
 
@@ -135,16 +137,16 @@ Official references:
 
 ## Session protocol
 
-At continuation, read the canonical repository plan/code and identify the last learner-confirmed checkpoint. Deliver a runnable milestone through a PR with explanation, test evidence, setup and an exercise. Verify Charan’s execution before updating learner acceptance. Implementation tests alone do not establish learner completion.
+At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository code; identify the last learner-confirmed checkpoint. Deliver a runnable milestone through a PR with explanation, test evidence, setup and an exercise. Verify Charan’s execution before updating learner acceptance. Implementation tests alone do not establish learner completion.
 
 ## Progress log
 
 | Date | Checkpoint | Evidence / next action |
 |---|---|---|
 | 2026-10-17 | UI prototype live | Browser run and dry-run approval checked; no real integrations |
-| 2026-10-17 | Portable source and guide prepared | Next: Charan runs `dist` locally and edits the heading |
-
-
+| 2026-10-17 | Portable source prepared | Source and initial learning guides exported |
 | 2026-10-17 | M0 learner complete | Local run, heading edit and commit 4777bb5 confirmed |
 | 2026-10-17 | Delivery workflow agreed | Runnable milestone PRs in o2c-collections-agent; Charan merges/pulls and learns locally |
-| 2026-10-17 | M1 code ready | Backend, JSON input, SSE, rule scoring, templates, dry-run approval and tests; learner verification pending |
+| 2026-10-17 | M1 implementation merged | PR #1; implementation 05fa17b, merge af9944b; API, HTTP/SSE and DOM checks passed |
+| 2026-10-17 | M1 normal local run verified | Charan reported expected results; amount-edit exercise/understanding check pending |
+| 2026-10-17 | Knowledge and M2 checklist prepared | PROJECT_KNOWLEDGE.md and docs/MILESTONE_2_PLAN.md; no M2 implementation yet |
