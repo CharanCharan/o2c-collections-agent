@@ -36,10 +36,10 @@
     <div class="top-actions"><div class="pill"><i class="dot"></i><span id="backend-label">Connecting to Python…</span></div><div class="pill" id="as-of">Start to load the demo snapshot</div><div class="avatar">CS</div></div>
   </header>
   <section class="intro">
-    <div><div class="eyebrow">Order to cash · Milestone 3</div><h1>Charan's Collections Agent</h1><p>Watch Python load invoices from Supabase, predict overdue risk before due dates, prioritize recovery after due dates and save the evidence.</p></div>
+    <div><div class="eyebrow">Order to cash · Milestone 4</div><h1>Charan's Collections Agent</h1><p>Watch Python load invoices from Supabase, predict overdue risk before due dates, prioritize recovery after due dates and save the evidence.</p></div>
     <div class="run-wrap"><div class="last-run" id="last-run">No active run</div><button class="primary" id="start-run" disabled><span class="play">▶</span> Start collections run</button></div>
   </section>
-  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices from Supabase, real Python execution and persistent history. Two models trained on synthetic history cover prevention and overdue recovery. Urgency uses rules; reminders use templates. No LLM or email provider yet.</span></div>
+  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices from Supabase, real Python execution and persistent history. Two models trained on synthetic history cover prevention and overdue recovery. Urgency uses rules. Reminders show whether LLM or template produced them; human review required. No email is sent.</span></div>
   <div class="error-box" id="error-box" role="alert" hidden></div>
   <section class="stats" aria-label="Accounts receivable summary">
     <div class="stat"><div class="stat-top">Open receivables <span class="stat-icon">◌</span></div><div class="stat-value" id="metric-open">—</div><div class="stat-foot" id="open-note">Calculated after loading data</div></div>
@@ -65,9 +65,9 @@
       <section class="panel detail" id="detail" aria-label="Selected invoice"></section>
     </div>
   </main>
-  <footer class="footer"><span>Collections Agent · M3 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
+  <footer class="footer"><span>Collections Agent · M4 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
 </div>
-<div class="modal-backdrop" id="modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title"><h2 id="approval-title">Record a dry-run approval?</h2><p>Python will record this invoice's approved template once in this run's saved event history. No email is sent. The approval and its event are saved together in Supabase.</p><button class="primary" id="confirm-send">Approve &amp; record dry run</button><button class="secondary" id="cancel-send">Go back</button></div></div>
+<div class="modal-backdrop" id="modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title"><h2 id="approval-title">Record a dry-run approval?</h2><p>Python will record this invoice's approved reminder once in this run's saved event history. No email is sent. The approval and its event are saved together in Supabase.</p><button class="primary" id="confirm-send">Approve &amp; record dry run</button><button class="secondary" id="cancel-send">Go back</button></div></div>
 <div class="toast" id="toast" role="status"></div>
 </body>
 </html>

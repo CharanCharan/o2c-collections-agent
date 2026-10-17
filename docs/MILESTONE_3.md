@@ -1,3 +1,5 @@
+> Historical M3 model lesson. PR#4 merged and learner reported completion. Current M4 adds optional LLM wording/reply review and SQL004; see [M4](MILESTONE_4.md). M3 numeric/model contracts remain unchanged.
+
 # Milestone 3 — prevent overdue invoices and prioritize recovery
 
 Current delivery: **PR #4**, extended to two models at Charan's request. M2 is learner-complete. M3 local checks pass; Charan's live M3 run/exercises remain pending. Only repository: CharanCharan/o2c-collections-agent.

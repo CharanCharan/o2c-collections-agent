@@ -81,3 +81,15 @@ def store_factory(database):
         return SupabaseStore("https://testproject.supabase.co", "sb_secret_test_only",
                              transport=httpx.MockTransport(request_handler))
     return factory
+
+@pytest.fixture(autouse=True)
+def disable_paid_api_in_tests(monkeypatch):
+    """Never inherit a learner's live .env opt-in/API key during pytest."""
+    monkeypatch.setenv('COLLECTIONS_LLM_ENABLED', 'false')
+    monkeypatch.setenv('OPENAI_API_KEY', '')
+    monkeypatch.setenv('GROQ_API_KEY', '')
+    for name, value in {'LLM_PROVIDER':'groq', 'LLM_MODEL':'openai/gpt-oss-20b',
+            'LLM_FREE_ONLY':'true', 'LLM_MAX_CALLS_PER_RUN':'4',
+            'LLM_MAX_CALLS_PER_PROCESS':'20', 'LLM_MAX_OUTPUT_TOKENS':'2048',
+            'LLM_TIMEOUT_SECONDS':'30'}.items():
+        monkeypatch.setenv(name, value)

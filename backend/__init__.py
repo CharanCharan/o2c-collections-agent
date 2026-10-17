@@ -1,1 +1,1 @@
-"""M3: Supabase collections workflow with synthetic-trained payment risk."""
+"""M4: Supabase collections, two risk models, bounded language tools and review."""

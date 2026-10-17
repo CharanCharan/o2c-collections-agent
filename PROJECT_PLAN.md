@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 implementation prepared on milestone-3-payment-risk; learner run/exercises pending.
+Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 code prepared on milestone-4-llm-drafting; live API/learner checks pending.
 
 ## Goal and scope
 
@@ -20,13 +20,11 @@ This is a hands-on learning project delivered one complete runnable milestone at
 - Read PROJECT_KNOWLEDGE.md, this plan and current code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
 - The original hosted Sites demo is a presentation prototype; this GitHub repository and the local Python application are the working source for the real POC.
 
-## Current implementation — M3 prepared for review
+## Current implementation — M4 prepared for review
 
-Supabase remains source/history store. Six Python stages include two saved logistic models: at due-7 predict becoming overdue; after due predict remaining unpaid another30days. Each is trained/evaluated on separate synthetic history. Persist target-specific inputs/explanations/model identity and evidence. Prevention and recovery rank separately; disputes/policy gates remain. Pre-due reviews do not yet create reminder approvals. Existing overdue rule urgency and threshold35 draft policy remain. No LLM or actual email.
+M3 merge f3acb263; user reported completion. Two ML risk models and separate queues remain. M4 adds explicit LLM drafting/reply-classification tools, structured schemas, deterministic fact rendering/guards, provider audit and labelled fallback. Groq / openai/gpt-oss-20b is the default for the requested Free account, with opt-in calls, modular adapters and environment-configurable models/keys/limits. LLM_FREE_ONLY blocks paid-provider routing, not paid Groq accounts: verify Free manually. Default templates make no calls; no provider failover. All generated wording requires human review; no semantic correctness guarantee from keyword checks.
 
-M2 PR #3 merged ea7a5fb and learner-confirmed. M3 PR #4 remains the review branch; user requested adding prevention before moving to M4. SQL003 adds three pre-due source examples without schema change/history deletion. No new credentials or runtime ML packages. With full seeds:9invoices/open431700/pastdue372200/eligible recovery308000. M3 learner verification pending. docs/MILESTONE_3.md and ml/MODEL_CARD.md are current.
-
-Local checks:29tests, actual SQL/HTTP/SSE/DOM. Prevention holdout511 AUC.738/Brier.195 versus .5/.225 baseline; recovery500 .808/.180 versus .5/.249. Synthetic tests do not prove real-world accuracy. Prior single-model22-test evidence remains historical.
+SQL004 adds only readiness/review functions. Fixed synthetic reply reviews persist atomically and deduplicate, without actual email receipt, payment/dispute updates or scheduled followups. Provider/sending loop remains M5. Pre-due stays review-only; overdue eligibility/draft rules unchanged.64 tests and local Groq HTTP/SSE/DOM passed using isolated SQL and mocked provider; no live provider/account verification or charges. Setup docs/MILESTONE_4.md. User Python3.13.5/live SQL004/API checks pending.
 
 ## Recommended stack
 
@@ -80,19 +78,21 @@ The revised checklist is docs/MILESTONE_2_PLAN.md. CSV import and a second hoste
 
 Acceptance: the Supabase rows produce the expected portfolio; owner data edits affect the next run; records/events/approvals survive Python restart; duplicate actions stay idempotent; failures are visible without JSON fallback. Historical run snapshots remain immutable.
 
-### M3 — Train and evaluate payment risk [CODE PREPARED; LEARNER CHECKS PENDING]
+### M3 — Train and evaluate payment risk [MERGED; NORMAL RUN LEARNER-CONFIRMED]
 
 Two stage-specific targets: (1) at exactly seven days before due, not fully paid by end of due date; (2) positive overdue balance remains at snapshot+30days. The second replaces the original due+30 candidate for recovery; the first adds Charan's requested prevention use case. A date outside the pre-due checkpoint is explicitly not scored, rather than backdating features. No current-invoice aging/future outcomes in pre-due features.
 
 Separate generated histories with mature labels, chronological gaps, train-only scaling, validation C choice and untouched later-date tests. Save/version numeric artifacts, model card, parameters and evidence. Website labels targets, shows separate queues and calibration/holdout evidence; never combines probabilities or calls one independent proof of the other. Disputes/zero balances/policy gates stay enforced. M3 preventive risk is review-only; actual reminder policy/sending is later work.
 
-Acceptance pending from learner: merge updated PR#4, pull main, run SQL003, see nine invoices/two target labels, change Harbor history and observe new risk while saved history stays unchanged. Explain timing windows, probability vs urgency, separate queue ranking and synthetic evaluation limits. Optional generator/trainer exercise for both models. Detailed steps docs/MILESTONE_3.md.
+PR#4 merged; learner reported done. Optional deeper checks still not separately confirmed: change Harbor history and observe new risk while saved history stays unchanged. Explain timing windows, probability vs urgency, separate queue ranking and synthetic evaluation limits. Optional generator/trainer exercise for both models. Detailed steps docs/MILESTONE_3.md.
 
-### M4 — Add language reasoning and policy
+### M4 — Add language reasoning and policy [CODE PREPARED; LIVE API/LEARNER CHECKS PENDING]
 
 Use an LLM for reminder drafts and structured reply classification. Use SQL/Python for finance calculations and policy checks. Validate LLM output against invoice facts. Implement explicit tools and state transitions; no multi-agent expansion unless a demonstrated need arises.
 
-Acceptance: Drafts use validated amounts and dates; disputed accounts pause; invalid output routes to review; tool inputs, outputs, versions, duration, and errors are recorded. Display action summaries and evidence, not private chain-of-thought.
+Implemented: modular Groq Chat Completions/default Free model and optional explicitly selected OpenAI Responses structured language tools with exact fact echo and Python financial block; nonfinancial prose guards/human review; version/usage/hash/duration audit; visible provider/validation/cap fallbacks; five fixed synthetic reply cases and quote/promise checks, always review-only. Live calls require local opt-in and a confirmed Groq Free account for zero-cost operation, no credentials received/spending by assistant. SQL004 stores review/event atomically, duplicates avoid another provider call. See M4 lesson for cost explanation and local controls.
+
+Acceptance pending: successful live API draft/evidence, invalid-output fallback understanding, sample classification/dedup/restart persistence, user can explain policy and limitations. Drafts use validated amounts and dates; disputed accounts pause; invalid output routes to review; tool inputs, outputs, versions, duration, and errors are recorded. Display action summaries and evidence, not private chain-of-thought.
 
 ### M5 — Close the email loop
 
@@ -151,3 +151,7 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | M2 learner complete | User confirmed all working and both source-change/persistence checks; PR #3 merge ea7a5fb |
 | 2026-10-17 | M3 implementation prepared | Synthetic-trained logistic model, saved evidence, risk ranking and lesson; 22 local tests + HTTP/SSE/DOM; learner verification pending |
 | 2026-10-17 | M3 extended at user request | PR#4 now includes due-7 prevention plus overdue recovery, SQL003 examples and separate queues; 29 local checks; learner confirmation pending |
+| 2026-10-17 | M3 merged / learner normal run confirmed | PR#4 merge f3acb263; user said done/next; optional exercises not separately confirmed |
+| 2026-10-17 | M4 prepared | LLM-assisted phrasing, bounded API adapter, visible fallbacks and sample reply review;64 local tests/mock providers; live setup pending |
+
+| 2026-10-17 | User requested free model and modular control | PR#5 updated to Groq default, separate provider adapters/keys, env model/limits, free-only routing, no paid failover; account Free status/live output still learner checks |

@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from . import pipeline
 from .storage import StorageError
+from .language import LanguageService
 
 
 STAGES = ["ingest", "validate", "assess", "predict", "prioritize", "draft"]
@@ -41,8 +42,9 @@ class Run:
 
 
 class RunService:
-    def __init__(self, store):
+    def __init__(self, store, language=None):
         self.store = store
+        self.language = language or LanguageService.from_env()
         self.process_id = str(uuid4())
         self.tasks: set[asyncio.Task] = set()
         self.initialized = False
@@ -52,6 +54,7 @@ class RunService:
         async with self.init_lock:
             if not self.initialized:
                 await self.store.health()
+                await self.store.rpc("ca_language_health")
                 await self.store.recover(self.process_id)
                 self.initialized = True
 
@@ -73,6 +76,12 @@ class RunService:
                 if stage == "ingest":
                     source = await self.store.source()
                     result = await asyncio.to_thread(pipeline.ingest, run.context, source)
+                elif stage == 'draft':
+                    async def tool_event(status, message, audit):
+                        snapshot = pipeline.result_snapshot(run.context)
+                        await run.emit('llm_draft', status, message, saved_result=snapshot,
+                                       result=audit, snapshot=snapshot)
+                    result = await self.language.draft(run.context, emit=tool_event)
                 else:
                     result = await asyncio.to_thread(getattr(pipeline, stage), run.context)
                 message = result.pop("message")
@@ -107,4 +116,5 @@ class RunService:
         for task in list(self.tasks):
             task.cancel()
         await asyncio.gather(*self.tasks, return_exceptions=True)
+        await self.language.close()
         await self.store.close()
