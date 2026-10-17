@@ -5,37 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f5f7f7" />
   <title>Charan’s Collections Agent</title>
-  <style>
-    :root{--ink:#142a2b;--muted:#728281;--line:#e3e9e8;--paper:#fff;--wash:#f5f7f7;--teal:#087e78;--teal2:#dff3f0;--lime:#b6e36b;--amber:#b7761c;--red:#bd514d;--shadow:0 10px 34px rgba(22,51,49,.06)}
-    *{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #6ac9bf;outline-offset:2px}.shell{max-width:1440px;margin:0 auto;padding:0 30px 42px}.topbar{height:68px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin-bottom:25px}.brand{display:flex;align-items:center;gap:11px;font-weight:730;letter-spacing:-.02em}.brand-mark{width:31px;height:31px;border-radius:10px;background:#153c3b;color:#c9f088;display:grid;place-items:center;font-size:15px}.brand small{display:block;color:#82918f;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}.top-actions{display:flex;align-items:center;gap:12px}.pill{display:flex;align-items:center;gap:7px;padding:7px 10px;background:#fff;border:1px solid var(--line);border-radius:999px;color:#5d6e6c;font-size:11px}.dot{width:7px;height:7px;background:#42aa7d;border-radius:50%;box-shadow:0 0 0 3px #e1f4eb}.avatar{width:29px;height:29px;border-radius:50%;background:#e3ece9;color:#37635d;display:grid;place-items:center;font-weight:700;font-size:11px}
-    .intro{display:flex;justify-content:space-between;align-items:flex-end;margin:27px 0 20px;gap:20px}.eyebrow{color:var(--teal);font-size:10px;font-weight:760;letter-spacing:.15em;text-transform:uppercase}.intro h1{font-size:29px;letter-spacing:-.045em;margin:7px 0 5px;line-height:1.1}.intro p{margin:0;color:var(--muted);font-size:13px}.run-wrap{display:flex;align-items:center;gap:12px}.last-run{font-size:10px;color:#879492;text-align:right}.primary{border:0;border-radius:9px;background:#123f3d;color:white;padding:11px 16px;font-size:12px;font-weight:670;display:flex;align-items:center;gap:9px;box-shadow:0 4px 12px rgba(18,63,61,.16);transition:.15s}.primary:hover{background:#0c5752;transform:translateY(-1px)}.primary:disabled{opacity:.55;cursor:wait;transform:none}.play{font-size:11px;color:#d0ef91}
-    .notice{display:flex;gap:9px;align-items:center;background:#fff9e9;border:1px solid #f0e5c4;color:#81652c;padding:9px 12px;border-radius:8px;font-size:11px;margin-bottom:17px}.notice b{font-weight:740}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}.stat{padding:15px 16px;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}.stat-top{display:flex;justify-content:space-between;align-items:center;color:#74827f;font-size:10px;font-weight:600}.stat-icon{font-size:14px;color:#7ba6a0}.stat-value{font-size:24px;letter-spacing:-.04em;font-weight:720;margin:9px 0 3px}.stat-foot{font-size:10px;color:#8a9794}.positive{color:#19856e}
-    .grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(320px,.9fr);gap:16px;align-items:start}.panel{background:var(--paper);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);overflow:hidden}.panel-head{padding:17px 19px 13px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #edf0ef}.panel-title{font-size:13px;font-weight:720;letter-spacing:-.015em}.panel-sub{font-size:10px;color:#85918f;margin-top:3px}.filter{font-size:10px;padding:6px 9px;color:#506562;background:#f6f8f7;border:1px solid var(--line);border-radius:6px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th{text-align:left;padding:10px 15px;color:#879390;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#fbfcfc;border-bottom:1px solid #edf0ef}td{padding:13px 15px;border-bottom:1px solid #f0f2f1;font-size:11px;white-space:nowrap}tbody tr{cursor:pointer;transition:background .12s}tbody tr:hover,tbody tr.selected{background:#f3faf8}.cust{font-size:11px;font-weight:690}.subline{font-size:9px;color:#899592;margin-top:3px}.amount{font-weight:700;font-variant-numeric:tabular-nums}.aging{font-size:10px;font-weight:660}.tag{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:690}.tag.high{background:#fff0ed;color:#b44c43}.tag.med{background:#fff6e6;color:#a16b17}.tag.low{background:#eaf5ef;color:#42805e}.tag.state{background:#f1f4f3;color:#657572}.tag.done{background:#e4f5ed;color:#27805c}.tag.warn{background:#fff4e2;color:#a76e17}.score{font-size:11px;font-weight:720}.score small{display:block;font-size:9px;color:#889592;font-weight:500}.empty-state{text-align:center;color:#869391;padding:30px}
-    .right-stack{display:grid;gap:15px}.run-panel{padding:0}.run-banner{padding:15px 17px;background:#153c3b;color:white;display:flex;align-items:center;justify-content:space-between}.run-banner .panel-title{color:white}.run-banner .panel-sub{color:#b8ceca}.run-state{display:flex;align-items:center;gap:6px;background:#24524f;padding:5px 8px;border-radius:99px;color:#c9f088;font-size:9px;font-weight:700}.run-state .dot{width:6px;height:6px;background:#b6e36b;box-shadow:none}.flow{padding:13px 17px 4px}.step{position:relative;display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;min-height:49px;color:#9aa5a2}.step:not(:last-child):before{content:"";position:absolute;left:11px;top:22px;height:31px;width:1px;background:#e1e7e5}.step-icon{z-index:1;width:23px;height:23px;border:1px solid #dce3e1;background:white;border-radius:50%;display:grid;place-items:center;font-size:9px}.step.active{color:#244746}.step.active .step-icon{border-color:#5bb9ae;background:#e8f7f4;color:#087e78}.step.complete{color:#57756f}.step.complete .step-icon{background:#e7f5ef;border-color:#cde8db;color:#248466}.step-name{font-size:10px;font-weight:650;margin-top:2px}.step-desc{font-size:9px;color:#899592;margin-top:1px}.step-meta{font-size:9px;color:#899592;white-space:nowrap;margin-top:4px}.progress{height:3px;background:#eef2f0}.progress span{display:block;height:100%;width:0;background:#5bb9ae;transition:width .3s}
-    .activity{padding:14px 17px 16px}.activity-head{display:flex;justify-content:space-between;margin-bottom:11px}.activity-title{font-size:11px;font-weight:720}.activity-count{font-size:9px;color:#879390}.feed{display:grid;gap:12px;max-height:255px;overflow:auto}.event{display:grid;grid-template-columns:20px 1fr auto;gap:9px;align-items:start;animation:enter .26s ease}.event-icon{width:19px;height:19px;border-radius:6px;background:#eff6f4;color:#34877a;display:grid;place-items:center;font-size:9px}.event-text{font-size:10px;color:#526461;line-height:1.4}.event-text b{color:#284541;font-weight:680}.event-time{font-size:9px;color:#a0aaa7;white-space:nowrap}.feed-empty{font-size:10px;color:#899592;padding:15px 0;text-align:center}@keyframes enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-    .detail{padding:16px 17px}.detail-top{display:flex;justify-content:space-between;align-items:flex-start}.detail-name{font-size:14px;font-weight:720;letter-spacing:-.02em}.detail-id{font-size:9px;color:#869390;margin-top:3px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;padding:11px 0;border-top:1px solid #edf0ef;border-bottom:1px solid #edf0ef}.detail-metric label{display:block;font-size:9px;color:#8a9693}.detail-metric strong{display:block;margin-top:3px;font-size:12px}.explain{font-size:10px;color:#70807c;line-height:1.55}.explain b{color:#3d5751}.draft{margin-top:12px;padding:11px;background:#f7faf9;border:1px solid #e8eeec;border-radius:8px}.draft-head{display:flex;justify-content:space-between;align-items:center;font-size:9px;font-weight:720;color:#49625e;margin-bottom:6px}.draft-head span{color:#28836c;font-size:8px;text-transform:uppercase;letter-spacing:.06em}.draft-body{font-size:10px;line-height:1.55;color:#667572}.detail-actions{display:flex;gap:8px;margin-top:11px}.secondary{border:1px solid #dce5e2;background:#fff;color:#42615b;padding:7px 10px;border-radius:6px;font-size:9px;font-weight:680}.secondary:hover{background:#f4f8f7}.secondary:disabled{opacity:.45;cursor:default}.footer{display:flex;justify-content:space-between;align-items:center;color:#99a39f;font-size:9px;padding:18px 3px 0}.footer a{color:#59716b;text-decoration:none}.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,15px);background:#173d3b;color:white;padding:10px 14px;border-radius:8px;font-size:11px;opacity:0;transition:.2s;pointer-events:none;z-index:8}.toast.show{opacity:1;transform:translate(-50%,0)}
-    @media(max-width:1000px){.grid{grid-template-columns:1fr}.right-stack{grid-template-columns:1fr 1fr}.run-panel{grid-row:span 2}.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.shell{padding:0 14px 26px}.topbar{height:58px;margin-bottom:17px}.intro{align-items:flex-start;flex-direction:column;margin:20px 0 16px}.intro h1{font-size:25px}.run-wrap{width:100%;justify-content:space-between}.stats{grid-template-columns:repeat(2,1fr);gap:8px}.stat{padding:12px}.stat-value{font-size:21px}.right-stack{grid-template-columns:1fr}.run-panel{grid-row:auto}.top-actions .pill{display:none}.panel-head{padding:14px}.footer{gap:12px;align-items:flex-start;flex-direction:column}}
-  .model-evidence{margin:14px 0;padding:14px;background:white;border:1px solid var(--line);border-radius:10px;font-size:12px;overflow-wrap:anywhere}.model-evidence summary{cursor:pointer;font-weight:700}.model-evidence p{line-height:1.6}.model-evidence pre{white-space:pre-wrap;max-height:240px;overflow:auto}.model-evidence table{min-width:480px}
-</style>
-<style>
-    .event details {margin-top:5px;font-size:9px} .event summary {cursor:pointer;color:#087e78}
-    .event pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:9px;background:#f4f8f6;padding:8px;max-height:240px;overflow:auto}
-    .draft-body {white-space:pre-wrap;font-family:inherit;margin:0} .draft-subject {font-size:10px;font-weight:700;margin-bottom:8px}
-    .step.failed .step-icon {color:#bd514d;border-color:#bd514d;background:#fff0ed}
-    .error-box {background:#fff0ed;border:1px solid #efc9c2;color:#943f39;padding:12px;border-radius:8px;margin:0 0 16px;font-size:12px;white-space:pre-wrap}
-    [hidden] {display:none!important} .explain ul {padding-left:16px} .feed {max-height:330px}
-  .history-bar{display:flex;align-items:center;gap:10px;margin:0 0 16px;flex-wrap:wrap}.history-bar label{font-size:11px;font-weight:700}.history-bar select{max-width:100%;padding:7px;border:1px solid #dce5e2;border-radius:6px;background:white;color:#42615b;font-size:10px}
-  .model-evidence{margin:14px 0;padding:14px;background:white;border:1px solid var(--line);border-radius:10px;font-size:12px;overflow-wrap:anywhere}.model-evidence summary{cursor:pointer;font-weight:700}.model-evidence p{line-height:1.6}.model-evidence pre{white-space:pre-wrap;max-height:240px;overflow:auto}.model-evidence table{min-width:480px}
-</style>
-  <style>
-    .diagnostics{margin-top:24px;border:1px solid var(--line);border-radius:11px;background:white;padding:16px}
-    .diagnostics>summary{cursor:pointer;font-weight:700;color:#536e69}.diagnostics>.run-panel{margin-top:15px}.diagnostics>.history-bar{margin-top:16px}
-    .draft-head{flex-wrap:wrap;gap:8px}
-    #case-conversation pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;font-size:11px}
-    #case-conversation textarea{width:100%;min-height:90px;font:inherit;padding:10px;border:1px solid var(--line);border-radius:6px;box-sizing:border-box}
-    .case-message{border-left:3px solid #cde8db;padding:9px 12px;margin:12px 0;background:#f6faf8}
-  </style>
-  <script src="/assets/app.js" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workspace-3" />
+  <script src="/assets/app.js?v=workspace-3" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -45,9 +16,15 @@
   </header>
   <section class="intro">
     <div><div class="eyebrow">Order to cash · Collections workspace</div><h1>Charan's Collections Agent</h1><p>Review receivables, prioritize collections and inspect reminders and customer responses.</p></div>
-    <div class="run-wrap"><div class="last-run" id="last-run">No active run</div><button class="primary" id="start-run" disabled><span class="play">▶</span> Start agent</button></div>
+    <div class="run-wrap">
+      <div class="run-actions">
+        <details class="previous-runs" id="previous-runs"><summary>Previous runs</summary><div class="history-popover">  <section class="history-bar" aria-label="Saved run history"><label for="saved-runs">Choose a previous run</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · stored in Supabase</span></section></div></details>
+        <button class="primary" id="start-run" disabled><span class="play">▶</span> Start agent</button>
+      </div>
+      <div class="last-run" id="last-run">No active run</div>
+    </div>
   </section>
-  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices from Supabase, real Python execution and persistent history. Two models trained on synthetic history cover prevention and overdue recovery. Urgency uses rules. Reminders show whether LLM or template produced them; human review required. Starting the agent prepares drafts. Use Send email beside a draft to send it to the project test inbox. Customer replies entered here are simulated.</span></div>
+  <div class="notice"><span>ⓘ</span><span>Synthetic AR data · trained risk models · real email to the project test inbox · simulated customer replies on this website.</span></div>
   <div class="error-box" id="error-box" role="alert" hidden></div>
   <section class="stats" aria-label="Accounts receivable summary">
     <div class="stat"><div class="stat-top">Open receivables <span class="stat-icon">◌</span></div><div class="stat-value" id="metric-open">—</div><div class="stat-foot" id="open-note">Calculated after loading data</div></div>
@@ -56,30 +33,38 @@
     <div class="stat"><div class="stat-top">High urgency · eligible <span class="stat-icon">⌁</span></div><div class="stat-value" id="metric-high">—</div><div class="stat-foot">Rule score of at least 65/100</div></div>
     <div class="stat"><div class="stat-top">Eligible exposure <span class="stat-icon">↗</span></div><div class="stat-value" id="metric-eligible">—</div><div class="stat-foot" id="eligible-note">Calculated after loading data</div></div>
   </section>
-  <p class="panel-sub" id="demo-access-note">Checking demo access…</p>
-  <p class="panel-sub" id="preventive-caption">Start to inspect the preventive review queue.</p>
   <p class="panel-sub" id="preview-caption" hidden>Current AR data · read-only preview. Start the agent to prepare and save collection actions.</p>
   <main class="grid">
-    <section class="panel">
-      <div class="panel-head"><div><div class="panel-title">Collections work queue</div><div class="panel-sub" id="queue-sub">Start to load invoices</div></div><label for="queue-stage" class="panel-sub">Stage</label><select class="filter" id="queue-stage"><option value="all">All stages</option><option value="overdue">Overdue recovery</option><option value="pre_due">Before due · prevention</option></select><button class="filter" id="filter-btn">All invoices ▾</button></div>
-      <div class="table-wrap"><table><thead><tr><th>Customer / invoice</th><th>Open balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Next action</th></tr></thead><tbody id="queue"></tbody></table></div>
+    <section class="panel queue-column" aria-label="Accounts receivable work queue">
+      <div class="panel-head">
+        <div><div class="panel-title">Collections work queue</div><div class="panel-sub" id="queue-sub">Loading invoices…</div></div>
+        <div class="queue-tools">
+          <div class="stage-filters" role="group" aria-label="Invoice stage">
+            <button id="stage-overdue" aria-pressed="true">Overdue <span id="overdue-count">0</span></button>
+            <button id="stage-preventive" aria-pressed="false">Preventive <span id="preventive-count">0</span></button>
+          </div>
+          <button class="filter" id="filter-btn" aria-pressed="false">All urgency</button>
+        </div>
+        <p class="panel-sub" id="preventive-caption">Prevention is scored seven days before due.</p>
+      </div>
+      <div class="table-wrap"><table class="ar-table"><thead><tr><th>Customer / invoice</th><th>Open balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Next action</th></tr></thead><tbody id="queue"></tbody></table></div>
     </section>
     <div class="right-stack">
       <section class="panel detail" id="detail" aria-label="Selected invoice"></section>
       <section class="panel detail" id="case-conversation" aria-label="Customer conversation" aria-live="polite"><p class="explain">Loading this browser’s saved cases…</p></section>
     </div>
-  </main>
-  <details class="diagnostics"><summary>Agent activity and technical details</summary>
+    <aside class="agent-column" aria-label="Live agent execution">
       <section class="panel run-panel">
         <div class="run-banner"><div><div class="panel-title">Agent execution</div><div class="panel-sub" id="run-caption">Connecting…</div></div><div class="run-state"><i class="dot"></i><span id="state-label">WAITING</span></div></div>
         <div class="flow" id="flow"></div><div class="progress"><span id="progress-bar"></span></div>
-        <div class="activity"><div class="activity-head"><span class="activity-title">Execution evidence</span><span class="activity-count" id="event-count">0 events</span></div><div class="feed" id="feed" aria-live="polite"></div></div>
+        <div class="activity"><div class="activity-head"><span class="activity-title">Live activity</span><span class="activity-count" id="event-count">0 events</span></div><div class="feed" id="feed" aria-live="polite"></div></div>
       </section>
+    </aside>
+  </main>
 
-  <section class="history-bar" aria-label="Saved run history"><label for="saved-runs">Saved runs</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open saved run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · stored in Supabase</span></section>
   <details id="model-evidence" class="model-evidence"><summary>Payment-risk model evidence</summary><p>Start a run to inspect the model used for that snapshot.</p></details>
-  </details>
-  <footer class="footer"><span>Collections Agent · M6 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
+  <p class="panel-sub" id="demo-access-note">Checking demo access…</p>
+  <footer class="footer"><span>Collections Agent · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
 </body>

@@ -1,4 +1,4 @@
-> Latest V2.2: **Send email** beside the draft sends through Resend without an owner-token panel or dry-run step. [Setup and hands-on lesson](docs/MILESTONE_V2_2.md): SQL008 after007, then manual Render deploy. LangGraph/control modes are next.
+> Latest V2.3: readable full-width three-column workspace, visible live agent execution, Previous runs beside Start, and Overdue/Preventive filter buttons. [Setup and hands-on lesson](docs/MILESTONE_V2_3.md): merge/pull and manual Render deploy; no new SQL or packages. LangGraph/control modes are next.
 
 # Charan's O2C Collections Agent
 
