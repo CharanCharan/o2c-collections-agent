@@ -1,18 +1,30 @@
 ---
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
-updated: 2026-10-17
-implementation_milestone: V2_5_promise_followups
-implementation_branch: promise-followups-scroll-workspace
+updated: 2026-10-18
+implementation_milestone: V2_6_collections_controls
+implementation_branch: collections-controls-ux
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: SQL012_deploy_promise_due_followup_and_panel_scrolling
+pending_learning_check: deploy_business_controls_and_selected_invoice_continuation
 next_milestone: guided_interviewer_walkthrough_then_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.5 promise follow-ups and scrolling — authoritative current checkpoint
+## V2.6 collections controls — authoritative current checkpoint
+
+PR#15 merged aeebec1b0aea5a8684ecf39f284aceef38d4c589; compare03c79629 to main showed mergeonly/nofiles. User explicitly approves business-friendly names, asks to move overview/promise banners to buttons beside Run collections, and invoice-specific continuation atop selected customer/email. Branch collections-controls-ux, lesson docs/MILESTONE_V2_6.md. UI-only: no backend/SQL/dependencies/envchanges. KeepSQL012previousprerequisite. Learnerreview/merge/manualdeploy/acceptancepending.
+
+Header now Run collections primary, Portfolio overview, Payment promises and Collections run history asnative details panels withcounts/progress badges, oneopenatatime/outsideclick/Escape dismissal/focusreturn. Existing workflow-summary/followup-controls IDs movedinsideheaderpanels, notdeleted/duplicated; no fullwidthbanner rowsbelowmetrics. Responsiveheaderwrap/panels, all8tablecols andV2.5bounded/internal/horizontalnavigation retained. Read-onlypreview and savedcases stillpreload; openingmenus creates no run/model/email action.
+
+Modes Review & approve/Automatic processing mapunchanged limited/autopilot. Process due promises, Set simulation date, Advance simulation by7days, Continue promise processing, Continue collections run; approvalspecificRecordpaymentpromise/Sendreminder/Sendfollowup, declineLeaveforreview. ExecutionlabelCollectionsactivity/Invoiceactivity; savednodeheadingsmappedbusinessdescriptions, actualmessages/evidence/APIs unchanged. Datechanges stillnosend; explicitduechecks/savedcasepolicies/budgets unchanged; no scheduler.
+
+Selectedcustomerheader shows shortCollectioncaseUUIDreference/titlefullUUID and Continue invoice processing onlyifworkflowprocessing orlatest(notanyold)replypending/reserved, noapprovalpending andnoUIactivejob/check/action. ReusesPOST/api/cases/{id}/resume withselectedcasefullID andexistingownership/checkpoints/idempotency. NoContinueforcompleted/waitingpromise/pendingapproval; specificapprovalbuttoninstead. Former lowerconversationresumebuttonremoved. Poll/headerbindingrefresh fromsavedcase; reply/approvalfailure refreshes cases sointerruptionvisible; successfulresumehidesbutton; switchinginvoicesscopesheadercorrectly. No case reset or reauthorization.
+
+Validation:22 followup/email actualSQL/API regressiontests passed withmockproviders. LocalHTTP/SSE/cookieJSDOM passed menuplacement/oneopen/Escape/no-startonopen, all8columns, promise/date/due/followuprealmocksend/signeddelivery/reload. Injectedrealgraphreconcileeffectfailure surfaced correctselectedinvoiceContinueaboveemail, notanotherinvoice; resumecompletedmatchwithoutanothermodelcall andbuttondisappeared. JSsyntaxpassed. No liveprovider/cloudwrite/deploy or actualpixel/viewportverification. Setupmerge/pull/manualdeployonly; newlesson/controlmap +knowledge/plan/AGENTSupdated. Nextguidedinterviewerwalkthrough, visitoreditorlast.
+
+## Historical V2.5 promise follow-ups and scrolling
 
 PR#14 mergedebcbe4693c5086779b14754fb8519bf0ae5edd00, comparea141d97f→main mergeonly/nofiles. User authorizes nextmilestone promise/duefollowup and requests fixedtableheight, consistentthreecolumnscroll and visiblehorizontalnavigation. Currentbranch promise-followups-scroll-workspace. Newlesson docs/MILESTONE_V2_5.md. Review/merge/SQL012/manualdeploy and learner/live acceptance pending. No actualprovider calls/cloudDBwrites/deploy byassistant.
 

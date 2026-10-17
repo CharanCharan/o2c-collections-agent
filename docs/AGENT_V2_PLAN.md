@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.6 UI uses Run collections, compact Portfolio overview/Payment promises/Collections run history panels beside it, and a selected-invoice case reference/conditional Continue invoice processing aboveemail. Business mode/action names, existing backendbehavior unchanged. No newSQL/packages/env, keep012prerequisite. LessonMILESTONE_V2_6.md; merge/deploy/learneracceptancepending.
+
 V2.5 implements explicit demo-clock due checks and fixed-recipient follow-up email with durablejobs, savedapproval/automaticallocations and separate initial/followup history. Full/partial/unmatched syntheticledger evidence controlsoutreach; no sourcebalancechange or scheduler. Currentlesson MILESTONE_V2_5.md; SQL012+manualdeploy. UI nowboundedpanels, nonstickyexecution and persistenthorizontalnavigation, all8columnsretained. Review/liveacceptancepending.
 
 User override: SQL011 removes daily browser/global Start quotas; signed ownership and all metered model/email limits stay. No daily run allowance after migration, repeatedStarts preserve cases and do not resend. Apply SQL011 +manualdeploy; see current lesson. Prior run-cap design below is historical.
