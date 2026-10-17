@@ -7,11 +7,11 @@
   <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="/assets/favicon.ico?v=1" />
   <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/favicon.svg?v=1" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-9" />
-  <script src="/assets/invoice-ui.js?v=workflow-9" defer></script>
-  <script src="/assets/followup-ui.js?v=workflow-9" defer></script>
-  <script src="/assets/workflow-ui.js?v=workflow-9" defer></script>
-  <script src="/assets/app.js?v=workflow-9" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-10" />
+  <script src="/assets/invoice-ui.js?v=workflow-10" defer></script>
+  <script src="/assets/followup-ui.js?v=workflow-10" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-10" defer></script>
+  <script src="/assets/app.js?v=workflow-10" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -24,7 +24,7 @@
     <div class="run-wrap">
       <div class="run-actions" aria-label="Collections actions">
         <button class="primary" id="start-run" disabled><span class="play">▶</span> Run collections</button>
-        <details class="header-menu" id="portfolio-menu"><summary>Portfolio overview <span class="menu-count" id="portfolio-count">—</span></summary><div class="action-popover"><section id="workflow-summary" class="workflow-summary" aria-label="Portfolio outcomes" aria-live="polite"></section></div></details>
+        <details class="header-menu" id="portfolio-menu"><summary>Run overview <span class="menu-count" id="portfolio-count">—</span></summary><div class="action-popover"><section id="workflow-summary" class="workflow-summary" aria-label="Run results and current invoice outcomes" aria-live="polite"></section></div></details>
         <details class="header-menu" id="promises-menu"><summary>Payment promises <span class="menu-count" id="promise-count">—</span></summary><div class="action-popover promise-popover"><section id="followup-controls" class="followup-controls" aria-label="Promise-to-pay management"></section></div></details>
         <details class="previous-runs header-menu" id="previous-runs"><summary>Collections run history</summary><div class="history-popover action-popover"><section class="history-bar" aria-label="Collections run history"><label for="saved-runs">Choose a collections run</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · saved history</span></section></div></details>
       </div>
@@ -50,13 +50,12 @@
             <button id="stage-overdue" aria-pressed="true">Overdue <span id="overdue-count">0</span></button>
             <button id="stage-preventive" aria-pressed="false">Preventive <span id="preventive-count">0</span></button>
           </div>
-          <button class="filter" id="filter-btn" aria-pressed="false">All urgency</button>
+          <button class="filter" id="filter-btn" aria-pressed="false">All urgency</button><button class="filter" id="clear-outcome-filter" hidden>Clear result filter</button>
         </div>
-        <p class="invoice-open-hint" id="invoice-open-hint">Select any invoice row to open its reminder and customer reply side by side.</p>
+        <p class="invoice-open-hint" id="invoice-open-hint">Click a row to open email &amp; reply.</p>
         <p class="panel-sub" id="preventive-caption">Prevention is scored seven days before due.</p>
       </div>
-      <div class="table-navigation"><span id="table-scroll-hint">Scroll sideways for all 8 columns →</span><div><button class="secondary" id="table-scroll-left" aria-label="Scroll invoice table left">←</button><input id="table-position" type="range" min="0" max="100" value="0" aria-label="Horizontal position in invoice table"><button class="secondary" id="table-scroll-right" aria-label="Scroll invoice table right">→</button></div></div>
-      <div id="queue-scroll" class="table-wrap" tabindex="0" role="region" aria-label="Invoice queue; scroll horizontally for all columns"><table class="ar-table"><thead><tr><th>Customer / invoice</th><th>Source balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Collection status</th><th>Next action</th><th>Latest activity</th></tr></thead><tbody id="queue"></tbody></table></div>
+      <div id="queue-scroll" class="table-wrap" tabindex="0" role="region" aria-label="Invoice queue; scroll horizontally for all columns"><table class="ar-table"><thead><tr><th>Customer / invoice</th><th>Source balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Current status</th><th>Last completed action</th><th>Next step</th></tr></thead><tbody id="queue"></tbody></table></div>
     </section>
     <aside class="agent-column" aria-label="Live agent execution">
       <section class="panel run-panel">

@@ -4,7 +4,11 @@ Last updated: 2026-10-18
 Owner: Charan
 Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. PR#8 merged c5778663 and user confirms preload works. Current v2-visitor-cases implements conversation/case foundation, SQL007 setup pending; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
-## Current milestone — V2.7 queue-first invoice dialog
+## Current milestone — V2.8 run results and compact queue
+
+PR17 merged1b959e05. Implement saved per-invoice run delta reports in existingjobJSON, frozen results vs currentaction/waitingsections, truthfullegacy/partial handling, countfilters and deliveryseparate. Compactwrappingqueueheader, remove customslider, finalcols Currentstatus/Lastcompletedaction/Nextstep. NoSQL/packages/env; lessonV2_8. 42 targeted SQL/API/graph/reporting checks +HTTP/SSE/JSDOMjourney passed; learnermerge/manualdeploy/visualchecks pending. Next guidedinterviewerwalkthrough, editorlast.
+
+## Historical milestone — V2.7 queue-first invoice dialog
 
 PR16 merged2a0e80f6. Userapproveslandingtable+execution, widerqueue, rowopenssidebysideemail/replydialog, clickhints+favicon. UI-only/noSQL/packages/env; currentlessonV2_7. Keep8fields/policies/Continuecasecontrol/compactheader; dialogreadonlyuntilaction. 8regressions andactualHTTP/SSE/JSDOMdialog/focus/recovery/promise flows passed; learnermerge/manualdeploy/nativebrowseracceptancepending. Nextguidedinterviewerwalkthrough, editorlast.
 

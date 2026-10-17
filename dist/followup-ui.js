@@ -65,19 +65,3 @@ async function initFollowups(health) {
   renderFollowupControls();
 }
 
-function initTableNavigation() {
-  const viewport=$('queue-scroll'),slider=$('table-position');
-  const sync=()=>{
-    const max=Math.max(0,viewport.scrollWidth-viewport.clientWidth);
-    slider.disabled=!max;slider.value=max?Math.round(100*viewport.scrollLeft/max):0;
-    $('table-scroll-left').disabled=viewport.scrollLeft<=0;
-    $('table-scroll-right').disabled=viewport.scrollLeft>=max-1;
-    $('table-scroll-hint').textContent=max?'Scroll sideways for all 8 columns →':'All 8 columns · scroll sideways if needed';
-  };
-  slider.oninput=()=>{viewport.scrollLeft=(viewport.scrollWidth-viewport.clientWidth)*Number(slider.value)/100;sync();};
-  $('table-scroll-left').onclick=()=>{viewport.scrollLeft=Math.max(0,viewport.scrollLeft-Math.max(250,viewport.clientWidth*.7));sync();};
-  $('table-scroll-right').onclick=()=>{viewport.scrollLeft=Math.min(viewport.scrollWidth-viewport.clientWidth,viewport.scrollLeft+Math.max(250,viewport.clientWidth*.7));sync();};
-  viewport.addEventListener('scroll',sync);window.addEventListener('resize',sync);
-  if(window.ResizeObserver)new ResizeObserver(sync).observe(viewport);
-  sync();
-}
