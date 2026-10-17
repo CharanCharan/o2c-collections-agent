@@ -1,14 +1,14 @@
-> Latest V2.3: readable full-width three-column workspace, visible live agent execution, Previous runs beside Start, and Overdue/Preventive filter buttons. [Setup and hands-on lesson](docs/MILESTONE_V2_3.md): merge/pull and manual Render deploy; no new SQL or packages. LangGraph/control modes are next.
+> Latest V2.4: [setup and hands-on lesson](docs/MILESTONE_V2_4.md). After merge/pull, apply SQL009 then010 in Supabase, install updated requirements and manually deploy the existing Render service. Adds15 synthetic scenarios (24total with original9), durable graph checkpoints and limited/autopilot modes. No new paid service or API key. Existing cases/history are preserved.
 
 # Charan's O2C Collections Agent
 
 Canonical repository: https://github.com/CharanCharan/o2c-collections-agent
 
-Milestone 6 prepares this repository for a public interview demo on one RenderFree Python service. Visitors click Start and see real Supabase ingestion, risk scoring and draft results, with their own browser's saved history. Real email activity is owner-only. SQL-backed daily quotas bound public work. Existing controlled email/reply/follow-up tools and configurable Groq model remain.
+Milestone 6 prepares this repository for a public interview demo on one RenderFree Python service. Visitors click Start and see real Supabase ingestion, risk scoring and draft results, with their own browser's saved history. Visitors can send a saved reminder to the server-configured project test inbox; private inbound/operator activity remains restricted. SQL-backed daily quotas bound public work. Existing controlled email/reply/follow-up tools and configurable Groq model remain.
 
 The deployment is not live until you configure your own account/secrets and verify its actual URL. Email/LLM default off. Only synthetic AR data belongs in the public demo; claims of payment never reduce invoice balances.
 
-The workspace update puts invoices, reminders and email activity first, with diagnostics below. Initial load reads the current Supabase portfolio without starting a run or spending model/email quota. [V2 design](docs/AGENT_V2_PLAN.md) proposes the next isolated visitor inbox, LangGraph control modes and event-driven case handling; these are not implemented yet.
+The current workspace preloads source AR and saved browser cases before Start. Its three columns show invoices, customer/email conversation and live execution. Collection status, next action and latest activity are separate. A real LangGraph case workflow supports limited approvals, bounded autopilot and automatic processing of clearly simulated website replies. Synthetic document/payment tools demonstrate disputes and reconciliation without changing source balances.
 
 ## Start here
 
@@ -32,7 +32,7 @@ python -m venv .venv
 
 Open http://localhost:8000 . Health: http://localhost:8000/api/health . API explorer: http://localhost:8000/docs . Direct environment Python avoids PowerShell activation-policy issues; no extra Python installation is needed. On macOS/Linux use `.venv/bin/python` instead.
 
-Expected after SQL003 plus original seed values: nine invoices, USD 431,700 open AR, USD 372,200 past due, USD 308,000 eligible recovery exposure, three not-yet-due invoices (two at the scoring checkpoint), four overdue templates. Six stages / 13 events; separate prevention/recovery risk labels. Fixed snapshot date: 2026-10-17.
+Historical nine-invoice baseline before SQL010: nine invoices, USD 431,700 open AR, USD 372,200 past due, USD 308,000 eligible recovery exposure, three not-yet-due invoices (two at the scoring checkpoint), four overdue templates. Six stages / 13 events; separate prevention/recovery risk labels. Fixed snapshot date: 2026-10-17.
 
 ## Code and learning map
 
@@ -57,6 +57,9 @@ Expected after SQL003 plus original seed values: nine invoices, USD 431,700 open
 | `backend/webhook_gateway.py` | Optional local callback-only forwarding helper; main app stays private |
 | `backend/public_demo.py`, `sql/006_public_demo.sql` | Signed sessions, run ownership, private email filtering and durable quotas |
 | `render.yaml`, `scripts/check_deployment.py` | Free cloud configuration and read-only live verification |
+| `backend/workflow/`, `sql/009_case_workflow.sql` | Durable LangGraph cases, approvals, tools, checkpoints and jobs |
+| `sql/010_seed_scenarios.sql` | Fifteen additive synthetic invoice/document/payment scenarios |
+| `dist/workflow-ui.js` | Modes, case states, action trace, outcomes and polling |
 | `tests/` | Storage, API, PostgreSQL, ML export/label/policy checks |
 
 - [Project knowledge](PROJECT_KNOWLEDGE.md): implementation contracts and continuation context.
@@ -94,7 +97,7 @@ This generates two independent sets of 4,000 synthetic records each, fits on pas
 
 Run one backend process per database, with no multiple Uvicorn workers. Restart marks abandoned active runs interrupted; completed history stays saved. This is persistence, not a durable job queue. Saved-run controls list the latest 20; older runs remain in the database.
 
-This POC has browser-session isolation and owner tools in public mode; it does not provide enterprise authentication. Use only synthetic data. Visitor data editing is deferred until after M6. Supabase Free can pause after inactivity; check/resume before demos. No paid upgrade is required by this milestone.
+This POC has browser-session isolation and owner tools in public mode; it does not provide enterprise authentication. Use only synthetic data. Visitor data editing is deferred until the current case workflow is accepted. Supabase Free can pause after inactivity; check/resume before demos. No paid upgrade is required by this milestone.
 
 Use only this repository. Push your edits before the next milestone. Review/merge milestone PRs, then pull `main` locally. Keep `.env` private and ignored; never paste secrets into chat, browser code or Git.
 
@@ -106,12 +109,12 @@ Defaults: four draft attempts/run, twenty total attempts/process, 2048 max compl
 
 ## Controlled email boundary
 
-EMAIL_ENABLED defaults false. Resend key/signing secret and32+character independent owner token stay private. Owner confirmation sends the saved draft only to EMAIL_TEST_RECIPIENT, your own Resend signup inbox. SQL persists exact payload, stable idempotency and ten new send reservations per UTC day; errors remain uncertain and require manual reconciliation/retry. Accepted differs from delivered. Replies need signed callback plus expected sender/thread checks and human review. Tasks/payment claims do not mutate invoice balances. Use only synthetic demo content.
+EMAIL_ENABLED defaults false. Resend key/signing secret stay private. The website Send email action (or bounded autopilot authorization) sends the saved draft only to EMAIL_TEST_RECIPIENT, your own Resend signup inbox. EMAIL_OWNER_TOKEN is optional for legacy private administration; it is not required by the website. SQL persists exact payload, stable idempotency and ten new send reservations per UTC day; errors remain uncertain and require manual reconciliation/retry. Accepted differs from delivered. Real inbound replies need signed callback plus expected sender/thread checks and private human review. Clearly labelled website replies are simulated and automatically processed by the case graph. Tasks/payment claims do not mutate invoice balances. Use only synthetic demo content.
 
 [M5 guide](docs/MILESTONE_5.md) preserves the local callback-forwarding lesson. For hosting, use [M6](docs/MILESTONE_6.md): the main cloud app handles callbacks directly, protects private email/history and enforces durable LLM quotas. Keep unrestricted local mode private.
 
 ## Public deployment boundary
 
-PUBLIC_DEMO requires distinct32+character DEMO_SESSION_SECRET and EMAIL_OWNER_TOKEN. Render refuses unrestricted local mode. Secure signed browser cookies isolate run history; owner login unlocks private email/history. Global daily SQL caps:20runs and40modelattempts; visitors3runs/8attempts. Cookie clearing is not person-level authentication; global caps still apply. Owner email remains10new reservations/day. No paid-provider fallback. Free Render sleeps, so manually wake/check before interviews; a stable URL is not always-on hosting. Supabase remains durable storage. Monitor hosting billing/allowances and provider Free status.
+PUBLIC_DEMO requires a32+character DEMO_SESSION_SECRET. An optional legacy EMAIL_OWNER_TOKEN, if configured, must be distinct and32+characters. Render refuses unrestricted local mode. Secure signed browser cookies isolate run history; owner login unlocks private email/history. Global daily SQL caps:20runs and40modelattempts; visitors3runs/8attempts. Cookie clearing is not person-level authentication; global caps still apply. All email shares10new reservations/day. No paid-provider fallback. Free Render sleeps, so manually wake/check before interviews; a stable URL is not always-on hosting. Supabase remains durable storage. Monitor hosting billing/allowances and provider Free status.
 
 GET `/api/webhooks/resend` reports reachability; actual callback requires a signature. Update Resend to the real cloud URL, use its endpoint signing secret, then Replay failed events instead of resending the email. See M6 for precise diagnosis/acceptance and provider limitations.

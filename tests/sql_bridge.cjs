@@ -11,6 +11,7 @@ const {PGlite} = require('@electric-sql/pglite');
   await db.exec(fs.readFileSync('sql/006_public_demo.sql','utf8'));
   await db.exec(fs.readFileSync('sql/007_visitor_cases.sql','utf8'));
   await db.exec(fs.readFileSync('sql/008_case_email.sql','utf8'));
+  await db.exec(fs.readFileSync('sql/009_case_workflow.sql','utf8'));
   const seed=fs.readFileSync('sql/002_seed_demo.sql','utf8');
   await db.exec(seed);
   console.log(JSON.stringify({ready:true}));
@@ -22,7 +23,7 @@ const {PGlite} = require('@electric-sql/pglite');
       try {
         let data;
         if(q.command==='reset') {
-          await db.exec('truncate public.ca_demo_usage; truncate public.ca_runs cascade; truncate public.ca_invoices; truncate public.ca_demo_settings;');
+          await db.exec('truncate public.ca_demo_usage; truncate public.ca_runs cascade; truncate public.ca_invoices cascade; truncate public.ca_demo_settings;');
           await db.exec(seed);data=true;
         } else if(q.command==='sql') {
           data=(await db.query(q.sql,q.params||[])).rows;

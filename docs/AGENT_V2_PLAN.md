@@ -1,3 +1,13 @@
+# V2 current implementation checkpoint
+
+V2.4 implements the durable case workflow described in [the hands-on lesson](MILESTONE_V2_4.md). Actual LangGraph nodes, Supabase checkpoints, limited-mode interrupts, bounded autopilot, server-side Start continuation and controlled scenario tools are implemented on langgraph-case-workflow; merge/SQL009+010/deploy and learner acceptance remain pending. PR#11 UI is merged. No live external calls/deployment by assistant.
+
+The AR table separates source balance, collection status, next action and completed activity. Send simulated reply automatically processes website events; real outbound still uses Resend to the configured project test inbox. Source AR is never marked paid by a claim/demo match. Existing cases keep original mode/history, autopilot reserves max3 newly eligible sends/job, free-only/global limits remain. Documentary evidence is synthetic and retrieved for review, not automatically emailed. Promise check-after dates are stored; demo clock/unattended due scheduling/voice/editor remain future work. Real inbound remains the private review channel.
+
+The rest of this document preserves earlier design history. Statements saying graph/modes are “next” are superseded by this checkpoint and PROJECT_KNOWLEDGE.md. The current layout is three columns with execution always visible, not collapsed below.
+
+---
+
 > Latest V2.3 UI overrides earlier layout: three desktop columns AR|customer/draft/conversation|live execution, execution always expanded, header Previous runs, Overdue/Preventive buttons and larger type. Fixture classifier UI removed; typed conversation stays. This UI PR requires no new SQL/packages/env. LangGraph/checkpoint/modes follows as the next dedicated milestone.
 
 > Latest V2.2 implementation supersedes earlier token/send phasing below: direct Send email beside draft, automatic case opening, real Resend send to fixed project test inbox and session-only status projection are implemented on draft-email-action. Owner/dry-run UI removed; owner token optional legacy API only. SQL008 after007. Graph/autopilot/limited-mode interrupts remain next. docs/MILESTONE_V2_2.md is current.

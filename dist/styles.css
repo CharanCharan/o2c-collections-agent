@@ -148,3 +148,17 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
   .ar-table {min-width:600px}.detail {padding:16px}.footer {flex-direction:column}
 }
 @media(prefers-reduced-motion:reduce) {* {transition:none!important}}
+/* Workflow state is separate from source AR amounts. */
+.ar-table th:first-child {width:26%}.ar-table th:nth-child(2) {width:17%}
+.ar-table th:nth-child(3) {width:18%}.ar-table th:nth-child(4) {width:19%}.ar-table th:last-child {width:20%}
+.workflow-summary {padding:13px 16px;margin:12px 0;border:1px solid #cbded1;border-radius:10px;background:#edf6f0;font-size:15px}
+.outcome-counts {display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:14px;color:#426453}
+.case-trace {display:grid;gap:12px;max-height:350px;overflow:auto;font-size:14px}
+.case-trace-item {border-left:3px solid #b9d9c2;padding-left:10px}.case-trace-item small {font-size:13px;color:var(--muted)}
+.case-outcome {padding:12px;border:1px solid var(--line);border-radius:8px;background:#f2f8f4;font-size:14px;margin:12px 0}
+.case-outcome h3 {margin:0 0 8px;font-size:17px}.case-outcome button {margin:4px}
+#agent-mode-dialog {width:min(540px,calc(100vw - 32px));border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:0 12px 60px #142a2b38;background:white;color:var(--ink)}
+#agent-mode-dialog::backdrop {background:#142a2b66}
+#agent-mode-dialog h2 {font-size:24px;margin-top:0}#agent-mode-dialog .primary {width:100%;margin:12px 0;justify-content:center;text-align:center}
+
+.amount .subline {white-space:normal;overflow-wrap:anywhere}
