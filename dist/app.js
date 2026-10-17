@@ -134,13 +134,15 @@ function renderQueue() {
   $("queue").innerHTML = rows.length ? rows.map((row) => {
     const v=rowView(row);
     return `<tr tabindex="0" data-id="${escapeHTML(row.id)}" aria-label="Inspect ${escapeHTML(row.customer)}" class="${row.id===state.selectedId?'selected':''}">
-      <td><div class="cust">${escapeHTML(row.customer)}</div><div class="subline">${escapeHTML(row.id)} · ${escapeHTML(timingLabel(row))}</div>
-        ${row.prediction?.status==='scored'?`<div class="subline">${(100*probability(row.prediction)).toFixed(1)}% ${isPreDue(row.prediction)?'becomes overdue':'unpaid in 30 days'}</div>`:''}</td>
+      <td><div class="cust">${escapeHTML(row.customer)}</div><div class="subline">${escapeHTML(row.id)}</div></td>
       <td class="amount">${money(row.amount)}${v.w?.reconciliation?`<div class="subline">Demo remaining ${money(v.w.reconciliation.remaining_amount)}</div>`:''}</td>
+      <td>${dateLabel(row.due)}<div class="subline">${escapeHTML(timingLabel(row))}</div></td>
+      <td><span class="tag ${row.score == null ? 'state' : row.level}">${row.score == null ? (row.days === 0 ? 'Not overdue' : 'Awaiting rules') : `${row.score}/100 · ${escapeHTML(row.level)}`}</span></td>
+      <td>${row.prediction?.status==='scored'?`<strong>${(100*probability(row.prediction)).toFixed(1)}%</strong><div class="subline">${isPreDue(row.prediction)?'Becomes overdue':'Unpaid in 30 days'}</div>`:'<span class="subline">No matching prediction</span>'}</td>
       <td><span class="tag ${v.status.includes('dispute')?'warn':'state'}">${escapeHTML(v.label)}</span></td>
       <td>${escapeHTML(v.next)}</td><td>${escapeHTML(v.latest)}${v.timestamp?`<div class="subline">${escapeHTML(new Date(v.timestamp).toLocaleTimeString())}</div>`:''}</td>
     </tr>`;
-  }).join('') : `<tr><td colspan="5" class="empty-state">${state.invoices.length?'No invoices match this filter.':'Waiting for invoice data.'}</td></tr>`;
+  }).join('') : `<tr><td colspan="8" class="empty-state">${state.invoices.length?'No invoices match this filter.':'Waiting for invoice data.'}</td></tr>`;
   renderWorkflowSummary();renderCaseExecution();
   $("queue").querySelectorAll("tr[data-id]").forEach((row) => {
     const select = () => {state.selectedId = row.dataset.id; renderQueue(); renderDetail();};

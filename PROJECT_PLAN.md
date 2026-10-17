@@ -4,7 +4,11 @@ Last updated: 2026-10-17
 Owner: Charan
 Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. PR#8 merged c5778663 and user confirms preload works. Current v2-visitor-cases implements conversation/case foundation, SQL007 setup pending; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
-## Current milestone — V2.4 implementation ready, learner acceptance pending
+## Current correction — risk columns and webhook configuration
+
+PR#12 merged0f795f6. Restore dedicated Due / aging, Rule urgency and ML risk · target shown without dropping source balance/status/next/activity. Eight readable columns with panel horizontal scrolling. User's webhook409 is the running EMAIL_ENABLED=false gate; enable it in Render environment, save/redeploy, check health.email.ready and Replay a failed event. Live URL/signed success evidence pending; no live verification claimed. No newSQL/packages.
+
+## V2.4 implementation — learner acceptance pending
 
 PR#11 three-column UI merged58492dc5. The next milestone implements durable LangGraph cases, limited/autopilot modes, separate collection status/next action/latest activity, automatic processing of explicitly simulated website replies and15 additive scenarios. See [V2.4 lesson](docs/MILESTONE_V2_4.md) and authoritative PROJECT_KNOWLEDGE.md checkpoint. Existing two ML models, real fixed-recipient Resend delivery and free-only limits retained.
 

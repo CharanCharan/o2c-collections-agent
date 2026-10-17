@@ -27,7 +27,13 @@ def check(origin):
         assert error.code==401,'Private email access did not reject visitor correctly.'
     else:raise AssertionError('Private email route exposed to visitor.')
     print('PASS: cloud health, public-mode configuration, webhook reachability, fresh-session history isolation and private email gate.')
-    print('No run, LLM call or email was triggered. Next verify Start in a private browser, then an owner-approved email/reply.')
+    email=health.get('email',{})
+    if email.get('ready'):
+        print('Email configuration ready; signed webhook processing still needs a Resend Replay and saved matching evidence.')
+    else:
+        print('EMAIL/WEBHOOK NOT READY:',email.get('configuration_error') or 'Check server email settings.')
+        print('Reachability passed only. Set EMAIL_ENABLED=true with private Resend settings, save/redeploy, then Replay a failed event.')
+    print('No run, LLM call or email was triggered. Next verify Start in a private browser and a signed callback.')
 
 
 if __name__=='__main__':

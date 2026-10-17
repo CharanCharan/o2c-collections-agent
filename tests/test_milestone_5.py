@@ -77,7 +77,13 @@ def test_disabled_email_owner_auth_confirmation_and_recipient_injection(store_fa
     with client_for(store_factory,provider,replace(CONFIG,enabled=False)) as c:
         run,_=finish(c);rid=run['run_id']
         assert send(c,rid).status_code==409
-        assert not provider.sent
+        raw,headers=signed({'type':'email.delivered','data':{'email_id':str(uuid4())}})
+        blocked=c.post('/api/webhooks/resend',content=raw,headers=headers)
+        assert blocked.status_code==409
+        assert blocked.json()['detail']=='Live email is disabled. No email attempted.'
+        assert c.get('/api/webhooks/resend').json()['status']=='reachable'
+        assert c.get('/api/health').json()['email']['enabled'] is False
+        assert not provider.sent and not provider.gets
     with client_for(store_factory,provider) as c:
         run,_=finish(c);path=f"/api/runs/{run['run_id']}/invoices/{INVOICE}/send-email"
         assert c.post(path,json={'confirm_reviewed':True}).status_code==401

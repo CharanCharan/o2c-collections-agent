@@ -149,8 +149,16 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 }
 @media(prefers-reduced-motion:reduce) {* {transition:none!important}}
 /* Workflow state is separate from source AR amounts. */
-.ar-table th:first-child {width:26%}.ar-table th:nth-child(2) {width:17%}
-.ar-table th:nth-child(3) {width:18%}.ar-table th:nth-child(4) {width:19%}.ar-table th:last-child {width:20%}
+/* Keep all eight business fields readable; scroll inside the AR panel. */
+.ar-table {min-width:1180px}
+.ar-table th:first-child {width:17%}
+.ar-table th:nth-child(2) {width:11%}
+.ar-table th:nth-child(3) {width:11%}
+.ar-table th:nth-child(4) {width:10%}
+.ar-table th:nth-child(5) {width:12%}
+.ar-table th:nth-child(6) {width:12%}
+.ar-table th:nth-child(7) {width:13%}
+.ar-table th:last-child {width:14%}
 .workflow-summary {padding:13px 16px;margin:12px 0;border:1px solid #cbded1;border-radius:10px;background:#edf6f0;font-size:15px}
 .outcome-counts {display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:14px;color:#426453}
 .case-trace {display:grid;gap:12px;max-height:350px;overflow:auto;font-size:14px}

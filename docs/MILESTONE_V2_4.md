@@ -37,7 +37,9 @@ If SQL009 is missing, current AR still loads, health reports workflow not ready,
 
 Open the site. Confirm current AR is already visible before Start. Click **Start agent → Limited control**. Watch the portfolio stages and then the selected invoice's case execution in the third column.
 
-Each row now answers three different questions:
+Due / aging, Rule urgency and ML risk · target shown remain dedicated columns beside source balance and the three workflow columns. Scroll horizontally inside the invoice panel to see all eight columns; text stays readable. ML labels distinguish becoming overdue from remaining unpaid after30days, and unscored invoices say No matching prediction.
+
+The three workflow columns answer different questions:
 
 | Column | Meaning | Example |
 |---|---|---|
@@ -146,3 +148,11 @@ Next milestone, after this live acceptance: improve the demo clock/due-task expe
 135 automated tests passed with real LangGraph and isolated Postgres-compatible PGlite SQL; model and Resend transports were mocked. Both limited and autopilot local HTTP/SSE/JSDOM flows passed:24records, separate columns, mode choice, send/delivery, simulated reply matching, promise approval/automatic recording, reload and unchanged sourceAR. JavaScript syntax passed. These checks do not verify live external providers or pixel/viewport layout.
 
 To run the automated suite locally, install Node test dependencies once (`npm install --prefix tests`), then install `requirements-dev.txt` in your Python environment and run `python -m pytest -q`. Tests never need live keys.
+
+## If Resend says live email is disabled
+
+`{"detail":"Live email is disabled. No email attempted."}` comes from the app's email enablement check. The webhook request reached the application but was rejected before signature/event processing. It is not a successful webhook receipt.
+
+In your existing Render service → Environment, set `EMAIL_ENABLED=true`. Preserve `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET` for that exact Resend endpoint, `EMAIL_FROM`, `EMAIL_TEST_RECIPIENT` and `EMAIL_RECEIVING_DOMAIN`. Keep secrets private. Save/redeploy and wait for the new process to become live. Check `/api/health`: expect `email.enabled` and `email.ready` both true; otherwise follow `email.configuration_error`. The repository's render.yaml defaults false intentionally; editing a local .env does not change cloud settings.
+
+In Resend replay one failed sent/delivered event against `https://YOUR-ACTUAL-HOST/api/webhooks/resend`, then inspect the response and matching saved activity. A received event should appear in the private inbound review flow. Do not resend the original email to repair a callback. A reachable GET proves routing only; a signed POST and matching stored evidence prove processing. Live confirmation requires the actual website URL and event outcome.
