@@ -1,0 +1,33 @@
+# Deploy only after SQL006 and the private environment settings in M6 guide.
+services:
+  - type: web
+    name: o2c-collections-agent
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers --forwarded-allow-ips '*'
+    healthCheckPath: /livez
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.14
+      - key: PUBLIC_DEMO
+        value: 'true'
+      - key: DEMO_SESSION_SECRET
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: EMAIL_OWNER_TOKEN
+        sync: false
+      - key: COLLECTIONS_LLM_ENABLED
+        value: 'false'
+      - key: LLM_PROVIDER
+        value: groq
+      - key: LLM_MODEL
+        value: openai/gpt-oss-20b
+      - key: LLM_FREE_ONLY
+        value: 'true'
+      - key: EMAIL_ENABLED
+        value: 'false'

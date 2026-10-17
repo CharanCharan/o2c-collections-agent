@@ -1,5 +1,7 @@
 # Milestone 5 — Send a controlled email and capture its reply
 
+M5 PR#6 is now merged; M6 cloud deployment supersedes the temporary forwarding instructions below when hosting. See docs/MILESTONE_6.md for the direct cloud callback and Resend Connect troubleshooting.
+
 M4 PR#5 merged as a18edaad. Charan explicitly deferred its LLM drafting/reply learning checks until after M5. Those checks remain pending; M5 works with `COLLECTIONS_LLM_ENABLED=false` and deterministic templates. No need to enable a model to send your first email.
 
 ## 1. Get the code and prepare the database

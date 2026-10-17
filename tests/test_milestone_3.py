@@ -92,7 +92,7 @@ def test_export_matches_independent_sklearn_prediction_and_train_only_scaler(tmp
 def test_live_pipeline_persists_model_and_preserves_policy(store_factory, database):
     with TestClient(create_app(store_factory())) as client:
         health = client.get('/api/health').json()
-        assert health['milestone'] == 'M5' and health['stage_count'] == 6
+        assert health['milestone'] == 'M6' and health['stage_count'] == 6
         card = client.get('/api/model').json()
         assert card['training_data']['synthetic'] is True
         run, events = finish(client)
