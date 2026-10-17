@@ -32,7 +32,10 @@ function invoiceCaseHeader(c) {
   const w=c?.workflow,pending=w?.pending,send=$('send-draft');
   let title='Review this invoice',explanation=rowView(row).next,action='';
   const busy=caseActionBusy||sendBusy||dueActive()||['running','waiting_for_portfolio'].includes(agentJob?.status);
-  if(invoiceContinuation(c)) {
+  const issue=agentJob?.progress?.report?.invoices?.[row.id]?.error;
+  if(issue && rowView(row).status==='processing_error' && !invoiceContinuation(c)) {
+    title='Recover invoice processing';explanation=issue.message+' Open Run overview for the diagnostic and Retry failed invoices action.';
+  } else if(invoiceContinuation(c)) {
     title='Continue interrupted invoice processing';explanation='Continue this invoice from its last saved step. This does not restart the portfolio.';
     action='<button class="primary" id="resume-case-action">Continue invoice processing</button>';
   } else if(pending?.tool==='record_promise') {
@@ -103,6 +106,8 @@ function rowView(row) {
   if(status==='promise_recorded')label='Payment promised — '+(w?.promise?.promise_date || 'date saved');
   if(status==='dispute_hold_review_required')label='Dispute — collections paused';
   if(!w && !c?.outbound && !row.dispute && !['pre_due','due_today'].includes(row.lifecycle)){label='Ready for agent review';next='Run collections to assess and prepare actions';}
+  const failure=agentJob?.progress?.report?.invoices?.[row.id]?.error;
+  if(failure && (!w || w.processing)){status='processing_error';label='Processing needs review';next='Open Run overview to review the issue and retry failed invoices';}
   return {c,w,status,label,
     next:next || 'Review invoice',latest:latest?.message || (row.draft?'Reminder draft prepared':'No collection action recorded'),timestamp:latest?.timestamp};
 }
@@ -120,8 +125,10 @@ function renderWorkflowSummary() {
   const selected=(test)=>entries.filter(([,v])=>test(v.result)).map(([id])=>id);
   const current=(test)=>rows.filter(test).map(v=>v.row.id);
   const running=['running','waiting_for_portfolio'].includes(job?.status);
-  const title=!job?'No collections run selected':job.status==='completed'?'Run completed':job.status==='interrupted'?'Run interrupted — partial results':job.status==='analysis_failed'?'Portfolio analysis failed': 'Run in progress';
-  $('portfolio-count').textContent=!job?'Ready':running?'Processing':job.status==='completed'?'Completed':'Interrupted';
+  const failed=job?.progress?.failed || 0;
+  const failures=Object.entries(report?.invoices || {}).filter(([,v])=>v.error);
+  const title=!job?'No collections run selected':job.status==='completed'?(failed?`Processing finished — ${failed} invoice${failed===1?'':'s'} need review`:'Run completed'):job.status==='interrupted'?'Processing stopped — recovery required':job.status==='analysis_failed'?'Portfolio analysis failed': 'Run in progress';
+  $('portfolio-count').textContent=!job?'Ready':running?'Processing':job.status==='completed'?(failed?`${failed} need review`:'Completed'):'Needs recovery';
   updatePromiseCount();
   const mails=entries.flatMap(([,v])=>[...v.result.initial_mail_ids,...v.result.followup_mail_ids]);
   const accepted=new Set(mails);
@@ -130,18 +137,20 @@ function renderWorkflowSummary() {
   const issues=outcomes.filter(m=>m.events.some(e=>['email.bounced','email.failed','email.complained','email.suppressed'].includes(e.type))).length;
   const reminders=selected(v=>v.initial_mail_ids.length>0),followups=selected(v=>v.followup_mail_ids.length>0);
   const countByLabel=new Map();for(const v of rows){const g=countByLabel.get(v.label)||[];g.push(v.row.id);countByLabel.set(v.label,g);}
-  const attention=current(v=>Boolean(v.w?.pending)||['manual_review_required','contact_required','delivery_exception','delivery_unknown','quota_wait','dispute_hold_review_required','reconciliation_required','documents_ready','document_review_required','promise_review_required','reply_received_review_required','followup_due'].includes(v.status));
+  const attention=current(v=>Boolean(v.w?.pending)||['manual_review_required','contact_required','delivery_exception','delivery_unknown','quota_wait','dispute_hold_review_required','reconciliation_required','documents_ready','document_review_required','promise_review_required','reply_received_review_required','followup_due','processing_error'].includes(v.status));
   panel.innerHTML=`<b>${escapeHTML(title)}</b>
     ${job?`<p class="panel-sub">Run #${escapeHTML(job.run_id.slice(0,8))} · ${job.mode==='autopilot'?'Automatic processing':'Review &amp; approve'} · ${escapeHTML(new Date(job.created_at || job.updated_at || Date.now()).toLocaleString())}</p>`:''}
-    ${report?`<h3>Results during this run</h3><p class="panel-sub">${job.progress.processed || 0}/${job.progress.total || 0} invoices reviewed. Completed processing does not mean invoices are paid.${report.legacy_partial?' Earlier processing predates result tracking; figures are partial.':''}</p>
-      <div class="outcome-counts">${card('Invoices reviewed',entries.map(([id])=>id))}${card('Invoices sent reminders',reminders,'Submitted to demo inbox')}${card('Invoices sent follow-ups',followups,'Submitted to demo inbox')}${card('Payment promises recorded',selected(v=>v.promise_recorded))}${card('Disputed invoices on hold',selected(v=>v.dispute_on_hold),money(entries.filter(([,v])=>v.result.dispute_on_hold).reduce((n,[id])=>n+Number(state.invoices.find(r=>r.id===id)?.amount || 0),0))+' source exposure; includes existing disputes')}${card('New dispute holds',selected(v=>v.new_dispute_hold))}</div>
+    ${report?`<h3>Results during this run</h3><p class="panel-sub">${job.progress.processed || 0}/${job.progress.total || 0} invoices successfully processed${failed?`; ${failed} need recovery`:''}. Completed processing does not mean invoices are paid.${report.legacy_partial?' Earlier processing predates result tracking; figures are partial.':''}</p>
+      <div class="outcome-counts">${card('Invoices reviewed',entries.map(([id])=>id))}${card('Invoices with processing issues',failures.map(([id])=>id))}${card('Invoices sent reminders',reminders,'Submitted to demo inbox')}${card('Invoices sent follow-ups',followups,'Submitted to demo inbox')}${card('Payment promises recorded',selected(v=>v.promise_recorded))}${card('Disputed invoices on hold',selected(v=>v.dispute_on_hold),money(entries.filter(([,v])=>v.result.dispute_on_hold).reduce((n,[id])=>n+Number(state.invoices.find(r=>r.id===id)?.amount || 0),0))+' source exposure; includes existing disputes')}${card('New dispute holds',selected(v=>v.new_dispute_hold))}</div>
       <p class="panel-sub">Delivery updates for these ${mails.length} submitted emails: ${delivered} confirmed delivered · ${issues} with delivery issues · ${outcomes.filter(m=>!m.events.some(e=>['email.delivered','email.bounced','email.failed','email.complained','email.suppressed'].includes(e.type))).length} awaiting confirmation. Delivery is not payment.</p>`:
       `<p class="panel-sub">${job?'This older run has no saved outcome report. Current statuses below cannot establish what it accomplished.':'Run collections to save a per-invoice result report.'}</p>`}
+    ${failures.length?`<details class="run-diagnostics"><summary>Review ${failures.length} processing issue(s)</summary>${failures.map(([id,v])=>`<p><b>${escapeHTML(id)}</b>: ${escapeHTML(v.error.message)}<br><small>${escapeHTML(v.error.code)} · ${escapeHTML(v.error.phase)}${v.error.operation?' · '+escapeHTML(v.error.operation):''} · reference ${escapeHTML(v.error.error_id)}</small></p>`).join('')}</details>`:''}
+    ${job?.status==='interrupted'?`<p class="explain">${escapeHTML(job.progress?.failure?.message || job.progress?.error || 'This older run has no detailed failure record. A server restart or processing failure left it unfinished. Recover saved work to continue.')}</p>${job.progress?.failure?`<details><summary>Recovery diagnostic</summary><pre>${escapeHTML(JSON.stringify(job.progress.failure,null,2))}</pre></details>`:''}`:''}
     <h3>Needs your action now</h3><div class="outcome-counts">${card('Reminders ready to send',current(v=>v.w?.pending?.tool==='send_email'))}${card('Follow-ups ready to send',current(v=>v.w?.pending?.tool==='send_followup_email'))}${card('Payment promises ready to record',current(v=>v.w?.pending?.tool==='record_promise'))}${card('Invoices needing attention',attention,'Includes approvals and exceptions')}</div>
     <h3>Waiting on customers or delivery now</h3><div class="outcome-counts">${card('Waiting for customer reply',current(v=>v.status==='awaiting_response'))}${card('Customers with recorded payment promises',current(v=>v.status==='promise_recorded'))}${card('Awaiting email delivery confirmation',current(v=>v.status==='awaiting_delivery'))}</div>
     <details class="current-statuses"><summary>Current invoice statuses · ${rows.length} invoices</summary><p class="panel-sub">Live case state for the displayed portfolio snapshot. Includes prior work and replies after the run; not additional run achievements.</p><div class="outcome-counts">${[...countByLabel].map(([label,ids])=>card(label,ids)).join('')}</div></details>
     <p class="panel-sub">Click a count to filter the queue. Source AR is unchanged. Customer replies and payment evidence are simulated.</p>
-    ${job?.status==='interrupted'?'<button class="secondary" id="resume-job">Continue collections run</button>':''}`;
+    ${job?.status==='interrupted'||(job?.status==='completed' && failed)?`<button class="secondary" id="resume-job">${failed?'Retry failed invoices':'Recover unfinished processing'}</button>`:''}`;
   for(const button of panel.querySelectorAll('[data-result]'))button.onclick=()=>{
     outcomeFilter=groups[Number(button.dataset.result)];state.highOnly=false;$('filter-btn').textContent='All urgency';
     renderQueue();renderDetail();$('portfolio-menu').open=false;$('queue-scroll').focus();
@@ -189,7 +198,10 @@ async function launchCaseAgent(runId,mode) {
   agentJob={run_id:runId,mode,status:'running',progress:{processed:0,total:state.invoices.length}};
   $('start-run').disabled=true;banner('COLLECTIONS RUNNING','Portfolio prepared; processing saved collection actions.');renderWorkflowSummary();
   try{agentJob=(await api(`/api/runs/${runId}/agent`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})})).job;}
-  catch(error){agentJob.status='interrupted';showError(error.message);$('start-run').disabled=false;}
+  catch(error){
+    try{agentJob=await api(`/api/runs/${runId}/agent`);}catch(readError){agentJob.status='interrupted';}
+    showError(error.message);$('start-run').disabled=['running','waiting_for_portfolio'].includes(agentJob.status);renderWorkflowSummary();
+  }
 }
 
 async function pollWorkflow() {
@@ -207,7 +219,7 @@ async function pollWorkflow() {
     renderFollowupControls();
     if(active && !['waiting_for_portfolio','running'].includes(agentJob.status)) {
       $('start-run').disabled=dueActive();
-      banner(agentJob.status==='completed'?'PROCESSING FINISHED':'INTERRUPTED',agentJob.status==='completed'?'Case actions saved. Waiting/review states remain open.':'Open Run overview to continue the interrupted collections run.');
+      banner(agentJob.status==='completed'?(agentJob.progress?.failed?'REVIEW REQUIRED':'PROCESSING FINISHED'):'RECOVERY REQUIRED',agentJob.status==='completed'?(agentJob.progress?.failed?`${agentJob.progress.processed}/${agentJob.progress.total} invoices processed; ${agentJob.progress.failed} need review. See Run overview.`:'Case actions saved. Waiting/review states remain open.'):'Open Run overview for the saved reason and recovery action.');
     }
   } catch(error){showError(error.message);}
   finally{workflowPollBusy=false;}

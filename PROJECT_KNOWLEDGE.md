@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_9_invoice_next_step
-implementation_branch: invoice-next-step-horizontal-flow
+implementation_milestone: V2_10_reliable_portfolio
+implementation_branch: reliable-portfolio-results
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_next_step_horizontal_flow_and_verify_selected_invoice_history
+pending_learning_check: deploy_latest_main_verify_v2_10_health_then_complete_run
 next_milestone: guided_interviewer_walkthrough_then_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.9 invoice next step and horizontal processing — authoritative current checkpoint
+## V2.10 portfolio reliability and bottom processing details — authoritative current checkpoint
+
+PR19 merged279cd10800e2fe09f905f28febadc5c01c1bc925; compare0a58f500→main mergeonly/nofilechanges. Userasksinvestigateinterruption/finishallinvoices andmovePortfolio processingbottom. Branchreliable-portfolio-results, lesson docs/MILESTONE_V2_10.md. NoSQL/packages/envchanges, previous009–012prerequisites. Userreview/merge/manualdeploy/versionverification/visualacceptancepending.
+
+Read-onlyactualRenderhealth2026-10-18IST:24rows/graphready/emailready/languageofftemplates; HTMLworkflow-6 assets, nofollowupshealthfield. Liveisolderthanmergedworkflow-11. Existingbrowser-ownedfailedjobunavailableinnewHTTPsession; oldgenericexceptionrecordcannotproveexactoriginalexception. DoNOTclaimliverootcausewasconfirmed. No liveStart/mail/model/DBmutation. Usermustmanualdeploylatestmainandverifyhealthapp_versionv2.10/ui_versionworkflow-12/followups.ready; absenceindicatesolddeploy.
+
+Codeprovenfault:run_joboutercatchabandonedwholeportfolioonanycaseexception. Newperinvoicecatchpersists safeerror/category/reference/phase/operation/exceptiontype, continuesrest; completedmeansscanfinished, progressprocessed successfulonly/attempted/failedexplicit, UIProcessingfinishedNneedreview. Failednotcountedinreviewed/actions. Retryfailedviaexistingstartcasejobendpoint protectedbyperrunasynclock, resumesonlyincompleteentries/reusesoriginalbaselines/autoIDs, noautoLLM/providerretry. read/case exceptionsisolated, baselinesave/finaljobsave/loadfailfatalstillinterruptedDBstate; UIProcessingstopped/recoveryrequiredtruthful,partialreportretained. Cancellationreasonserverstopped. mainaftercallbackpreservesoldprogressinstead genericreplacement. StorageErrorcode/opmetadata/safeconstantpublicmessages, no rawSQL/provider/exception/keylogging. Testsourcepatchsecretbodyneverexposed. Existingbudget/idempotency/checkpoints/modes unchanged.
+
+Processingdetails nativecollapsedbelowfullwidthqueue, horizontalstages+nestedloginside; selectedhistoryremainspopup. Runoverviewmainbusinessprogress. 40uniquetargetedSQL/graph/storage/report/followuptests passed +actualHTTP/SSE/cookieJSDOMjourneybottomcollapsed/layout/filter/topactions/switching/recovery/delivery/reply/promise/date/followup/reload/sourceunchanged. JSsyntax/Pythoncompilepassed. No livefix/deployment orpixelverificationclaimed. Nextguidedinterviewerwalkthrough/editorlast.
+
+## Historical V2.9 invoice next step and horizontal processing
 
 PR18 mergeda0fcc746bfd8b16c0f3b0618d86b51e33ae62406; compareddcd1fc5 to main mergeonly/nofilechanges. Userapproves consistent topNextstep ininvoicepopup and asks horizontalflow/removalofredundantCollectionsactivity plusselectedinvoiceactivityfix. Branchinvoice-next-step-horizontal-flow, lesson docs/MILESTONE_V2_9.md. UI-only/noSQL/packages/env; existing012prerequisite. Charanmerge/manualdeploy/nativebrowseracceptancepending.
 

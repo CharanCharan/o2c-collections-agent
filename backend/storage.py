@@ -14,7 +14,9 @@ from dotenv import load_dotenv
 
 
 class StorageError(Exception):
-    pass
+    def __init__(self,message,code='storage_operation_failed'):
+        self.code=code
+        super().__init__(message)
 
 
 class StoreRequestError(StorageError):
@@ -51,11 +53,18 @@ class SupabaseStore:
 
     async def rpc(self, name: str, body: dict | None = None):
         try:
+            return await self._rpc(name,body)
+        except StorageError as exc:
+            exc.operation=name
+            raise
+
+    async def _rpc(self, name: str, body: dict | None = None):
+        try:
             response = await self.client.post("rpc/" + name, json=body or {})
         except httpx.HTTPError:
-            raise StorageError("Cannot reach Supabase. Check network, project status and whether the Free project is paused.") from None
+            raise StorageError("Cannot reach Supabase. Check network, project status and whether the Free project is paused.",code="network_unavailable") from None
         if response.status_code in {401, 403}:
-            raise StorageError("Supabase rejected access. Check the backend secret key and run sql/001_schema.sql.")
+            raise StorageError("Supabase rejected access. Check the backend secret key and run sql/001_schema.sql.",code="access_denied")
         if response.status_code >= 400:
             try:
                 data = response.json()
@@ -83,7 +92,7 @@ class SupabaseStore:
             if data.get("code") in allowed:
                 raise StoreRequestError(int(data["code"][2:]), allowed[data["code"]])
             if response.status_code == 404:
-                raise StorageError("Supabase schema function missing. Run the required schema SQL (001/002 for setup; 004_language_review.sql for M4; 005_email_loop.sql for M5; 006_public_demo.sql for M6; 007_visitor_cases.sql and 008_case_email.sql for V2; 009_case_workflow.sql for LangGraph).")
+                raise StorageError("Supabase schema function missing. Run the required schema SQL (001/002 for setup; 004_language_review.sql for M4; 005_email_loop.sql for M5; 006_public_demo.sql for M6; 007_visitor_cases.sql and 008_case_email.sql for V2; 009_case_workflow.sql for LangGraph).",code="schema_missing")
             raise StorageError("Supabase could not complete the database operation. Check schema setup and project availability.")
         try:
             return response.json()

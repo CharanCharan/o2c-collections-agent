@@ -1,3 +1,5 @@
+> Latest V2.10: [reliable portfolio results](docs/MILESTONE_V2_10.md). One invoice error no longer abandons the portfolio; reports retain explicit exceptions and retry failed invoices. Processing details are collapsed below the table. Deploy latest main and verify `/api/health` reports app_version v2.10 and ui_version workflow-12; no new SQL or packages.
+
 > Latest V2.9: [invoice Next step and horizontal processing](docs/MILESTONE_V2_9.md). Portfolio stages run horizontally above the full-width queue; selected invoice history appears in its popup beside reply/evidence, with specific next-action controls at the top. Merge/pull and redeploy; no new SQL or packages.
 
 > Latest V2.8: [run results and compact queue](docs/MILESTONE_V2_8.md). Run overview separates saved processing results from current approvals and customer waiting states. Compact queue header, native scrolling and clearer status/action columns. Merge/pull and manually deploy; no new SQL or packages.

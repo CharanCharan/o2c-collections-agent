@@ -7,11 +7,11 @@
   <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="/assets/favicon.ico?v=1" />
   <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/favicon.svg?v=1" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-11" />
-  <script src="/assets/invoice-ui.js?v=workflow-11" defer></script>
-  <script src="/assets/followup-ui.js?v=workflow-11" defer></script>
-  <script src="/assets/workflow-ui.js?v=workflow-11" defer></script>
-  <script src="/assets/app.js?v=workflow-11" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-12" />
+  <script src="/assets/invoice-ui.js?v=workflow-12" defer></script>
+  <script src="/assets/followup-ui.js?v=workflow-12" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-12" defer></script>
+  <script src="/assets/app.js?v=workflow-12" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -41,11 +41,6 @@
     <div class="stat"><div class="stat-top">Eligible exposure <span class="stat-icon">↗</span></div><div class="stat-value" id="metric-eligible">—</div><div class="stat-foot" id="eligible-note">Calculated after loading data</div></div>
   </section>
   <p class="panel-sub" id="preview-caption" hidden>Current AR data · read-only preview. Run collections to prepare and save collection actions.</p>
-  <section class="panel portfolio-flow" aria-label="Portfolio processing">
-    <div class="run-banner"><div><div class="panel-title">Portfolio processing</div><div class="panel-sub" id="run-caption">Connecting…</div></div><div class="run-state"><i class="dot"></i><span id="state-label">WAITING</span></div></div>
-    <div class="flow" id="flow" tabindex="0" role="list" aria-label="Portfolio preparation stages"></div><div class="progress"><span id="progress-bar"></span></div>
-    <details class="portfolio-events"><summary>Portfolio event log · <span id="event-count">0 events</span></summary><div class="feed" id="feed" aria-live="polite"></div></details>
-  </section>
   <main class="grid">
     <section class="panel queue-column" aria-label="Accounts receivable work queue">
       <div class="panel-head">
@@ -64,6 +59,12 @@
     </section>
 
   </main>
+  <details class="panel portfolio-flow" aria-label="Portfolio processing"><summary>Processing details <span class="panel-sub">Portfolio stages and technical event log</span></summary>
+    <div class="run-banner"><div><div class="panel-title">Portfolio processing</div><div class="panel-sub" id="run-caption">Connecting…</div></div><div class="run-state"><i class="dot"></i><span id="state-label">WAITING</span></div></div>
+    <div class="flow" id="flow" tabindex="0" role="list" aria-label="Portfolio preparation stages"></div><div class="progress"><span id="progress-bar"></span></div>
+    <details class="portfolio-events"><summary>Portfolio event log · <span id="event-count">0 events</span></summary><div class="feed" id="feed" aria-live="polite"></div></details>
+  </details>
+
 
   <details id="model-evidence" class="model-evidence"><summary>Payment-risk model evidence</summary><p>Start a run to inspect the model used for that snapshot.</p></details>
   <p class="panel-sub" id="demo-access-note">Checking demo access…</p>

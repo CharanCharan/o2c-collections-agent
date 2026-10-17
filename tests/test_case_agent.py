@@ -261,7 +261,8 @@ def test_job_resume_preserves_three_email_authority_reservations(store_factory,m
             saved=c.get(f'/api/runs/{rid}/agent').json()
             if saved['status']!='running':break
             time.sleep(.005)
-        assert saved['status']=='interrupted'
+        assert saved['status']=='completed' and saved['progress']['failed']==1
+        assert saved['progress']['attempted']==6 and saved['progress']['processed']==5
         assert len(provider.sent)==2 and len(saved['progress']['auto_case_ids'])==3
         monkeypatch.setattr(agent,'invoke',original)
         result=job(c,rid,'autopilot')
