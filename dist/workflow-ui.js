@@ -6,12 +6,14 @@ let pendingMode = null;
 let workflowPollBusy = false;
 let caseActionBusy = false;
 let scenarioSummaries = [];
+let outcomeFilter = null;
 const workflowLabels = {
-  quota_wait:'Waiting for mail quota',processing:'Processing case',ready_for_outreach:'Ready for outreach',awaiting_approval:'Awaiting approval',
+  quota_wait:'Waiting for mail quota',processing:'Processing case',ready_for_outreach:'Reminder ready to send',awaiting_approval:'Action ready for approval',
+  awaiting_outreach:'Reminder ready to send',manual_review_required:'Human review needed',promise_review_required:'Payment promise needs review',dispute_hold_review_required:'Dispute — collections paused',
   awaiting_delivery:'Awaiting delivery',awaiting_response:'Awaiting customer reply',promise_recorded:'Promise recorded',
   followup_due:'Promise follow-up due',demo_payment_matched:'Payment matched · demo',demo_partial_payment:'Partial payment · demo',
   documents_ready:'Documents ready',contact_required:'Contact needed',delivery_exception:'Prior delivery issue · simulated',
-  delivery_unknown:'Send outcome unknown',preventive_review:'Preventive review',monitoring:'Monitoring',
+  delivery_unknown:'Send outcome unknown',preventive_review:'Not due — preventive assessment only',monitoring:'No reminder — below policy threshold',
 };
 
 const activityLabels={load:'Load invoice',interpret:'Interpret customer reply',choose:'Select collection action',approval:'Request approval',authorization:'Authorize action',execute:'Complete action',plan_followup:'Prepare promise follow-up',finish:'Save outcome',supersede:'Update after customer reply'};
@@ -62,22 +64,60 @@ function rowView(row) {
     }
   }
   if(!latest && c?.messages.at(-1)?.channel==='simulated_customer_reply') latest={message:'Simulated customer reply saved',timestamp:c.messages.at(-1).created_at};
-  return {c,w,status,label:workflowLabels[status] || caseLabels[status] || status,
-    next:next || 'Review invoice',latest:latest?.message || (state.status==='completed' && row.draft?'Draft prepared':'Read-only assessment'),timestamp:latest?.timestamp};
+  let label=workflowLabels[status] || caseLabels[status] || status;
+  if(status==='awaiting_approval')label=w?.pending?.tool==='record_promise'?'Payment promise ready to record':w?.pending?.tool==='send_followup_email'?'Follow-up ready to send':'Reminder ready to send';
+  if(status==='monitoring') {
+    label=Number(row.amount)<=0?'No outstanding balance':row.days===0?'Not overdue — no reminder scheduled':'No reminder — below policy threshold';
+    next=Number(row.amount)<=0?'No collection action needed':row.days===0?'Review when due':'Review if urgency increases';
+  }
+  if(status==='preventive_review')next='Review payment risk; pre-due email is not enabled';
+  if(status==='promise_recorded')label='Payment promised — '+(w?.promise?.promise_date || 'date saved');
+  if(status==='dispute_hold_review_required')label='Dispute — collections paused';
+  if(!w && !c?.outbound && !row.dispute && !['pre_due','due_today'].includes(row.lifecycle)){label='Ready for agent review';next='Run collections to assess and prepare actions';}
+  return {c,w,status,label,
+    next:next || 'Review invoice',latest:latest?.message || (row.draft?'Reminder draft prepared':'No collection action recorded'),timestamp:latest?.timestamp};
 }
 
 function renderWorkflowSummary() {
   const panel=$('workflow-summary');if(!panel)return;
-  const rows=state.invoices.map(rowView),counts=new Map();
-  for(const r of rows)counts.set(r.label,(counts.get(r.label)||0)+1);
-  const saved=rows.filter(r=>r.w).length;
-  $('portfolio-count').textContent=agentJob?.status==='interrupted'?'Paused':['running','waiting_for_portfolio'].includes(agentJob?.status)?'Processing':String(rows.length);
+  const job=agentJob, report=job?.progress?.report;
+  const entries=Object.entries(report?.invoices || {}).filter(([,v])=>v.completed);
+  const rows=state.invoices.map(row=>({row,...rowView(row)}));
+  const groups=[];
+  const card=(label,ids,detail='')=>{
+    const index=groups.push({label,ids})-1;
+    return `<button class="result-card" data-result="${index}" ${ids.length?'':'disabled'}><strong>${ids.length}</strong><span>${escapeHTML(label)}</span>${detail?`<small>${escapeHTML(detail)}</small>`:''}</button>`;
+  };
+  const selected=(test)=>entries.filter(([,v])=>test(v.result)).map(([id])=>id);
+  const current=(test)=>rows.filter(test).map(v=>v.row.id);
+  const running=['running','waiting_for_portfolio'].includes(job?.status);
+  const title=!job?'No collections run selected':job.status==='completed'?'Run completed':job.status==='interrupted'?'Run interrupted — partial results':job.status==='analysis_failed'?'Portfolio analysis failed': 'Run in progress';
+  $('portfolio-count').textContent=!job?'Ready':running?'Processing':job.status==='completed'?'Completed':'Interrupted';
   updatePromiseCount();
-  let title=agentJob?.status==='waiting_for_portfolio'?'Portfolio analysis running':agentJob?.status==='running'?`Processing collections · ${agentJob.progress?.processed || 0}/${agentJob.progress?.total || state.invoices.length} processed`:
-    agentJob?.status==='analysis_failed'?'Portfolio analysis stopped; start a new run':agentJob?.status==='interrupted'?'Collections run interrupted':saved?'Collection outcomes · open items remain visible':'Portfolio ready for collections';
-  panel.innerHTML=`<b>${escapeHTML(title)}</b><div class="outcome-counts">${saved?[...counts].map(([label,n])=>`<span>${n} ${escapeHTML(label.toLowerCase())}</span>`).join(''):'Run collections to assess invoices and prepare actions. Source balances remain separate from collection outcomes.'}</div>
-    ${agentJob?.status==='interrupted'?'<button class="secondary" id="resume-job">Continue collections run</button>':''}`;
-  if($('resume-job'))$('resume-job').onclick=()=>launchCaseAgent(agentJob.run_id,agentJob.mode);
+  const mails=entries.flatMap(([,v])=>[...v.result.initial_mail_ids,...v.result.followup_mail_ids]);
+  const accepted=new Set(mails);
+  const outcomes=visitorCases.flatMap(c=>[c.outbound,...(c.followups||[])]).filter(m=>m && accepted.has(m.id));
+  const delivered=outcomes.filter(m=>m.events.some(e=>e.type==='email.delivered') && !m.events.some(e=>['email.bounced','email.failed','email.complained','email.suppressed'].includes(e.type))).length;
+  const issues=outcomes.filter(m=>m.events.some(e=>['email.bounced','email.failed','email.complained','email.suppressed'].includes(e.type))).length;
+  const reminders=selected(v=>v.initial_mail_ids.length>0),followups=selected(v=>v.followup_mail_ids.length>0);
+  const countByLabel=new Map();for(const v of rows){const g=countByLabel.get(v.label)||[];g.push(v.row.id);countByLabel.set(v.label,g);}
+  const attention=current(v=>Boolean(v.w?.pending)||['manual_review_required','contact_required','delivery_exception','delivery_unknown','quota_wait','dispute_hold_review_required','reconciliation_required','documents_ready','document_review_required','promise_review_required','reply_received_review_required','followup_due'].includes(v.status));
+  panel.innerHTML=`<b>${escapeHTML(title)}</b>
+    ${job?`<p class="panel-sub">Run #${escapeHTML(job.run_id.slice(0,8))} · ${job.mode==='autopilot'?'Automatic processing':'Review &amp; approve'} · ${escapeHTML(new Date(job.created_at || job.updated_at || Date.now()).toLocaleString())}</p>`:''}
+    ${report?`<h3>Results during this run</h3><p class="panel-sub">${job.progress.processed || 0}/${job.progress.total || 0} invoices reviewed. Completed processing does not mean invoices are paid.${report.legacy_partial?' Earlier processing predates result tracking; figures are partial.':''}</p>
+      <div class="outcome-counts">${card('Invoices reviewed',entries.map(([id])=>id))}${card('Invoices sent reminders',reminders,'Submitted to demo inbox')}${card('Invoices sent follow-ups',followups,'Submitted to demo inbox')}${card('Payment promises recorded',selected(v=>v.promise_recorded))}${card('Disputed invoices on hold',selected(v=>v.dispute_on_hold),money(entries.filter(([,v])=>v.result.dispute_on_hold).reduce((n,[id])=>n+Number(state.invoices.find(r=>r.id===id)?.amount || 0),0))+' source exposure; includes existing disputes')}${card('New dispute holds',selected(v=>v.new_dispute_hold))}</div>
+      <p class="panel-sub">Delivery updates for these ${mails.length} submitted emails: ${delivered} confirmed delivered · ${issues} with delivery issues · ${outcomes.filter(m=>!m.events.some(e=>['email.delivered','email.bounced','email.failed','email.complained','email.suppressed'].includes(e.type))).length} awaiting confirmation. Delivery is not payment.</p>`:
+      `<p class="panel-sub">${job?'This older run has no saved outcome report. Current statuses below cannot establish what it accomplished.':'Run collections to save a per-invoice result report.'}</p>`}
+    <h3>Needs your action now</h3><div class="outcome-counts">${card('Reminders ready to send',current(v=>v.w?.pending?.tool==='send_email'))}${card('Follow-ups ready to send',current(v=>v.w?.pending?.tool==='send_followup_email'))}${card('Payment promises ready to record',current(v=>v.w?.pending?.tool==='record_promise'))}${card('Invoices needing attention',attention,'Includes approvals and exceptions')}</div>
+    <h3>Waiting on customers or delivery now</h3><div class="outcome-counts">${card('Waiting for customer reply',current(v=>v.status==='awaiting_response'))}${card('Customers with recorded payment promises',current(v=>v.status==='promise_recorded'))}${card('Awaiting email delivery confirmation',current(v=>v.status==='awaiting_delivery'))}</div>
+    <details class="current-statuses"><summary>Current invoice statuses · ${rows.length} invoices</summary><p class="panel-sub">Live case state for the displayed portfolio snapshot. Includes prior work and replies after the run; not additional run achievements.</p><div class="outcome-counts">${[...countByLabel].map(([label,ids])=>card(label,ids)).join('')}</div></details>
+    <p class="panel-sub">Click a count to filter the queue. Source AR is unchanged. Customer replies and payment evidence are simulated.</p>
+    ${job?.status==='interrupted'?'<button class="secondary" id="resume-job">Continue collections run</button>':''}`;
+  for(const button of panel.querySelectorAll('[data-result]'))button.onclick=()=>{
+    outcomeFilter=groups[Number(button.dataset.result)];state.highOnly=false;$('filter-btn').textContent='All urgency';
+    renderQueue();renderDetail();$('portfolio-menu').open=false;$('queue-scroll').focus();
+  };
+  if($('resume-job'))$('resume-job').onclick=()=>launchCaseAgent(job.run_id,job.mode);
 }
 
 function renderCaseExecution() {
@@ -92,7 +132,7 @@ function renderCaseExecution() {
 function workflowExtras(c) {
   const w=c.workflow;if(!w)return '';
   const view=rowView(state.invoices.find(r=>r.id===c.invoice_id)||c.snapshot.invoice);
-  return `<section class="case-outcome"><h3>${escapeHTML(view.label)}</h3><p><b>Next action:</b> ${escapeHTML(view.next)}</p>
+  return `<section class="case-outcome"><h3>${escapeHTML(view.label)}</h3><p><b>Next step:</b> ${escapeHTML(view.next)}</p>
     ${w.pending && !['send_email','send_followup_email'].includes(w.pending.tool)?`<p>Prepared action: ${escapeHTML(actionLabels[w.pending.tool] || w.pending.tool.replaceAll('_',' '))}</p><button class="secondary" id="approve-case-action" ${caseActionBusy?'disabled':''}>${escapeHTML(actionLabels[w.pending.tool] || 'Approve action')}</button><button class="secondary" id="decline-case-action" ${caseActionBusy?'disabled':''}>Leave for review</button>`:''}
     ${['send_email','send_followup_email'].includes(w.pending?.tool)?'<p>Review the draft and use its Send button above to approve this action.</p>':''}
 

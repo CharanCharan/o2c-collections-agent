@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_7_queue_invoice_dialog
-implementation_branch: queue-first-invoice-dialog
+implementation_milestone: V2_8_run_results
+implementation_branch: run-results-compact-queue
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_queue_dialog_favicon_and_verify_native_modal_layout
+pending_learning_check: deploy_run_results_and_verify_new_run_vs_current_state
 next_milestone: guided_interviewer_walkthrough_then_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.7 queue-first invoice dialog — authoritative current checkpoint
+## V2.8 run results and compact queue — authoritative current checkpoint
+
+PR17 merged1b959e0544e52ab9939c45cf3bc554c9e17871a0, main compare no code changes. User approved run reporting design and requests compact queue header, removal of custom slider and clearer column names/order. Branch run-results-compact-queue; lesson docs/MILESTONE_V2_8.md. No SQL/packages/env changes; existing012 prerequisite. Charan review/merge/manualdeploy/visual acceptance pending.
+
+Run overview results come from saved ca_agent_jobs.progress.report v1 per-invoice before/after snapshots, NOT grouping live statuses or case originalrunID. Baseline saved before graph, result after; accepted IDs dedup, resume skips completed/reuses incompletebaseline, oldreportedresults preserved. Existing interrupted job predatingtracking flaggedpartial. Old completedjobs no report explicitlyunavailable. Per-run results frozen; subsequentmanualsend/reply/due actions only current sections. Baseline deltas measure changes during processing, not guaranteedcausal attribution underconcurrentother-tab actions; see lesson limitation. Source disputes counttotalonhold withsourceexposure; newholds separate. Distinct initial/followupinvoicecounts, promisesrecorded; delivery live onlymatchedexactreportmailIDs, issuesprecedence. Accepted!=delivered!=paid. No fabricated DSO/cash/ROI/time-saved metric.
+
+Currentattention andwaiting sections/action-specificlabels plus expandableallstatuses, clickablecountfilters crossstage; Clearfilter/stagebuttonsrestorestage. Openinghistory fetchescorrectjob, previewreloadlatestjob restored. Currentstats includeprior/postrunwork andexplicitlabel. Monitoring mapsactualthreshold/notdue/settledreason; unprocessedpreviewReadyforagentreview. Pendingapprovals namedreminder/followup/promise. Finalcols Currentstatus | Lastcompletedaction | Nextstep, dedicateddue/aging/rule/ML retained. Compactwrappingqueueheader; preventivecaptiononlypreventive; customarrows/rangeslider removed, nativeboundedscroll remains. workflow-10 cache.
+
+Validation:34 graph/followup/report tests +8preview/email tests, isolatedSQL andmockproviders. Actual localHTTP/SSE/cookieJSDOM flow passednewlabels/order/filterclear/sliderabsence pluspreviousdialog/focus/unsentdraft/realgraphinterruptionresume/signeddelivery/promise/date/followup/reload/sourceunchanged. JSsyntaxpassed. No liveprovidercalls/cloudwrites/deploy; no pixelacceptanceclaim. Newlessonhands-on differentiates frozenrunresults vs currentactions. Next guidedinterviewerwalkthrough, editorlast.
+
+## Historical V2.7 queue-first invoice dialog
 
 PR16 merged2a0e80f6f620cc5ae11c9bae01d86a6ad0acfa77; user asks landingonlytable+execution, rowopenscustomer/emailandreplysidebyside, subtleclickhint and favicon. Branch queue-first-invoice-dialog. UI-only/noSQL/packages/env/backendchanges; existingSQL012prerequisite. Lesson docs/MILESTONE_V2_7.md. Learnermerge/manualdeploy/nativebrowseracceptancepending; no liveprovidercalls/cloudwrites/deploy byassistant.
 

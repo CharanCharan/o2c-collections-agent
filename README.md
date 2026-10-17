@@ -1,3 +1,5 @@
+> Latest V2.8: [run results and compact queue](docs/MILESTONE_V2_8.md). Run overview separates saved processing results from current approvals and customer waiting states. Compact queue header, native scrolling and clearer status/action columns. Merge/pull and manually deploy; no new SQL or packages.
+
 > Latest V2.7: [queue-first invoice workspace](docs/MILESTONE_V2_7.md). Landing page shows a wider invoice table and collections activity. Open an invoice for side-by-side email and simulated reply, with a custom website icon. Merge/pull and deploy only; no new SQL or packages.
 
 > Latest V2.6: [collections controls and invoice continuation](docs/MILESTONE_V2_6.md). Compact Portfolio overview and Payment promises beside Run collections; business-friendly labels and a conditional Continue invoice processing control above the selected email. Merge/pull and manual deploy only; no new SQL or packages.

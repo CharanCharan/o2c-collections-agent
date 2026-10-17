@@ -18,6 +18,7 @@ from langsmith import tracing_context
 from ..language import facts_for
 from ..storage import StoreRequestError,StorageError
 from .checkpoints import SupabaseSaver
+from .reporting import case_snapshot, case_result
 
 
 class State(TypedDict,total=False):
@@ -342,11 +343,18 @@ class CaseAgent:
             return await self.store.rpc('ca_agent_job',{'p_action':'update','p_session_key':actor,'p_run_id':run_id,'p_progress':progress,'p_status':status})
         try:
             job=await self.store.rpc('ca_agent_job',{'p_action':'get','p_session_key':actor,'p_run_id':run_id})
-            progress['auto_case_ids']=job['progress'].get('auto_case_ids',[])
+            progress.update(job['progress'])
+            progress.setdefault('report',{'version':1,'invoices':{},'legacy_partial':bool(progress.get('processed'))})
+            report=progress['report']['invoices']
+            progress['processed']=0
             run=await self.store.get_run(run_id);rows=run['result']['invoices'];progress['total']=len(rows)
             for row in rows:
                 opened=await self.cases.open(actor,run_id,row['id']);c=opened['case']
                 progress['current_invoice']=row['id']
+                entry=report.setdefault(row['id'],{'case_id':c['id'],'before':case_snapshot(c),'completed':False})
+                if entry['completed']:
+                    progress['processed']+=1
+                    continue
                 ids=progress['auto_case_ids']
                 if opened['recorded'] and mode=='autopilot' and len(ids)<3 and row.get('draft') and row['eligible']:
                     ids.append(c['id'])
@@ -355,6 +363,8 @@ class CaseAgent:
                     await self.invoke(actor,c['id'],mode=mode,allow_auto_send=c['id'] in ids)
                 elif c['workflow'].get('processing') and not c['workflow'].get('pending'):
                     await self.resume(actor,c['id'])
+                c=await self.case(actor,c['id'])
+                entry.update(completed=True,after=case_snapshot(c),result=case_result(entry['before'],c))
                 progress['processed']+=1
                 await save()
             await save('completed')

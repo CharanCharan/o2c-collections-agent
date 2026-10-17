@@ -26,11 +26,11 @@ const caseLabels = {
   awaiting_outreach: 'Ready for outreach',
   awaiting_response: 'Awaiting customer response',
   reply_received_review_required: 'Reply saved · processing incomplete; review required',
-  dispute_hold_review_required: 'Demo dispute hold · review required',
+  dispute_hold_review_required: 'Dispute — collections paused',
   reconciliation_required: 'Payment claim · reconciliation required',
   promise_review_required: 'Promise proposed · review required',
   document_review_required: 'Document request · review required',
-  manual_review_required: 'Reply needs manual review',
+  manual_review_required: 'Human review needed',
 };
 let mailEnabled = false;
 let publicMode = false;
@@ -49,7 +49,7 @@ async function api(path, options = {}) {
   const headers = options.headers || {};
   const response = await fetch(path, {cache: "no-store", ...options, headers});
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
+  if (!response.ok) {const error=new Error(data.detail || `Request failed (${response.status})`);error.status=response.status;throw error;}
   return data;
 }
 
@@ -120,14 +120,15 @@ const stageLabel = row => row.lifecycle === 'pre_due' ? 'Prevention' : row.lifec
 const timingLabel = row => row.days > 0 ? `${row.days} days overdue` : row.days_to_due > 0 ? `Due in ${row.days_to_due} days` : 'Due today';
 
 function renderQueue() {
-  $("filter-btn").disabled = state.queueStage === "pre_due";
-  const rows = state.invoices.filter(row => (!state.highOnly || (row.level === 'high' && row.eligible)) &&
-    (state.queueStage === 'pre_due' ? ['pre_due','due_today'].includes(row.lifecycle) : row.days > 0));
+  $("filter-btn").disabled = !outcomeFilter && state.queueStage === "pre_due";
+  $("preventive-caption").hidden=Boolean(outcomeFilter) || state.queueStage!=="pre_due";
+  const rows = state.invoices.filter(row => (!outcomeFilter || outcomeFilter.ids.includes(row.id)) && (!state.highOnly || (row.level === 'high' && row.eligible)) &&
+    (outcomeFilter || (state.queueStage === 'pre_due' ? ['pre_due','due_today'].includes(row.lifecycle) : row.days > 0)));
   if (!rows.length) state.selectedId = null;
   else if (!rows.some(row => row.id === state.selectedId)) state.selectedId = rows[0].id;
-  $("queue-sub").textContent = `${rows.length} invoices shown · ${state.queueStage === 'pre_due' ? 'preventive review' : 'overdue recovery'}. Totals above cover the full portfolio.`;
-  $("stage-overdue").setAttribute('aria-pressed', String(state.queueStage === 'overdue'));
-  $("stage-preventive").setAttribute('aria-pressed', String(state.queueStage === 'pre_due'));
+  $("queue-sub").textContent = `${rows.length} shown${outcomeFilter ? ' · '+outcomeFilter.label : ''} · totals above: full portfolio`;
+  $("stage-overdue").setAttribute('aria-pressed', String(!outcomeFilter && state.queueStage === 'overdue'));
+  $("stage-preventive").setAttribute('aria-pressed', String(!outcomeFilter && state.queueStage === 'pre_due'));
   $("overdue-count").textContent = state.invoices.filter(r => r.days > 0).length;
   $("preventive-count").textContent = state.invoices.filter(r => ['pre_due','due_today'].includes(r.lifecycle)).length;
   $("filter-btn").setAttribute('aria-pressed', String(state.highOnly));
@@ -140,9 +141,10 @@ function renderQueue() {
       <td><span class="tag ${row.score == null ? 'state' : row.level}">${row.score == null ? (row.days === 0 ? 'Not overdue' : 'Awaiting rules') : `${row.score}/100 · ${escapeHTML(row.level)}`}</span></td>
       <td>${row.prediction?.status==='scored'?`<strong>${(100*probability(row.prediction)).toFixed(1)}%</strong><div class="subline">${isPreDue(row.prediction)?'Becomes overdue':'Unpaid in 30 days'}</div>`:'<span class="subline">No matching prediction</span>'}</td>
       <td><span class="tag ${v.status.includes('dispute')?'warn':'state'}">${escapeHTML(v.label)}</span></td>
-      <td>${escapeHTML(v.next)}</td><td>${escapeHTML(v.latest)}${v.timestamp?`<div class="subline">${escapeHTML(new Date(v.timestamp).toLocaleTimeString())}</div>`:''}</td>
+      <td>${escapeHTML(v.latest)}${v.timestamp?`<div class="subline">${escapeHTML(new Date(v.timestamp).toLocaleTimeString())}</div>`:''}</td><td>${escapeHTML(v.next)}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="8" class="empty-state">${state.invoices.length?'No invoices match this filter.':'Waiting for invoice data.'}</td></tr>`;
+  $('clear-outcome-filter').hidden=!outcomeFilter;
   renderWorkflowSummary();renderCaseExecution();
   $("queue").querySelectorAll("tr[data-id]").forEach((row) => {
     const select = () => openInvoiceWorkspace(row.dataset.id);
@@ -182,7 +184,7 @@ function renderDetail() {
       <div class="detail-metric"><label>Open balance</label><strong>${money(row.amount)}</strong></div>
       <div class="detail-metric"><label>Timing</label><strong>${escapeHTML(timingLabel(row))}</strong></div>
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
-      <div class="detail-metric"><label>Next action</label><strong id="detail-next-action">${escapeHTML(rowView(row).next)}</strong></div>
+      <div class="detail-metric"><label>Next step</label><strong id="detail-next-action">${escapeHTML(rowView(row).next)}</strong></div>
     </div>
     <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send reminder</button></div>
       ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Run collections to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
@@ -257,6 +259,7 @@ function handleEvent(event) {
 }
 
 function clearRun() {
+  outcomeFilter=null;
   pendingMode=null;
   state.source?.close();
   const selectedStage = state.queueStage;
@@ -355,6 +358,8 @@ async function openSavedRun() {
     state.legacyRun = !["M3", "M4", "M5", "M6"].includes(run.result.workflow_version);
     for (const event of run.events) handleEvent(event);
     state.status = run.status;
+    agentJob=null;
+    if(workflowReady){try{agentJob=await api(`/api/runs/${id}/agent`);}catch(error){if(error.status!==404)showError('Run statistics unavailable: '+error.message);}}
     applySnapshot(run.result);
     banner(run.status.toUpperCase(), `Opened saved run ${id.slice(0, 8)} from Supabase`);
     $("last-run").textContent = `Saved run ${id.slice(0, 8)}`;
@@ -367,11 +372,12 @@ async function openSavedRun() {
 $("open-saved-run").onclick = openSavedRun;
 $("refresh-runs").onclick = refreshSavedRuns;
 initWorkflowControls();
-initTableNavigation();
+
 initInvoiceWorkspace();
+$('clear-outcome-filter').onclick=()=>{outcomeFilter=null;renderQueue();renderDetail();};
 for (const [id,stage] of [['stage-overdue','overdue'],['stage-preventive','pre_due']]) {
   $(id).onclick = () => {
-    state.queueStage = stage; state.highOnly = false;
+    state.queueStage = stage; state.highOnly = false; outcomeFilter=null;
     $("filter-btn").textContent = 'All urgency';
     renderQueue(); renderDetail();
   };
@@ -564,7 +570,8 @@ api("/api/health").then(async (health) => {
   if(workflowReady){
     scenarioSummaries=(await api('/api/scenarios')).scenarios;
     agentJob=(await api('/api/agent-jobs')).job;
-    renderWorkflowSummary();renderCaseExecution();
+    $('clear-outcome-filter').hidden=!outcomeFilter;
+  renderWorkflowSummary();renderCaseExecution();
   }
   renderFollowupControls();
   $('start-run').disabled=dueActive()||['waiting_for_portfolio','running'].includes(agentJob?.status);

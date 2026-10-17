@@ -174,16 +174,12 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 /* A bounded workspace: all columns move together; each owns its content scroll. */
 .grid {align-items:stretch;height:calc(100vh - 40px);min-height:480px;max-height:1000px}
 .queue-column {display:flex;flex-direction:column;min-height:0;height:100%}
-.queue-column .panel-head,.table-navigation {flex-shrink:0}
+.queue-column .panel-head {flex-shrink:0}
 .queue-column .table-wrap {flex:1;min-height:0;overflow:auto;scrollbar-width:auto;scrollbar-color:#769f91 #edf3ef}
 .ar-table thead th {position:sticky;top:0;z-index:2}
 .right-stack {display:block;height:100%;min-height:0;overflow:auto;border-radius:12px;scrollbar-gutter:stable}
 .right-stack>.panel+.panel {margin-top:16px}
 .agent-column {position:static;top:auto;height:100%;min-height:0;max-height:none;overflow:auto;scrollbar-gutter:stable}
-.table-navigation {padding:9px 12px;border-bottom:1px solid var(--line);background:#edf6f0;font-size:13px;color:#365f50}
-.table-navigation>div {display:flex;align-items:center;gap:8px;margin-top:5px}
-.table-navigation button {min-height:32px;padding:2px 12px;font-size:18px}
-.table-navigation input {min-width:60px;flex:1;accent-color:var(--teal)}
 .table-wrap::-webkit-scrollbar {height:14px;width:12px}
 .table-wrap::-webkit-scrollbar-track {background:#edf3ef}
 .table-wrap::-webkit-scrollbar-thumb {background:#769f91;border:3px solid #edf3ef;border-radius:8px}
@@ -271,3 +267,24 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
  .invoice-dialog-columns {grid-template-columns:minmax(0,1fr);overflow:auto;padding:10px;gap:10px}
  .invoice-dialog-columns>.panel {height:auto;overflow:visible}
 }
+
+/* Compact queue header and business run outcomes. Native scrolling remains. */
+.queue-column .panel-head {display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:12px 16px}
+.queue-column .panel-head>div:first-child {margin-right:auto}
+.queue-column .panel-title {font-size:18px}
+.queue-column .panel-sub {font-size:13px;margin:0}
+.queue-column .invoice-open-hint {font-size:14px;flex:0 1 auto}
+#preventive-caption {flex:0 1 auto;color:#607b70}
+.ar-table {min-width:1080px}
+.ar-table th:nth-child(7) {width:14%}
+.ar-table th:last-child {width:13%}
+.result-card {display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px;border:1px solid #d2e3d8;border-radius:8px;background:#f2f7f4;color:#234f41;text-align:left;font-size:14px;cursor:pointer}
+.result-card strong {font-size:24px;line-height:1.2}
+.result-card small {font-size:12px;color:#5c786b}
+.result-card:disabled {opacity:.7;cursor:default}
+.result-card:not(:disabled):hover {background:#e3f0e9;border-color:#719e8a}
+.workflow-summary h3 {font-size:15px;margin:18px 0 8px}
+.current-statuses {margin-top:16px}
+.current-statuses>summary {font-size:14px;cursor:pointer;font-weight:650}
+#portfolio-menu .action-popover {width:580px}
+@media(min-width:1600px) {.queue-column .panel-head {gap:8px 12px}.queue-column .panel-head>div:first-child {max-width:230px}}
