@@ -1,110 +1,123 @@
-"""HTTP endpoints and static frontend. Run from the repository root with Uvicorn."""
+"""One FastAPI server for the website, Supabase-backed runs and SSE."""
 
 import asyncio
 import json
 from contextlib import asynccontextmanager
 from pathlib import Path
+from uuid import UUID
 
 from fastapi import FastAPI, Header, HTTPException, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from .runner import Run, RunService, timestamp
+from .runner import RunService
+from .storage import StorageError, StoreRequestError, SupabaseStore
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
 
 
-def create_app(data_path: Path | None = None) -> FastAPI:
+def create_app(store=None):
+    config_error = None
+    if store is None:
+        try:
+            store = SupabaseStore.from_env(ROOT)
+        except StorageError as exc:
+            config_error = str(exc)
+    service = RunService(store) if store is not None else None
+
     @asynccontextmanager
     async def lifespan(app):
+        if service:
+            try:
+                await service.initialize()
+            except StorageError:
+                pass  # Still serve the page and an actionable health error.
         yield
-        await app.state.runs.close()
+        if service:
+            await service.close()
 
-    app = FastAPI(title="Collections Agent · Milestone 1", lifespan=lifespan)
-    app.state.runs = RunService(data_path or ROOT / "data" / "invoices.json")
+    app = FastAPI(title="Collections Agent · Milestone 2", lifespan=lifespan)
+    app.state.runs = service
 
-    def get_run(run_id: str) -> Run:
-        run = app.state.runs.runs.get(run_id)
-        if run is None:
-            raise HTTPException(404, "Run not found. The server may have restarted or the run expired. Start a new run.")
-        return run
+    def backend():
+        if service is None:
+            raise StorageError(config_error or "Configure Supabase in the local .env file and restart Python.")
+        return service
+
+    @app.exception_handler(StorageError)
+    async def storage_error(request, exc):
+        return JSONResponse(status_code=exc.status if isinstance(exc, StoreRequestError) else 503,
+                            content={"detail": str(exc)})
 
     @app.get("/api/health")
     async def health():
-        return {"status": "ok", "milestone": "M1", "storage": "process_memory_only",
-                "message": "Charan's collections backend is running", "stage_count": 5}
+        s = backend()
+        await s.initialize()
+        info = await s.store.health()
+        return {"status": "ok", "milestone": "M2", "storage": "supabase_postgres",
+                "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": 5}
 
     @app.post("/api/runs", status_code=202)
     async def start_run():
-        try:
-            run = app.state.runs.create()
-        except RuntimeError as exc:
-            raise HTTPException(429, str(exc)) from exc
+        run = await backend().create()
         return {"run_id": run.id, "status": run.status, "events_url": f"/api/runs/{run.id}/events"}
 
+    @app.get("/api/runs")
+    async def saved_runs():
+        return {"runs": await backend().store.recent()}
+
     @app.get("/api/runs/{run_id}")
-    async def read_run(run_id: str):
-        run = get_run(run_id)
-        async with run.lock:
-            return run.view()
+    async def read_run(run_id: UUID):
+        run = await backend().store.get_run(str(run_id))
+        if run is None:
+            raise HTTPException(404, "Run not found in this database.")
+        return run
 
     @app.get("/api/runs/{run_id}/events")
-    async def events(run_id: str, request: Request, last_event_id: str | None = Header(default=None)):
-        run = get_run(run_id)
+    async def events(run_id: UUID, request: Request, last_event_id: str | None = Header(default=None)):
+        store = backend().store
         try:
             after = max(0, int(last_event_id or 0))
         except ValueError as exc:
             raise HTTPException(400, "Last-Event-ID must be an integer") from exc
+        first = await store.feed(str(run_id), after)
+        if first is None:
+            raise HTTPException(404, "Run not found in this database.")
 
         async def stream():
-            cursor = after
+            cursor, current, idle = after, first, 0
             yield "retry: 1500\n\n"
             while True:
-                # Hold the condition while inspecting/waiting to avoid missed notifications.
-                async with run.condition:
-                    batch = [e for e in run.events if e["event_id"] > cursor]
-                    terminal = run.status in {"completed", "failed", "cancelled"}
-                    if not batch and not terminal:
-                        try:
-                            await asyncio.wait_for(run.condition.wait(), timeout=10)
-                        except asyncio.TimeoutError:
-                            pass
-                        batch = [e for e in run.events if e["event_id"] > cursor]
-                        terminal = run.status in {"completed", "failed", "cancelled"}
-                if await request.is_disconnected():
-                    return
-                for event in batch:
+                for event in current["events"]:
                     cursor = event["event_id"]
                     yield f"id: {cursor}\nevent: update\ndata: {json.dumps(event)}\n\n"
-                if terminal:
+                if current["status"] in TERMINAL or await request.is_disconnected():
                     return
-                if not batch:
+                # Poll persisted events, not simulated work. SSE still pushes each
+                # recorded update to the browser. No extra realtime service needed.
+                await asyncio.sleep(0.35)
+                try:
+                    current = await store.feed(str(run_id), cursor)
+                    if current is None:
+                        raise StorageError("Run was removed from the database.")
+                except StorageError as exc:
+                    # Transient connection errors are not fabricated saved events.
+                    payload = json.dumps({"message": str(exc)})
+                    yield f"event: connection-error\ndata: {payload}\n\n"
+                    return
+                idle = 0 if current["events"] else idle + 1
+                if idle >= 28:
                     yield ": heartbeat\n\n"
+                    idle = 0
 
         return StreamingResponse(stream(), media_type="text/event-stream",
                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
     @app.post("/api/runs/{run_id}/invoices/{invoice_id}/dry-run")
-    async def dry_run(run_id: str, invoice_id: str):
-        run = get_run(run_id)
-        async with run.lock:
-            if run.status != "completed":
-                raise HTTPException(409, "Finish a successful collections run first")
-            row = next((r for r in run.context.invoices if r["id"] == invoice_id), None)
-            if row is None:
-                raise HTTPException(404, "Invoice not found in this run")
-            if not row["eligible"] or not row["draft"]:
-                raise HTTPException(409, "This invoice has no eligible reminder draft")
-            if row["contacted"]:
-                return {"recorded": False, "message": "Already recorded; no duplicate created", "run": run.view()}
-            row["contacted"] = True
-            row["action"] = "Dry run recorded"
-            run.interactions.append({"invoice_id": invoice_id, "type": "approved_dry_run",
-                                     "timestamp": timestamp(), "draft": row["draft"].copy(), "email_sent": False})
-            await run.emit("approval", "completed", f"Approved dry-run reminder for {row['customer']} ({invoice_id}). No email was sent.",
-                           result={"invoice_id": invoice_id, "email_sent": False})
-            return {"recorded": True, "run": run.view()}
+    async def dry_run(run_id: UUID, invoice_id: str):
+        return await backend().store.approve(str(run_id), invoice_id)
 
     @app.get("/")
     async def index():

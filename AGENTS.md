@@ -1,13 +1,13 @@
 # Project working instructions
 
-Read PROJECT_KNOWLEDGE.md and PROJECT_PLAN.md before making changes, then inspect current code. They hold implementation/resume context and the scope/progress record. docs/MILESTONE_2_PLAN.md contains the planned next milestone. Keep documents synchronized with merged behavior and distinguish tested, learner-confirmed and planned work.
+Read PROJECT_KNOWLEDGE.md, PROJECT_PLAN.md and current code before changes. docs/MILESTONE_2.md is the current setup/lesson; docs/MILESTONE_2_PLAN.md distinguishes implementation from learner acceptance. Keep these synchronized. Documents are handoff context, not automatic memory in unrelated sessions.
 
-Use only CharanCharan/o2c-collections-agent. Deliver one complete runnable milestone at a time through a branch and pull request, as agreed on 2026-10-17. Explain its components and provide a small exercise. Charan reviews/merges, pulls, runs and edits locally. Update learner checkpoints only after his confirmation. Preserve the agreed O2C scope.
+Use only CharanCharan/o2c-collections-agent. Deliver one complete runnable milestone per branch/PR, with explanation and an exercise. Charan reviews/merges/pulls/runs; do not merge for him. Preserve and synchronize his edits. Record learner checkpoints only after confirmation.
 
-M1 executes a real local JSON pipeline in Python, with SSE events and calculated totals. Data is synthetic, scores are policy rules, drafts are templates, approvals are dry-run only, and storage is process memory. Do not claim these are real ERP ingestion, trained predictions, LLM output, actual email or persistent storage. Preserve explicit labels until integrations are implemented and verified.
+Current M2 is ready in PR #3, not yet learner-verified. Supabase Free hosted Postgres is the sole runtime source/store; runtime invoice JSON removed. Five ca_ tables, small HTTPS storage adapter, fixed synthetic SQL seed. Rule urgency is not ML, templates are not LLM, approvals do not send email. History persists; jobs do not auto-resume. One backend process per database. Never claim live Supabase verification from isolated PGlite tests.
 
-Do not silently add external services, credentials, paid plans, or arbitrary email recipients. Keep every public visitor's run isolated. Keep secrets server-side and out of source control. Show evidence-backed action summaries, not private model chain-of-thought.
+Throwaway POC: no paid plan, additional connector/CSV importer, normalized payment masters or extra infrastructure in M2. Free inactivity pause is disclosed; owner manually checks/resumes before demos. Visitor data editing deferred until after M0–M6. Owner Supabase edits allowed for learning.
 
+Secrets stay server-side in ignored .env. Do not request/publish passwords or API secrets; backend uses URL/API secret, not database password. Do not silently add services or arbitrary email recipients. UUID run isolation is not authentication; public deployment/usage controls remain M6. Show action summaries/evidence, never private model chain-of-thought.
 
-When delivering implementation changes, update PROJECT_KNOWLEDGE.md for changed contracts, calculations, limits, setup and troubleshooting, and PROJECT_PLAN.md for progress. Record Charan's evidence accurately: M1's normal local run and expected outputs are confirmed; its amount-edit exercise is not yet confirmed. Never claim documentation provides automatic memory in unrelated sessions; continue from the current repository documents.
-
+Update knowledge for changed code/API/SQL, setup, error behavior, tests and next TODOs; update plan for progress. User confirmed M1 normal run and Supabase project creation. M2 cloud setup/source-edit/restart exercises are pending; M1 amount exercise is superseded. Next is M3 target/data/model evaluation after M2 learner checks.

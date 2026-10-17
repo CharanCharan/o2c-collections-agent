@@ -1,1 +1,1 @@
-"""Milestone 1: a local, observable collections workflow."""
+"""Milestone 2: observable collections with a Supabase source and saved history."""
