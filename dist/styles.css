@@ -288,3 +288,30 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 .current-statuses>summary {font-size:14px;cursor:pointer;font-weight:650}
 #portfolio-menu .action-popover {width:580px}
 @media(min-width:1600px) {.queue-column .panel-head {gap:8px 12px}.queue-column .panel-head>div:first-child {max-width:230px}}
+
+/* Portfolio flow is horizontal; invoice execution belongs to its selected dialog. */
+.grid {display:block;height:76vh;min-height:480px;max-height:1000px}
+.portfolio-flow {margin:14px 0 12px}
+.portfolio-flow .run-banner {padding:12px 16px}
+.portfolio-flow .flow {display:flex;gap:12px;padding:14px 16px;overflow-x:auto}
+.portfolio-flow .step {flex:1 0 145px;min-width:0;min-height:0;padding:0;display:grid;grid-template-columns:28px minmax(0,1fr);gap:5px 8px;align-content:start}
+.portfolio-flow .step:not(:last-child):before {display:none}
+.portfolio-flow .step-icon {grid-row:1;grid-column:1}
+.portfolio-flow .step-meta {grid-column:2;margin:0;text-transform:capitalize}
+.portfolio-flow .step-name {font-size:14px}
+.portfolio-flow .step-desc {font-size:12px}
+.portfolio-events {padding:10px 16px;border-top:1px solid var(--line);font-size:14px}
+.portfolio-events>summary {cursor:pointer;color:#496b5d}
+.portfolio-events .feed {margin-top:12px;max-height:240px}
+.invoice-next-step {margin-top:10px;padding:14px;background:#edf6f0;border:1px solid #c8ded0;border-radius:10px}
+.invoice-next-step h3 {margin:5px 0;font-size:19px}
+.invoice-next-step p {font-size:14px;line-height:1.55;margin:7px 0 12px;color:#456553}
+.next-step-actions {display:flex;gap:8px;flex-wrap:wrap}
+.next-step-actions:empty {display:none}
+.reply-pane>#case-agent-activity {border-top:1px solid var(--line);padding:16px 0 0;margin-top:20px}
+.case-trace {display:flex;gap:10px;overflow-x:auto;max-height:none;padding-bottom:10px}
+.case-trace-item {flex:0 0 230px;border:1px solid #d4e2d9;border-radius:8px;padding:12px;font-size:13px;background:#f7faf8}
+.case-trace-item b,.trace-status {display:block;margin-bottom:6px}
+.trace-status {font-size:12px;color:#41745b}
+.case-trace-item small {display:block;margin-top:8px}
+@media(max-width:1000px) {.grid {height:76vh;min-height:480px;max-height:820px}.queue-column {height:100%}}

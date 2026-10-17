@@ -210,7 +210,7 @@ function renderFlow() {
     if (status === "completed") completed++;
     const cls = status === "completed" ? "complete" : status === "started" ? "active" : status === "failed" ? "failed" : "";
     const symbol = status === "completed" ? "✓" : status === "failed" ? "!" : i + 1;
-    return `<div class="step ${cls}"><div class="step-icon">${symbol}</div><div><div class="step-name">${name}</div><div class="step-desc">${desc}</div></div><div class="step-meta">${status || "Waiting"}</div></div>`;
+    return `<div class="step ${cls}" role="listitem"><div class="step-icon">${symbol}</div><div><div class="step-name">${name}</div><div class="step-desc">${desc}</div></div><div class="step-meta">${status || "Waiting"}</div></div>`;
   }).join("");
   $("progress-bar").style.width = `${completed / visibleStages.length * 100}%`;
 }
@@ -451,6 +451,7 @@ function renderCase() {
     return;
   }
   const historyOpen=$('message-history')?.open || false;
+  renderCaseExecution();
   panel.innerHTML = `<div class="panel-title">Simulate customer reply</div>
     <p class="explain">Act as the customer and test how collections responds. This form records a simulated reply; it does not send or receive an email.</p>
     <form id="case-reply-form"><label for="case-reply-text">Act as the customer · simulated reply</label><textarea id="case-reply-text" maxlength="4000" required placeholder="Example: We believe this invoice was already paid. Please check your records."></textarea>
@@ -478,6 +479,7 @@ function renderCase() {
     const button = event.currentTarget.querySelector('button[type="submit"]'); button.disabled = true;
     let replyFailed=false;
     button.textContent = 'Saving and checking reply…';
+    renderSendState();
     try {
       const response = await api(`/api/cases/${current.id}/replies`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({request_id:pending.request_id,text})});
       pendingCaseReply = null; replyDrafts.delete(current.id); saveCase(response);
@@ -505,7 +507,6 @@ function renderSendState() {
   if (!button) return;
   const row = state.invoices.find(r => r.id === state.selectedId);
   const c = visitorCases.find(c => c.invoice_id === row?.id);
-  refreshInvoiceCaseHeader(c);
   const draftRow = c?.snapshot.invoice || row;
   const follow=c?.workflow?.followup;
   if(follow) {
@@ -515,6 +516,7 @@ function renderSendState() {
     button.textContent=sendBusy?'Sending follow-up…':follow.status==='accepted'?'Follow-up sent':follow.status==='superseded'?'Follow-up superseded':follow.status==='declined'?'Follow-up declined':follow.status==='review_required'?'Retry reviewed follow-up':follow.status==='unknown'?'Retry same follow-up':follow.status==='quota_wait'?'Retry follow-up after quota reset':'Send follow-up';
     $('draft-email-status').textContent=outboundLabel(out);
     if($('detail-next-action') && row)$('detail-next-action').textContent=rowView(row).next;
+    refreshInvoiceCaseHeader(c);
     return;
   }
   const held = c && !['awaiting_outreach','awaiting_response'].includes(c.collection_status);
@@ -523,6 +525,7 @@ function renderSendState() {
   button.textContent = sendBusy ? 'Sending…' : c?.outbound?.state === 'accepted' ? 'Email sent' : c?.outbound ? 'Retry same email' : c?.workflow?.status === 'quota_wait' ? 'Retry email after quota reset' : 'Send reminder';
   if($('detail-next-action') && row)$('detail-next-action').textContent=rowView(row).next;
   $('draft-email-status').textContent = held && !c.outbound ? 'Reminder paused: review this case before further outreach.' : !mailEnabled ? 'Email is disabled or not configured on the server.' : outboundLabel(c?.outbound);
+  refreshInvoiceCaseHeader(c);
 }
 
 async function sendDraft() {
