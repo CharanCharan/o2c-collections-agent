@@ -1,3 +1,5 @@
+> Latest V2.7: [queue-first invoice workspace](docs/MILESTONE_V2_7.md). Landing page shows a wider invoice table and collections activity. Open an invoice for side-by-side email and simulated reply, with a custom website icon. Merge/pull and deploy only; no new SQL or packages.
+
 > Latest V2.6: [collections controls and invoice continuation](docs/MILESTONE_V2_6.md). Compact Portfolio overview and Payment promises beside Run collections; business-friendly labels and a conditional Continue invoice processing control above the selected email. Merge/pull and manual deploy only; no new SQL or packages.
 
 > Latest V2.5: [promise follow-ups and scrolling lesson](docs/MILESTONE_V2_5.md). After merge/pull, apply SQL012 then manually deploy. Adds an explicit demo clock, resumable due checks, separate authorized follow-up emails and consistent bounded three-panel scrolling with horizontal table controls. No new packages or environment settings.
@@ -14,7 +16,7 @@ Milestone 6 prepares this repository for a public interview demo on one RenderFr
 
 The deployment is not live until you configure your own account/secrets and verify its actual URL. Email/LLM default off. Only synthetic AR data belongs in the public demo; claims of payment never reduce invoice balances.
 
-The current workspace preloads source AR and saved browser cases before Start. Its three columns show invoices, customer/email conversation and live execution. Collection status, next action and latest activity are separate. A real LangGraph case workflow supports limited approvals, bounded autopilot and automatic processing of clearly simulated website replies. Synthetic document/payment tools demonstrate disputes and reconciliation without changing source balances.
+The current workspace preloads source AR and saved browser cases before Start. Its landing workspace shows invoices and live execution; opening an invoice reveals email and customer replies in a side-by-side dialog. Collection status, next action and latest activity are separate. A real LangGraph case workflow supports limited approvals, bounded autopilot and automatic processing of clearly simulated website replies. Synthetic document/payment tools demonstrate disputes and reconciliation without changing source balances.
 
 ## Start here
 

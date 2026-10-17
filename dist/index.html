@@ -3,17 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#f5f7f7" />
+  <meta name="theme-color" content="#153c3b" />
+  <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="/assets/favicon.ico?v=1" />
+  <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/favicon.svg?v=1" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-8" />
-  <script src="/assets/followup-ui.js?v=workflow-8" defer></script>
-  <script src="/assets/workflow-ui.js?v=workflow-8" defer></script>
-  <script src="/assets/app.js?v=workflow-8" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-9" />
+  <script src="/assets/invoice-ui.js?v=workflow-9" defer></script>
+  <script src="/assets/followup-ui.js?v=workflow-9" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-9" defer></script>
+  <script src="/assets/app.js?v=workflow-9" defer></script>
 </head>
 <body>
 <div class="shell">
   <header class="topbar">
-    <div class="brand"><div class="brand-mark">↗</div><div>AR Collections <small>Agent workspace</small></div></div>
+    <div class="brand"><div class="brand-mark"><img src="/assets/favicon.svg" width="38" height="38" alt="" /></div><div>AR Collections <small>Agent workspace</small></div></div>
     <div class="top-actions"><div class="pill"><i class="dot"></i><span id="backend-label">Connecting to Python…</span></div><div class="pill" id="as-of">Start to load the demo snapshot</div><div class="avatar">CS</div></div>
   </header>
   <section class="intro">
@@ -49,15 +52,12 @@
           </div>
           <button class="filter" id="filter-btn" aria-pressed="false">All urgency</button>
         </div>
+        <p class="invoice-open-hint" id="invoice-open-hint">Select any invoice row to open its reminder and customer reply side by side.</p>
         <p class="panel-sub" id="preventive-caption">Prevention is scored seven days before due.</p>
       </div>
       <div class="table-navigation"><span id="table-scroll-hint">Scroll sideways for all 8 columns →</span><div><button class="secondary" id="table-scroll-left" aria-label="Scroll invoice table left">←</button><input id="table-position" type="range" min="0" max="100" value="0" aria-label="Horizontal position in invoice table"><button class="secondary" id="table-scroll-right" aria-label="Scroll invoice table right">→</button></div></div>
       <div id="queue-scroll" class="table-wrap" tabindex="0" role="region" aria-label="Invoice queue; scroll horizontally for all columns"><table class="ar-table"><thead><tr><th>Customer / invoice</th><th>Source balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Collection status</th><th>Next action</th><th>Latest activity</th></tr></thead><tbody id="queue"></tbody></table></div>
     </section>
-    <div class="right-stack">
-      <section class="panel detail" id="detail" aria-label="Selected invoice"></section>
-      <section class="panel detail" id="case-conversation" aria-label="Customer conversation" aria-live="polite"><p class="explain">Loading this browser’s saved cases…</p></section>
-    </div>
     <aside class="agent-column" aria-label="Live agent execution">
       <section class="panel run-panel">
         <div class="run-banner"><div><div class="panel-title">Collections activity</div><div class="panel-sub" id="run-caption">Connecting…</div></div><div class="run-state"><i class="dot"></i><span id="state-label">WAITING</span></div></div>
@@ -72,6 +72,13 @@
   <p class="panel-sub" id="demo-access-note">Checking demo access…</p>
   <footer class="footer"><span>Collections Agent · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
 </div>
+<dialog id="invoice-dialog" class="invoice-dialog" aria-labelledby="invoice-dialog-title" aria-describedby="invoice-dialog-caption">
+  <header class="invoice-dialog-head"><div><div class="eyebrow">Invoice workspace</div><h2 id="invoice-dialog-title">Invoice details</h2><p id="invoice-dialog-caption">Review the email on the left and simulate a customer reply on the right.</p></div><button class="secondary" id="close-invoice-dialog" autofocus>Back to queue <span aria-hidden="true">×</span></button></header>
+  <div class="invoice-dialog-columns">
+    <section class="panel detail" id="detail" aria-label="Invoice and reminder email"></section>
+    <section class="panel detail" id="case-conversation" aria-label="Simulated customer reply" aria-live="polite"><p class="explain">Loading this browser’s saved cases…</p></section>
+  </div>
+</dialog>
 <dialog id="agent-mode-dialog" aria-labelledby="agent-mode-title">
   <h2 id="agent-mode-title">Choose how to process collections</h2>
   <p>New cases use this mode. Existing cases retain their saved approvals and history.</p>
