@@ -248,8 +248,9 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         await s.initialize()
         info = await s.store.health()
         await s.store.rpc("ca_language_health")
+        public_info = {}
         if public.config.enabled:
-            await s.store.rpc("ca_public_health")
+            public_info = await s.store.rpc("ca_public_health")
             if s.language.enabled and (not s.language.config.free_only or s.language.config.error()):
                 raise HTTPException(503,"Public demo requires valid free-only Groq configuration.")
         if mail.config.enabled:
@@ -264,7 +265,10 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         return {"status": "ok", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
-                "public_demo": {"enabled":public.config.enabled,"daily_run_cap":20,"daily_llm_attempt_cap":40,"per_browser_runs":3,"per_browser_llm_attempts":8},
+                "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,
+                                "daily_run_cap":public_info.get('daily_run_cap',20) if public.config.enabled else None,
+                                "per_browser_runs":public_info.get('per_browser_runs',3) if public.config.enabled else None,
+                                "daily_llm_attempt_cap":40,"per_browser_llm_attempts":8},
                 "workflow":workflow,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
 
     @app.get('/api/reply-examples')

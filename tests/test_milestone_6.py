@@ -37,25 +37,33 @@ def test_https_session_run_history_isolation_and_all_mutation_routes(store_facto
             assert b.get(f'/api/runs/{rid}').status_code==404
 
 
-def test_run_daily_quota_and_cookie_survives_restart(store_factory,database):
+def test_repeated_starts_work_after_old_browser_quota_and_restart(store_factory,database):
     with TestClient(app_for(store_factory),base_url='https://demo.test') as c:
+        run,_=finish(c)
+        actor=database.sql('select session_key from ca_run_access where run_id=$1',[run['run_id']])[0]['session_key']
+        database.sql("insert into ca_demo_usage(day,actor,kind,attempts) values((now() at time zone 'UTC')::date,$1,'run',3),((now() at time zone 'UTC')::date,'global','run',20)",[actor])
         for _ in range(3):finish(c)
-        assert c.post('/api/runs').status_code==429
         cookie=c.cookies.get(COOKIE)
+        health=c.get('/api/health').json()['public_demo']
+        assert health['daily_run_limit_enabled'] is False
+        assert health['daily_run_cap'] is None and health['per_browser_runs'] is None
     with TestClient(app_for(store_factory),base_url='https://demo.test') as fresh:
         fresh.cookies.set(COOKIE,cookie)
-        assert len(fresh.get('/api/runs').json()['runs'])==3
-        assert fresh.post('/api/runs').status_code==429
-    assert database.sql("select attempts from ca_demo_usage where actor='global' and kind='run'")[0]['attempts']==3
+        assert len(fresh.get('/api/runs').json()['runs'])==4
+        run,_=finish(fresh)
+        assert run['status']=='completed'
+    assert database.sql("select attempts from ca_demo_usage where actor='global' and kind='run'")[0]['attempts']==20
 
 
-def test_global_run_cap_is_not_bypassed_by_new_cookies(store_factory,database):
-    for index in range(20):
+def test_old_global_run_usage_does_not_block_new_visitor(store_factory,database):
+    database.sql("insert into ca_demo_usage(day,actor,kind,attempts) values((now() at time zone 'UTC')::date,'global','run',20)")
+    for index in range(21):
         assert database.call(command='rpc',name='ca_public_reserve',params={'p_actor':str(index),'p_kind':'run'})['data']
     with TestClient(app_for(store_factory),base_url='https://demo.test') as c:
-        assert c.post('/api/runs').status_code==429
         assert c.get('/api/runs').json()['runs']==[]
-    assert database.sql('select count(*) as count from ca_run_access')[0]['count']==0
+        run,_=finish(c)
+        assert run['status']=='completed'
+    assert database.sql('select count(*) as count from ca_run_access')[0]['count']==1
 
 
 def test_private_email_events_removed_from_run_sse_and_action_responses(store_factory,database):
@@ -169,3 +177,38 @@ def test_budget_database_outage_blocks_provider_egress(store_factory,monkeypatch
         run,_=finish(c)
         assert run['result']['drafting']['counts']['fallback']==4 and not requests
         assert not any(r.get('draft_audit',{}).get('api_attempted') for r in run['result']['invoices'])
+
+
+def test_start_migration_is_additive_idempotent_and_keeps_llm_budgets(database):
+    from pathlib import Path
+    sql=(Path(__file__).resolve().parents[1]/'sql/011_unlimited_demo_starts.sql').read_text()
+    database.sql("insert into ca_demo_usage(day,actor,kind,attempts) values((now() at time zone 'UTC')::date,'global','llm',40)")
+    assert database.call(command='exec',sql=sql)['data']
+    assert database.call(command='exec',sql=sql)['data']
+    assert database.sql("select attempts from ca_demo_usage where actor='global' and kind='llm'")[0]['attempts']==40
+    assert database.call(command='rpc',name='ca_public_reserve',params={'p_actor':'test','p_kind':'llm'})['data'] is False
+    assert database.call(command='rpc',name='ca_public_reserve',params={'p_actor':'test','p_kind':'run'})['data'] is True
+
+
+def test_health_does_not_claim_unlimited_before_migration(store_factory,database):
+    # Simulate the old database contract, without reverting other functions.
+    database.call(command='exec',sql="create or replace function public.ca_public_health() returns jsonb language sql stable security definer set search_path=public,pg_temp as $$ select '{\"public_schema_version\":6}'::jsonb; $$;")
+    try:
+        with TestClient(app_for(store_factory),base_url='https://demo.test') as c:
+            health=c.get('/api/health').json()['public_demo']
+            assert health['daily_run_limit_enabled'] and health['daily_run_cap']==20 and health['per_browser_runs']==3
+    finally:
+        from pathlib import Path
+        database.call(command='exec',sql=(Path(__file__).resolve().parents[1]/'sql/011_unlimited_demo_starts.sql').read_text())
+
+
+def test_concurrent_server_capacity_has_specific_message_not_daily_quota(store_factory,database):
+    from uuid import uuid4
+    with TestClient(app_for(store_factory),base_url='https://demo.test') as c:
+        assert c.get('/api/health').status_code==200
+        for _ in range(5):
+            database.sql("insert into ca_runs(id,process_id,status) values($1,$2,'queued')",[str(uuid4()),str(uuid4())])
+        response=c.post('/api/runs')
+        assert response.status_code==429,response.text
+        assert 'processing five runs' in response.json()['detail']
+        assert 'Daily Start' not in response.json()['detail']

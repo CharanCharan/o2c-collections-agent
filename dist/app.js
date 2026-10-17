@@ -521,7 +521,11 @@ clearRun();
 api("/api/health").then(async (health) => {
   publicMode = Boolean(health.public_demo?.enabled);
   workflowReady=Boolean(health.workflow?.ready);
-  $("demo-access-note").textContent = publicMode ? 'Public demo · synthetic invoices · this browser gets 3 runs and 8 LLM attempts per UTC day. Shared daily caps also apply; templates remain available when LLM quota is used.' : 'Local learning mode · keep this instance private.';
+  $('demo-access-note').textContent = publicMode
+    ? (health.public_demo.daily_run_limit_enabled === false
+      ? 'Public demo · no daily Start limit. Model and real email allowances remain bounded; templates remain available when model quota is used.'
+      : 'Public demo · daily Start limits still active. Apply sql/011_unlimited_demo_starts.sql to remove them. Model and email allowances remain bounded.')
+    : 'Local learning mode · keep this instance private.';
   const language = health.language;
   mailEnabled = Boolean(health.email?.ready);
   $("backend-label").textContent = language ? (language.configuration_error ? "Supabase · LLM configuration blocked" : language.enabled ? (language.key_configured ? `Supabase · ${language.provider} · ${language.model}` : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";

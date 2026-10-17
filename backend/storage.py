@@ -64,8 +64,19 @@ class SupabaseStore:
             allowed = {
                 "PT404": "Run, invoice or case not found in this session.",
                 "PT409": "Action blocked: case needs review, or invoice has no eligible draft in a completed run.",
-                "PT429": "Demo limit reached (runs, replies or case storage). Daily limits reset at UTC midnight; case/message storage limits do not.",
+                "PT429": "Demo capacity reached for this action. Existing data remains saved.",
             }
+            if data.get("code") == 'PT429':
+                if data.get('message') == 'Five runs are active. Wait or restart the single backend to recover abandoned runs.':
+                    allowed['PT429'] = 'The server is processing five runs. Wait for an active run to finish, then try again.'
+                else:
+                    allowed['PT429'] = {
+                        'ca_public_create': 'Daily Start limits are still active in this database. Apply sql/011_unlimited_demo_starts.sql to remove them.',
+                        'ca_case_open': 'Demo case storage is full. Existing cases remain available; the project owner needs to review storage.',
+                        'ca_case_reply': 'Reply allowance reached for this case or today. Existing replies remain saved; a full case does not reset at midnight.',
+                        'ca_mail_prepare': 'Daily real-email allowance reached. No new email reserved; try after UTC midnight.',
+                        'ca_case_mail_prepare': 'Daily real-email allowance reached. No new email reserved; try after UTC midnight.',
+                    }.get(name, 'Demo capacity reached for this action. Existing data remains saved.')
             if data.get("code") in allowed:
                 raise StoreRequestError(int(data["code"][2:]), allowed[data["code"]])
             if response.status_code == 404:
