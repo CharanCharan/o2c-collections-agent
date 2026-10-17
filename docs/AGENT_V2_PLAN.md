@@ -1,6 +1,6 @@
 # Collections workspace V2 — business-first, autonomous within a policy
 
-Status: proposed design after user reported cloud app working on2026-10-17. PR#7 merged b8c0bc96. Actual public URL not supplied for independent verification. User asks for invoice/email-first layout, preloaded data, LangGraph, automatic/limited control, visitor replies without owner token, and voice/IVR ideas. Constraint remains no paid services. This document separates shipped phase1 from proposed V2 work; LangGraph/inbox/autopilot are not implemented by this PR.
+Status: phase1 merged in PR#8 (c5778663), user confirms preloaded data is working. Phase2 case/conversation foundation is implemented on v2-visitor-cases, learner setup pending. Remaining graph/autopilot phases are planned. PR#7 merged b8c0bc96. Actual public URL not supplied for independent verification. User asks for invoice/email-first layout, preloaded data, LangGraph, automatic/limited control, visitor replies without owner token, and voice/IVR ideas. Constraint remains no paid services. This document separates shipped phase1 from proposed V2 work. The case/conversation foundation is implemented below; LangGraph/autopilot are not implemented yet.
 
 ## Implemented immediately: workspace and first-load experience
 
@@ -8,16 +8,16 @@ Invoice queue, selected invoice/reminder and existing email panel appear before 
 
 GET /api/portfolio loads the current synthetic Supabase source and computes validation, urgency, both stage-specific ML predictions and ranking as a read-only preview. No LLM, draft generation, email, saved run, event or quota reservation. Initial website load populates totals/invoices before Start is enabled. Preview is explicitly labelled; it does not claim a collection run executed. Start still invokes the genuine saved workflow. Existing source snapshot date and privacy boundaries remain. No new SQL/environment settings.98localtests passed, including the preview zero-side-effect check; cookie-aware HTTP/SSE/DOM verified nine preloaded rows,431700balance,zeroevents,collapsed diagnostics after email and the existing owner email loop with mocked providers. No live deployment by assistant.
 
-M5 real email remains owner-only until the visitor inbox/channel isolation below exists. Moving owner controls is not removing backend authorization. New V2 permissions must replace the visitor experience before deleting its token dependency; exposing real inbox/secrets publicly is not the design.
+M5 real email remains owner-only in this foundation milestone. The next graph/control-mode milestone will add narrowly scoped visitor sends to the fixed project test inbox. Moving owner controls is not removing backend authorization. New V2 permissions must replace the visitor experience before deleting its token dependency; exposing real inbox/secrets publicly is not the design.
 
 ## Recommended visitor journey
 
 1. Open URL: see current invoices, amounts, risk/collection status and a customer inbox panel immediately. Later iterations overlay this session's saved case state; never show another visitor's inbox/history.
 2. Choose Start agent. Dialog offers **Review actions** (limited control) or **Autopilot demo** (automatic actions within displayed policy).
-3. Agent identifies priority accounts, pauses disputes, chooses eligible action, drafts/validates wording and either requests approval or delivers to the session's demo inbox.
+3. Agent identifies priority accounts, pauses disputes, chooses eligible action, drafts/validates wording and either requests approval or sends through Resend to the project test inbox, while displaying only this session’s message/status copy.
 4. Visitor acts as the customer: type a quick reply or choose a suggested scenario. The reply is a real application event, explicitly simulated customer communication rather than an externally received email.
 5. LangGraph resumes that case automatically, interprets intent, validates extracted facts and records the supported next state/action. No separate manual Classify button in autopilot mode.
-6. Changes appear beside the invoice and conversation: reminder delivered to demo inbox, promise recorded, payment claim awaiting reconciliation, dispute held, documents requested or review needed. The bottom trace explains selected action/evidence/policy/outcome, not private chain-of-thought.
+6. Changes appear beside the invoice and conversation: real reminder delivered to project test inbox, promise recorded, payment claim awaiting reconciliation, dispute held, documents requested or review needed. The bottom trace explains selected action/evidence/policy/outcome, not private chain-of-thought.
 7. Reload restores that browser session's saved conversation/cases. Start processes new/pending work and due tasks; it does not resend every draft merely because it exists.
 
 ## Permission modes
@@ -26,14 +26,14 @@ M5 real email remains owner-only until the visitor inbox/channel isolation below
 |---|---|---|
 | Read synthetic AR/risk/prioritize | Automatic | Automatic |
 | Propose reminder/next action | Automatic | Automatic |
-| Deliver to isolated demo inbox | Ask approval | Automatic if policy passes |
+| Send real email to fixed project test inbox | Ask approval | Automatic if session/policy/budget checks pass |
 | Read/classify newly submitted demo reply | Automatic | Automatic |
 | Record clear supported promise/schedule demo task | Propose for approval | Automatic if literal date/amount/policy pass |
 | Pause collection on dispute | Immediate hold, then review | Immediate hold, then review |
 | Ambiguous promise or unsupported request | Pause for clarification | Pause for clarification |
 | Claim of payment | Reconciliation required | Reconciliation required |
 | Mark invoice paid/write off/change balance or terms | Never from model/customer claim | Never from model/customer claim |
-| Actual external email/call | Separate controlled channel/verified recipient | Not enabled for anonymous public autopilot |
+| Arbitrary recipient email / actual phone call | Not part of default demo | Not part of default demo |
 
 “Full control” should not mean unrestricted tools or arbitrary recipients. UI can explain exactly what Autopilot is allowed to do. A low-confidence/unavailable model or exhausted budget must pause/label fallback, not silently invent an action or permission.
 
@@ -48,7 +48,7 @@ Suggested nodes:
 - Choose next action: model returns a structured action, supporting evidence and required facts from allowed actions. Python enforces eligibility, dispute hold, contact cooldown, due date, permissions and budget.
 - Draft/validate: existing modular provider and exact financial rendering; one bounded repair attempt at most, consuming the existing budget. Invalid result goes to review or clearly labelled template.
 - Approval: use LangGraph interrupt for limited-mode side effects or exceptional actions. Resume same thread with explicit approval.
-- Deliver: demo channel records the message atomically and emits a UI event; real Resend remains a separate adapter.
+- Deliver: narrowly scoped server-side tool uses Resend to send only to the fixed project test recipient. Persist reservation/idempotency and show this session’s message copy plus verified provider status. Do not expose the private owner mailbox.
 - Await response: persist and end this invocation; do not hold a sleeping server task/socket indefinitely.
 - Classify/validate response: on a new message event, resume with original case/thread and enforce extraction checks.
 - Resolve/route: record promise, reconcile payment claim, hold dispute, prepare document response or request clarification. Save follow-up and end or loop to the next allowed action.
@@ -77,13 +77,15 @@ For repeatable demos, add a session-local **demo clock** and an explicit “adva
 
 ## Visitor email/inbox choice under zero-cost constraints
 
-Recommended default: **a simulated customer inbox inside the website**, isolated by browser session. Auto-deliver synthetic reminders there, accept bounded typed replies and process them through the same classifier/graph policy as real messages. Label channel/status as “Demo inbox”/“Simulated delivery”; never claim Resend sent/received it. It can demonstrate the whole feedback loop without real visitor addresses or public owner tokens.
+Recommended default (latest user-approved design): **real outbound via Resend to the existing project test inbox, with simulated customer replies in the website**. Visitors see only their session-linked message copies and verified provider status; label the real recipient as the project test inbox, not the visitor’s personal inbox. Typed replies are clearly labelled simulated and go through the same classifier/policy as live messages. Do not claim they are Resend receipts.
+
+This milestone implements only session cases, an **unsent draft copy**, typed replies, automatic classification-for-review and persistent proposed collection status. Opening a case does not send or simulate delivery. Real outbound is still the existing owner-controlled M5 flow. The next LangGraph/control-mode milestone will implement server-authorized visitor sends scoped to their own case and the fixed configured test recipient, preserving idempotency/global mail limits and keeping all unrelated owner messages private. No visitor-supplied recipient/body/sender and no exposed owner credential.
 
 An actual Resend receiving mailbox can receive messages at the account's managed subdomain, but it is not a public writable inbox widget to expose wholesale. A reply typed into our website is application input, not a Resend received webhook. If we later display actual messages, retrieve/relay only session-matched content server-side and retain signature/thread/sender checks; never expose API keys, shared inboxes or unrelated messages.
 
 The current onboarding@resend.dev test sender only sends to the account signup address. Arbitrary visitor recipients require a verified sending domain. If Charan already owns a suitable domain, sending may fit the provider Free quota, but domain ownership/verification is still needed; buying a domain is not zero cost. An optional future real-email path needs recipient verification/consent, durable recipient and global caps, session-scoped access and no relay capability. Do not simply replace EMAIL_TEST_RECIPIENT with visitor text or remove owner auth from the existing real-email endpoint.
 
-Public visitor experience should need no owner token. Keep a private operator credential/server boundary for actual provider actions/account administration; remove those controls from the main visitor journey rather than granting anonymous access to the owner's inbox. Existing private email history must remain private.
+Public visitor experience should need no owner token. Keep a private operator credential for account administration and a server-enforced narrow visitor tool boundary for fixed-recipient sends; remove those controls from the main visitor journey rather than granting anonymous access to the owner's inbox. Existing private email history must remain private.
 
 ## Voice and IVR
 
@@ -96,7 +98,7 @@ Before voice, higher-value low-cost additions are promise tracking, dispute hold
 ## Delivery order and acceptance
 
 1. **Workspace/preview PR (this PR):** invoice/reminder/email first, technical details below, initial current-data preview. No graph/email authority change. Merge/pull and manually redeploy existing Render service; no new SQL/env.
-2. **Visitor inbox + case state:** per-session messages/replies/current collection status; no token for simulated channel; privacy/dedup/bounded text tests. Existing real mail remains protected. Show current saved case state on reload.
+2. **Visitor conversations + case state (implemented, setup pending):** SQL007 case/messages, one case per browser/invoice with immutable originating-run snapshot; unsent draft copy, typed simulated replies, automatic classification-for-review or visible manual fallback. No owner token for this channel. Private M5 email stays protected. Initial load restores cases beside fresh AR; duplicate request UUID does not repeat model work. No graph/checkpoint or promise/task/payment mutation yet.
 3. **LangGraph + control modes:** replace linear orchestration where useful, install/pin library, durable checkpoints, permission dialog, policy-checked decisions/approval interrupts and automatic resume on message. Test fresh/reload/restart/duplicate callback/no paid fallback; expose model-unavailable behavior honestly.
 4. **Scenario polish:** preventive outreach, promises/expiry with explicit demo clock, disputes/payment claims/documents, outcome counters and short guided interviewer scenarios.
 5. **Optional browser voice:** only after above. Actual arbitrary-recipient email/phone adapters require a separate justified plan; not part of no-cost default.
@@ -113,3 +115,12 @@ Official references reviewed2026-10-17:
 - https://github.com/langchain-ai/langgraph/blob/main/LICENSE
 - https://resend.com/docs/knowledge-base/403-error-resend-dev-domain
 - https://www.twilio.com/docs/usage/trials
+
+
+## V2.1 implementation contract
+
+Read docs/MILESTONE_V2_1.md for setup/exercise and PROJECT_KNOWLEDGE.md for handoff. SQL007 is additive; existing runs/AR/mail remain unchanged. Session keys are server-derived and never returned. Cases are session-private even for another browser with an owner role. Twelve cases/browser,500 global stored cases;12 replies/case;20 replies/browser/day and120 global/day. Caps are SQL-atomic; global/actor model quotas still apply. Case caps do not reset on UTC midnight. A new run reuses an existing case for that invoice, preserving original snapshot and contact history. No reset/delete button this milestone.
+
+Reply is saved as pending before the bounded LLM attempt. Same request UUID/text returns stored outcome without another model attempt, including after failure/restart. A crash can leave a pending/manual review case; there is no silent retry or recovery-worker claim. A classified dispute sets a sticky **demo case** hold; separate owner mail is unchanged in this foundation. All promise/date/amount results are proposals requiring review, not committed promises or scheduled tasks. Payment claims require reconciliation and never reduce AR.
+
+Public uses the existing signed7-day cookie/secret. Local HTTP also gets a browser cookie; set private DEMO_SESSION_SECRET32+characters locally for persistence across Python restarts. Without it a local process-random signer means cases persist in SQL but the new process cannot recover that browser identity. Public configuration remains fail closed and Secure cookies stay enabled.

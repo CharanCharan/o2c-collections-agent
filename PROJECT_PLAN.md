@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. Current workspace-preview-v2-plan PR implements business-first layout/read-only preload; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
+Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. PR#8 merged c5778663 and user confirms preload works. Current v2-visitor-cases implements conversation/case foundation, SQL007 setup pending; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
 ## Goal and scope
 
@@ -163,3 +163,10 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 ## Latest V2 direction — after user-reported live deployment
 
 User requests a product-facing invoice/email workspace, data on first load and a more autonomous LangGraph workflow with visitor replies and optional voice, retaining zero spend. Follow docs/AGENT_V2_PLAN.md: phase1 UI/preload now; next per-session simulated inbox/case status without visitor owner token; then durable LangGraph/checkpoints/approval modes/automatic reply handling; scenario polish and optional simulated browser voice. Current real email remains owner-controlled. Arbitrary visitor email needs verified sending domain; sustainable real IVR not assumed free. No unsafe blanket send or payment closure from customer claims. Existing future visitor editor remains separate.
+
+
+## Latest milestone — V2.1 visitor conversations and persistent cases
+
+User confirms initial loading works; no further preload diagnosis required. Prepared v2-visitor-cases based on PR#8 mergec5778663. Add isolated SQL007 cases/messages, unsent reminder copy, typed simulated reply, bounded automatic classification-for-review and saved proposed case status. Reload restores this session beside fresh current AR, never another browser’s messages. No LangGraph/visitor send/control dialog/financial action yet. Setup/exercise docs/MILESTONE_V2_1.md; acceptance pending until user runs it.
+
+Latest approved channel choice: real Resend outbound to project test inbox with session-only display, simulated quick replies. That supersedes earlier simulated-outbound recommendation above. Existing M5 owner send stays intact for this foundation; next graph/control milestone adds narrow visitor authorization to fixed-recipient sends and provider status projection, without exposing owner inbox. Then business tools for document/dispute/payment reconciliation and promise due checks with labelled demo clock. Optional editing/voice remains later.

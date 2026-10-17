@@ -1,3 +1,5 @@
+> Latest: PR#8 preload is learner-confirmed. V2.1 adds saved visitor cases and typed simulated replies; run [the V2.1 lesson](docs/MILESTONE_V2_1.md) after merging. SQL007 required. This is the conversation foundation; LangGraph/control modes and visitor-triggered real Resend sending are next.
+
 # Charan's O2C Collections Agent
 
 Canonical repository: https://github.com/CharanCharan/o2c-collections-agent

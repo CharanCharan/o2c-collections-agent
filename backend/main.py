@@ -15,6 +15,7 @@ from .runner import RunService, STAGES
 from . import risk_model, pipeline
 from .language import LanguageService, facts_for
 from .mail.service import MailService
+from .cases import CaseService
 from .public_demo import PublicConfig, PublicAccess, ACTOR
 from pydantic import BaseModel, ConfigDict, Field
 from .storage import StorageError, StoreRequestError, SupabaseStore
@@ -34,6 +35,8 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     service = RunService(store, language=language) if store is not None else None
 
     mail = MailService(store,service.language,config=mail_config,transport=mail_transport) if service else None
+
+    cases = CaseService(store,service.language) if service else None
 
     public = PublicAccess(public_config or PublicConfig.from_env(),store)
     if service and public.config.enabled:
@@ -64,16 +67,16 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         except HTTPException as exc:
             return JSONResponse({'detail':exc.detail},status_code=exc.status_code)
         session=None
-        if public.config.enabled and request.url.path not in {'/livez','/api/webhooks/resend'}:
+        if request.url.path not in {'/livez','/api/webhooks/resend'}:
             origin=request.headers.get('origin')
-            if request.method not in {'GET','HEAD','OPTIONS'} and origin:
+            if public.config.enabled and request.method not in {'GET','HEAD','OPTIONS'} and origin:
                 from urllib.parse import urlsplit
                 parsed=urlsplit(origin)
                 if parsed.scheme!='https' or parsed.netloc!=request.headers.get('host'):
                     return JSONResponse({'detail':'Cross-origin action rejected.'},status_code=403)
             session=public.session(request)
             request.state.demo_session=session
-            request.state.demo_owner=(session.get('owner_until',0)>time.time() or public.owner(request.headers.get('x-collections-owner')))
+            request.state.demo_owner=public.config.enabled and (session.get('owner_until',0)>time.time() or public.owner(request.headers.get('x-collections-owner')))
             actor=public.actor(request)
         else:
             request.state.demo_owner=False
@@ -135,6 +138,32 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             return pipeline.result_snapshot(context)
         return {'mode':'read_only_preview','agent_started':False,
                 'portfolio':await asyncio.to_thread(build)}
+
+    class OpenCaseRequest(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+        run_id: UUID
+        invoice_id: str = Field(min_length=1,max_length=80)
+
+    class CaseReplyRequest(BaseModel):
+        model_config = ConfigDict(extra='forbid',strict=True)
+        request_id: UUID = Field(strict=False)
+        text: str = Field(min_length=1,max_length=4000)
+
+    @app.get('/api/cases')
+    async def list_cases(request: Request):
+        backend()
+        return {'cases':await cases.list(public.actor(request)[0])}
+
+    @app.post('/api/cases')
+    async def open_case(body: OpenCaseRequest,request: Request):
+        await public.allowed(request,body.run_id)
+        backend()
+        return await cases.open(public.actor(request)[0],str(body.run_id),body.invoice_id)
+
+    @app.post('/api/cases/{case_id}/replies')
+    async def case_reply(case_id: UUID,body: CaseReplyRequest,request: Request):
+        backend()
+        return await cases.reply(public.actor(request)[0],str(case_id),str(body.request_id),body.text)
 
     @app.get("/api/model")
     async def model_info():
