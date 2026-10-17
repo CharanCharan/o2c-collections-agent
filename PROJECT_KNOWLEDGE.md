@@ -3,14 +3,31 @@ document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
 implementation_milestone: M6_cloud_public_demo
-implementation_branch: workspace-preview-v2-plan
+implementation_branch: v2-visitor-cases
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: workspace_preview_redeploy_then_V2_inbox_graph_cases
-next_milestone: live_acceptance_then_optional_visitor_editor
+pending_learning_check: SQL007_case_reply_reload_then_graph
+next_milestone: durable_langgraph_control_modes_fixed_recipient_real_email
 ---
 
 # Project knowledge — continuation context
+
+## Latest V2.1 checkpoint — authoritative continuation
+
+PR#8 merged c57786632c2d9ccf2215f1d711d7fb0e92c40a69; remote main verified identical before this work. User confirms first-load data works and withdraws the preload complaint. No live URL supplied; no independent live inspection claimed. Proceed one runnable milestone at a time.
+
+Latest approved design supersedes earlier simulated-outbound default: keep Resend REAL outbound to fixed project test inbox, show only session message/status copy; website quick replies explicitly simulated. No arbitrary visitor addresses/domain purchase. Owner token remains private administration, visitor actions eventually use server-authorized scoped case tools. Current V2.1 is the foundation, not that send tool or LangGraph yet.
+
+Implemented: backend/cases.py + API GET/POST/api/cases and POST/api/cases/{UUID}/replies; SQL007 ca_collection_cases/ca_case_messages and service-only RPCs. Open requires own completed run in public mode, known invoice; one case/browser/invoice, originating run invoice/currency/as-of frozen. Unsent draft copy stored as draft_preview (no delivery). Actor not exposed, no owner cross-browser bypass. Fresh portfolio remains current source; conversation restores independently on page load. Missing SQL007 yields scoped actionable panel error, not empty AR. Reset/logout re-load portfolio rather than leave empty boxes. Existing private mail panel remains separate and protected.
+
+Reply: plain text1–4000 chars, UUID request key; SQL commits simulated_customer_reply/pending first. Existing bounded LanguageService.classify on that event only. Schema/literal-evidence validation and existing public global/browser LLM caps retained. Review status maps to promise_review_required / reconciliation_required / dispute_hold_review_required / document_review_required / manual_review_required. All review-only; no tasks/promise commitment/AR mutation or mail. Dispute hold sticky only in demo case (not yet operator mail gate). Disabled/unavailable/capped model visibly manual-review, never fake keyword classifier. No modelcalls on render/read/reload. Same key/text duplicate returns saved result/no new attempt; changed text samekey409. Failure after reservation leaves pending, retry does not re-run model; explicit review, not automatic restart/resume.
+
+SQL limits:12cases/browser500global stored cases,12customerreplies/case,20/browser/day120global/day UTC. Locked SQL reservations protect limits/replay across restart. Newrun reuses existingcase; storage limits not daily reset. Owner tests/typed replies count toward relevant caps. No automatic retention/deletion, no reset feature. Publiccookie existing secret7daySecure/HttpOnly. Localalso signedbrowsercookie(nonSecure forHTTP); set DEMO_SESSION_SECRET locally to persist identity across Pythonrestart; otherwise ephemeral process signer means newprocess can't recover that localbrowser identity. No secret needed from user in chat.
+
+Validation: full regression112 tests passed before adding one extra actor-cap case; final dedicated visitor suite15 tests passed, covering the added cap and corrected unrelated-actor global cap. Actual local HTTP/SSE + cookie-aware DOM passed case open, typed reply/manual fallback, HTML escaping, stranger isolation and full-page reload restoration, plus previous owner Resend loop with mocked providers. No real LLM/email calls or live deployment. One existing Starlette/httpx deprecation warning.
+
+Setup lesson docs/MILESTONE_V2_1.md: merge/pull SQL007 once then manualRenderdeploy; no packages/newservices/env for existingcloud. Next implement durable LangGraph checkpoints/modes, scoped fixed-recipient real send/session projection and policy-replay tests; then document/dispute/payment-evidence tools and due-work demo clock. No paid voice or always-on promise.
+
 
 ## Current workspace/V2 checkpoint — latest user direction
 

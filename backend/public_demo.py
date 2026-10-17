@@ -48,20 +48,23 @@ class PublicConfig:
 
 
 class PublicAccess:
-    def __init__(self,config,store):self.config,self.store=config,store
+    def __init__(self,config,store):
+        self.config,self.store=config,store
+        # Local mode also isolates case conversations. Set DEMO_SESSION_SECRET for restart persistence.
+        self.session_secret=config.secret or secrets.token_hex(32)
 
     def owner(self,token):
         return bool(token and self.config.owner_token and hmac.compare_digest(token.encode(),self.config.owner_token.encode()))
 
     def encode(self,session):
         body=base64.urlsafe_b64encode(json.dumps(session,separators=(',',':')).encode()).decode().rstrip('=')
-        signature=hmac.new(self.config.secret.encode(),body.encode(),hashlib.sha256).hexdigest()
+        signature=hmac.new(self.session_secret.encode(),body.encode(),hashlib.sha256).hexdigest()
         return body+'.'+signature
 
     def decode(self,value):
         try:
             body,signature=value.split('.')
-            expected=hmac.new(self.config.secret.encode(),body.encode(),hashlib.sha256).hexdigest()
+            expected=hmac.new(self.session_secret.encode(),body.encode(),hashlib.sha256).hexdigest()
             if not hmac.compare_digest(signature,expected):raise ValueError
             result=json.loads(base64.urlsafe_b64decode(body+'='*(-len(body)%4)))
             if not re.fullmatch(r'[0-9a-f]{64}',result['id']) or not 0<=time.time()-result['issued']<7*86400:raise ValueError
@@ -73,7 +76,7 @@ class PublicAccess:
         return self.decode(request.cookies.get(COOKIE,'')) or {'id':secrets.token_hex(32),'issued':int(time.time()),'owner_until':0}
 
     def set_cookie(self,response,session):
-        response.set_cookie(COOKIE,self.encode(session),max_age=7*86400,secure=True,httponly=True,samesite='lax',path='/')
+        response.set_cookie(COOKIE,self.encode(session),max_age=7*86400,secure=self.config.enabled,httponly=True,samesite='lax',path='/')
 
     def actor(self,request):
         session=request.state.demo_session

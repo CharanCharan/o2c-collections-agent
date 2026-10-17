@@ -30,6 +30,9 @@
   <style>
     .diagnostics{margin-top:24px;border:1px solid var(--line);border-radius:11px;background:white;padding:16px}
     .diagnostics>summary{cursor:pointer;font-weight:700;color:#536e69}.diagnostics>.run-panel{margin-top:15px}.diagnostics>.history-bar{margin-top:16px}
+    #case-conversation pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;font-size:11px}
+    #case-conversation textarea{width:100%;min-height:90px;font:inherit;padding:10px;border:1px solid var(--line);border-radius:6px;box-sizing:border-box}
+    .case-message{border-left:3px solid #cde8db;padding:9px 12px;margin:12px 0;background:#f6faf8}
     #email-activity pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;font-size:11px}
   </style>
   <script src="/assets/app.js" defer></script>
@@ -63,6 +66,7 @@
     </section>
     <div class="right-stack">
       <section class="panel detail" id="detail" aria-label="Selected invoice"></section>
+      <section class="panel detail" id="case-conversation" aria-label="Customer conversation" aria-live="polite"><p class="explain">Loading this browser’s saved cases…</p></section>
       <section class="panel detail" id="email-activity" aria-label="Email activity"><p class="explain">Complete a run to inspect email delivery, replies and follow-up tasks.</p></section>
     </div>
   </main>
