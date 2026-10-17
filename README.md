@@ -6,6 +6,8 @@ Milestone 6 prepares this repository for a public interview demo on one RenderFr
 
 The deployment is not live until you configure your own account/secrets and verify its actual URL. Email/LLM default off. Only synthetic AR data belongs in the public demo; claims of payment never reduce invoice balances.
 
+The workspace update puts invoices, reminders and email activity first, with diagnostics below. Initial load reads the current Supabase portfolio without starting a run or spending model/email quota. [V2 design](docs/AGENT_V2_PLAN.md) proposes the next isolated visitor inbox, LangGraph control modes and event-driven case handling; these are not implemented yet.
+
 ## Start here
 
 For cloud hosting, follow [M6 deployment and webhook repair](docs/MILESTONE_6.md). Merge M6, apply SQL006, stop your local main server sharing the database, then create the one Free service. [Deploy to Render](https://render.com/deploy?repo=https://github.com/CharanCharan/o2c-collections-agent) uses render.yaml after it is merged into main. Verify Free plan and private environment values before confirming. Manual Web Service setup is also documented; do not create both.

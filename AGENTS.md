@@ -1,6 +1,6 @@
 # Project working instructions
 
-Read PROJECT_KNOWLEDGE.md, PROJECT_PLAN.md and current code before changes. docs/MILESTONE_6.md is the current lesson; docs/MILESTONE_2.md covers fresh database setup; docs/MILESTONE_2_PLAN.md distinguishes implementation from learner acceptance. Keep these synchronized. Documents are handoff context, not automatic memory in unrelated sessions.
+Read PROJECT_KNOWLEDGE.md, PROJECT_PLAN.md, docs/AGENT_V2_PLAN.md and current code before changes. docs/MILESTONE_6.md is the current lesson; docs/MILESTONE_2.md covers fresh database setup; docs/MILESTONE_2_PLAN.md distinguishes implementation from learner acceptance. Keep these synchronized. Documents are handoff context, not automatic memory in unrelated sessions.
 
 Use only CharanCharan/o2c-collections-agent. Deliver one complete runnable milestone per branch/PR, with explanation and an exercise. Charan reviews/merges/pulls/runs; do not merge for him. Preserve and synchronize his edits. Record learner checkpoints only after confirmation.
 
@@ -21,3 +21,5 @@ Throwaway POC: no paid plan, additional connector/CSV importer, normalized payme
 Secrets stay server-side in ignored .env. Do not request/publish passwords or API secrets; backend uses URL/API secret, not database password. Do not silently add services or arbitrary email recipients. UUID run isolation is not authentication; public deployment/usage controls remain M6. Show action summaries/evidence, never private model chain-of-thought.
 
 Update knowledge for changed code/API/SQL, setup, error behavior, tests and next TODOs; update plan for progress. User confirmed M1/M2 and reported M3 done; deeper M3 exercises unconfirmed. M4 live cloud/API and learning checks pending. M6 cloud deployment/live URL/Resend replay plus M5 loop and deferred M4 checks pending. Next learner steps: merge/pull, SQL006, stop local main sharing DB, RenderFree service/render.yaml, private environment secrets, health/probe smoke, update existing Resend URL/endpointsecret, replay, owner/visitor acceptance. Keep one backend instance/worker; no auto-deploy during active runs. After all live checks, optional visitor editor. Do not equate automated checks with learner completion.
+
+Latest: user reports site live, requests V2 invoice/email-first +preload+LangGraph/autopilot/visitorinbox/voice. Current workspace-preview-v2-plan phase1 only UI/read-only GET/api/portfolio/startup preload; noLLM/run/email/quotaonload. docs/AGENT_V2_PLAN.md proposednext phases; do notclaimgraph/inbox/modesimplemented. Keeprealprovider/privateemailauth; visitor token-free path must useisolatedclearlysimulatedinbox, notopen relay. Userzero-spend retained; no paid voice/domain assumptions. LangGraph library/SQLcheckpoint/decisionmodes not yet added.
