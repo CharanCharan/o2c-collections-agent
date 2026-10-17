@@ -170,3 +170,32 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 #agent-mode-dialog h2 {font-size:24px;margin-top:0}#agent-mode-dialog .primary {width:100%;margin:12px 0;justify-content:center;text-align:center}
 
 .amount .subline {white-space:normal;overflow-wrap:anywhere}
+
+/* A bounded workspace: all columns move together; each owns its content scroll. */
+.grid {align-items:stretch;height:calc(100vh - 40px);min-height:480px;max-height:1000px}
+.queue-column {display:flex;flex-direction:column;min-height:0;height:100%}
+.queue-column .panel-head,.table-navigation {flex-shrink:0}
+.queue-column .table-wrap {flex:1;min-height:0;overflow:auto;scrollbar-width:auto;scrollbar-color:#769f91 #edf3ef}
+.ar-table thead th {position:sticky;top:0;z-index:2}
+.right-stack {display:block;height:100%;min-height:0;overflow:auto;border-radius:12px;scrollbar-gutter:stable}
+.right-stack>.panel+.panel {margin-top:16px}
+.agent-column {position:static;top:auto;height:100%;min-height:0;max-height:none;overflow:auto;scrollbar-gutter:stable}
+.table-navigation {padding:9px 12px;border-bottom:1px solid var(--line);background:#edf6f0;font-size:13px;color:#365f50}
+.table-navigation>div {display:flex;align-items:center;gap:8px;margin-top:5px}
+.table-navigation button {min-height:32px;padding:2px 12px;font-size:18px}
+.table-navigation input {min-width:60px;flex:1;accent-color:var(--teal)}
+.table-wrap::-webkit-scrollbar {height:14px;width:12px}
+.table-wrap::-webkit-scrollbar-track {background:#edf3ef}
+.table-wrap::-webkit-scrollbar-thumb {background:#769f91;border:3px solid #edf3ef;border-radius:8px}
+.followup-controls {padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:white;margin:12px 0}
+.clock-actions {display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:10px}
+.clock-actions label {font-size:14px}.clock-actions input {padding:8px;border:1px solid var(--line);border-radius:7px;color:var(--ink)}
+.followup-history {border-top:1px solid var(--line);padding-top:12px;margin-top:14px}
+@media(max-width:1180px) {
+ .grid {height:auto;min-height:0;max-height:none;align-items:start}
+ .queue-column,.right-stack {height:calc(100vh - 32px);min-height:480px;max-height:800px}
+ .agent-column {height:calc(100vh - 32px);min-height:420px;max-height:720px}
+}
+@media(max-width:760px) {
+ .queue-column,.right-stack,.agent-column {height:75vh;min-height:420px;max-height:720px}
+}

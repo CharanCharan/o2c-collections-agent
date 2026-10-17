@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.5 implements explicit demo-clock due checks and fixed-recipient follow-up email with durablejobs, savedapproval/automaticallocations and separate initial/followup history. Full/partial/unmatched syntheticledger evidence controlsoutreach; no sourcebalancechange or scheduler. Currentlesson MILESTONE_V2_5.md; SQL012+manualdeploy. UI nowboundedpanels, nonstickyexecution and persistenthorizontalnavigation, all8columnsretained. Review/liveacceptancepending.
+
 User override: SQL011 removes daily browser/global Start quotas; signed ownership and all metered model/email limits stay. No daily run allowance after migration, repeatedStarts preserve cases and do not resend. Apply SQL011 +manualdeploy; see current lesson. Prior run-cap design below is historical.
 
 V2.4 implements the durable case workflow described in [the hands-on lesson](MILESTONE_V2_4.md). Actual LangGraph nodes, Supabase checkpoints, limited-mode interrupts, bounded autopilot, server-side Start continuation and controlled scenario tools are implemented on langgraph-case-workflow; merge/SQL009+010/deploy and learner acceptance remain pending. PR#11 UI is merged. No live external calls/deployment by assistant.

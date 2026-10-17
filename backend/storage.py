@@ -66,6 +66,8 @@ class SupabaseStore:
                 "PT409": "Action blocked: case needs review, or invoice has no eligible draft in a completed run.",
                 "PT429": "Demo capacity reached for this action. Existing data remains saved.",
             }
+            if data.get("code") == 'PT409' and name in {'ca_demo_clock','ca_due_job'}:
+                allowed['PT409'] = 'Use a forward demo date within one year of the snapshot and wait for active processing. Interrupted due checks can be resumed.'
             if data.get("code") == 'PT429':
                 if data.get('message') == 'Five runs are active. Wait or restart the single backend to recover abandoned runs.':
                     allowed['PT429'] = 'The server is processing five runs. Wait for an active run to finish, then try again.'
@@ -76,6 +78,7 @@ class SupabaseStore:
                         'ca_case_reply': 'Reply allowance reached for this case or today. Existing replies remain saved; a full case does not reset at midnight.',
                         'ca_mail_prepare': 'Daily real-email allowance reached. No new email reserved; try after UTC midnight.',
                         'ca_case_mail_prepare': 'Daily real-email allowance reached. No new email reserved; try after UTC midnight.',
+                        'ca_followup_mail_prepare': 'Daily real-email allowance reached. No follow-up reserved; try after UTC midnight.',
                     }.get(name, 'Demo capacity reached for this action. Existing data remains saved.')
             if data.get("code") in allowed:
                 raise StoreRequestError(int(data["code"][2:]), allowed[data["code"]])

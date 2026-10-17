@@ -20,14 +20,15 @@ function rowView(row) {
   let next=w?.next_action || (c?.outbound ? 'Wait for delivery or customer reply' : row.action);
   const completed=(w?.activity || []).filter(a=>a.status==='completed' && ['execute','interpret'].includes(a.node));
   let latest=completed.at(-1) || null;
-  if(c?.outbound) {
-    const issue=c.outbound.events.findLast(e=>['email.bounced','email.failed','email.complained','email.suppressed'].includes(e.type));
-    const delivered=c.outbound.events.findLast(e=>e.type==='email.delivered');
+  const currentOutbound=followupMail(c)||c?.outbound;
+  if(currentOutbound) {
+    const issue=currentOutbound.events.findLast(e=>['email.bounced','email.failed','email.complained','email.suppressed'].includes(e.type));
+    const delivered=currentOutbound.events.findLast(e=>e.type==='email.delivered');
     const e=issue || delivered;
     if(e && (!latest || new Date(e.received_at)>new Date(latest.timestamp))) latest={message:e.type.replace('email.','Email '),timestamp:e.received_at};
-    if(!latest) latest={message:c.outbound.state==='accepted'?'Email accepted by Resend':'Email outcome unknown',timestamp:c.outbound.created_at};
+    if(!latest) latest={message:currentOutbound.state==='accepted'?'Email accepted by Resend':'Email outcome unknown',timestamp:currentOutbound.created_at};
     if(!w || ['awaiting_delivery','awaiting_outreach','awaiting_response'].includes(status)) {
-      status=issue?'delivery_unknown':delivered?'awaiting_response':c.outbound.state==='accepted'?'awaiting_delivery':'delivery_unknown';
+      status=issue?'delivery_unknown':delivered?'awaiting_response':currentOutbound.state==='accepted'?'awaiting_delivery':'delivery_unknown';
       next=issue?'Review delivery issue':delivered?'Wait for customer response':'Await verified delivery';
     }
   }
@@ -62,9 +63,10 @@ function workflowExtras(c) {
   const view=rowView(state.invoices.find(r=>r.id===c.invoice_id)||c.snapshot.invoice);
   const unfinishedReply=c.messages.some(m=>m.channel==='simulated_customer_reply' && ['pending_review','model_attempt_reserved'].includes(m.review?.status));
   return `<section class="case-outcome"><h3>${escapeHTML(view.label)}</h3><p><b>Next action:</b> ${escapeHTML(view.next)}</p>
-    ${w.pending && w.pending.tool!=='send_email'?`<p>Prepared action: ${escapeHTML(w.pending.tool.replaceAll('_',' '))}</p><button class="secondary" id="approve-case-action" ${caseActionBusy?'disabled':''}>Approve action</button><button class="secondary" id="decline-case-action" ${caseActionBusy?'disabled':''}>Decline</button>`:''}
-    ${w.pending?.tool==='send_email'?'<p>Review the draft and use Send email above to approve this action.</p>':''}
+    ${w.pending && !['send_email','send_followup_email'].includes(w.pending.tool)?`<p>Prepared action: ${escapeHTML(w.pending.tool.replaceAll('_',' '))}</p><button class="secondary" id="approve-case-action" ${caseActionBusy?'disabled':''}>Approve action</button><button class="secondary" id="decline-case-action" ${caseActionBusy?'disabled':''}>Decline</button>`:''}
+    ${['send_email','send_followup_email'].includes(w.pending?.tool)?'<p>Review the draft and use its Send button above to approve this action.</p>':''}
     ${(w.processing || unfinishedReply) && !caseActionBusy && agentJob?.status!=='running'?'<button class="secondary" id="resume-case-action">Resume saved processing</button>':''}
+    ${w.followup?`<p><b>Follow-up:</b> ${escapeHTML(w.followup.status)} · promised ${escapeHTML(w.followup.promise_date)} · checked on demo date ${escapeHTML(w.followup.as_of_date)}. Original reminder stays in history.</p>`:''}
     ${w.promise?`<p>Promise date: <b>${escapeHTML(w.promise.promise_date)}</b>. Amount: ${escapeHTML(w.promise.promise_amount || 'not specified')}. Check after: ${escapeHTML(w.followup_date)} (demo date).</p>`:''}
     ${w.reconciliation?`<p><b>Synthetic payment match:</b> ${escapeHTML(w.reconciliation.financial_state.replaceAll('_',' '))} · matched ${money(w.reconciliation.matched_amount)} · demo remaining ${money(w.reconciliation.remaining_amount)}. Source AR remains unchanged.</p>`:''}
     ${w.evidence?`<p>${w.evidence.difference_amount?'Evidence discrepancy: '+money(w.evidence.difference_amount)+'. ':''}${w.evidence.missing_documents?.length?'Missing evidence: '+escapeHTML(w.evidence.missing_documents.join(', '))+'. ':''}These are controlled synthetic documents; retrieving them does not send email.</p>
@@ -99,14 +101,18 @@ async function launchCaseAgent(runId,mode) {
 async function pollWorkflow() {
   if(workflowPollBusy)return;
   const active=['waiting_for_portfolio','running'].includes(agentJob?.status);
-  const mailPending=visitorCases.some(c=>c.outbound && !c.outbound.events.some(e=>['email.delivered','email.bounced','email.complained','email.failed','email.suppressed'].includes(e.type)));
-  if(!active && !caseActionBusy && !mailPending)return;
+  const checkingDue=dueActive();
+  const mailPending=visitorCases.some(c=>[c.outbound,...(c.followups||[])].some(out=>out && !out.events.some(e=>['email.delivered','email.bounced','email.complained','email.failed','email.suppressed'].includes(e.type))));
+  if(!active && !checkingDue && !caseActionBusy && !mailPending)return;
   workflowPollBusy=true;
   try {
     if(active)agentJob=await api(`/api/runs/${agentJob.run_id}/agent`);
+    if(checkingDue)dueJob=await api(`/api/followup-checks/${dueJob.id}`);
     await refreshCases(false);
+    if(checkingDue && !dueActive()){ $('start-run').disabled=active;banner('FOLLOW-UP CHECK FINISHED','Saved promises and payment evidence checked; review states remain open.'); }
+    renderFollowupControls();
     if(active && !['waiting_for_portfolio','running'].includes(agentJob.status)) {
-      $('start-run').disabled=false;
+      $('start-run').disabled=dueActive();
       banner(agentJob.status==='completed'?'PROCESSING FINISHED':'INTERRUPTED',agentJob.status==='completed'?'Case actions saved. Waiting/review states remain open.':'Resume saved case processing below.');
     }
   } catch(error){showError(error.message);}
@@ -115,7 +121,7 @@ async function pollWorkflow() {
 
 function initWorkflowControls() {
   $('start-run').onclick=()=>{
-    if(state.status==='running'||['waiting_for_portfolio','running'].includes(agentJob?.status))return;
+    if(state.status==='running'||dueActive()||['waiting_for_portfolio','running'].includes(agentJob?.status))return;
     if(!workflowReady){showError('Apply sql/009_case_workflow.sql to enable the case agent. Current AR remains available.');return;}
     const dialog=$('agent-mode-dialog');if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');
   };

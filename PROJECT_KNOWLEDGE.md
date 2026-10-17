@@ -2,17 +2,33 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
-implementation_milestone: V2_4_durable_langgraph
-implementation_branch: remove-daily-start-limits
+implementation_milestone: V2_5_promise_followups
+implementation_branch: promise-followups-scroll-workspace
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: apply_SQL009_010_deploy_and_verify_case_workflow
-next_milestone: demo_clock_due_tasks_then_optional_visitor_editor
+pending_learning_check: SQL012_deploy_promise_due_followup_and_panel_scrolling
+next_milestone: guided_interviewer_walkthrough_then_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## Current correction — unlimited daily Starts, metered tools still bounded
+## V2.5 promise follow-ups and scrolling — authoritative current checkpoint
+
+PR#14 mergedebcbe4693c5086779b14754fb8519bf0ae5edd00, comparea141d97f→main mergeonly/nofiles. User authorizes nextmilestone promise/duefollowup and requests fixedtableheight, consistentthreecolumnscroll and visiblehorizontalnavigation. Currentbranch promise-followups-scroll-workspace. Newlesson docs/MILESTONE_V2_5.md. Review/merge/SQL012/manualdeploy and learner/live acceptance pending. No actualprovider calls/cloudDBwrites/deploy byassistant.
+
+SQL012 after011 adds browserca_demo_clocks (base/demo date, forwardonlywithinbase+365), durable ca_due_jobs (frozendate/caseIDs,progress,auto_case_ids), ca_case_followup_mail(case,event→mail). Adds ca_mail_messages.purpose_key defaultinitial and unique(run,invoice,purpose), preserves old rows, adjusts ca_mail_prepare selectinitial; initial ca_case_mail unchanged. ca_case_get returns separate followups array usingprivateca_mail_public projection excludingrecipient/rawprivateinbound. Reapply012safe; do not rerun olderSQLafternewones. ca_workflow_patch load assignsclockdate ifpresent elsecaseasof; no012basicgraph stillworks. ca_graph_recover also marksrunningduejobsinterrupted. Allnewtables/RPCs RLS/serviceonly. SourceAR and realUTCquota/maildates untouched.
+
+FollowupService in backend/workflow/followups.py: explicitclock/datejob actions, scans owned savedpromise orseedpriorpromise, dueafterpromisedate+1, persistsjobs beforebackgroundtask, reserves max3auto_case_ids beforeeachgraphinvoke, per-case originalmode preserved, job/case explicitresume afterrestart. Clockadvance blockedwhileactiveprocessing/interruptedcheck; startinganotherduecheck blockeduntilinterruptedone resumed, preservingjobdate/authority. No scheduler/keepalive. New API GET/POST demo-clock, POSTfollowup-checks request_idUUID, GETlatest/jobspecific, POSTjobspecificresume, POSTcases/{id}/followup-email nooverrides. Mainhealth followups.ready/schema12 withactionablemissing012; currentAR/basicgraph remainavailable.
+
+Graph addsplan_followup afterexecute(check_due)→approval→execute(send_followup_email)→finish. Existingduebranch checksdisputehold beforematching. Fullsyntheticmatch stopsoutreach; partial/unmatched positiveremaining templateusesDecimal amount/promise date. Missingcontact/priortransport, actualbounce/unknowninitial, newunsupportedreply, dispute/overpayment stopforreview. Followupdraft deterministictemplate/noLLM; languagecalls remaininitialdraft/replyinterpretation. recordpromise savespromise_event_key, newpromise clearscurrentfollowup but oldmailhistoryretained. Dueeventkey derivedpromiseUUID/seeddate, repeatchecks reusepending/completedcheckpoint; no newdraft/send. Businessdraft-beforecheckpoint replay still reachesapproval. Newreply supersedes unsentquota/unknown/reviewdraft; staleapprovalsblocked.
+
+Shared MailService.send_followup preservesfixedtestrecipient, servertemplate, persistedexactpayload/idempotency,10globaldailyreservationsand20hunresolvedguard. Distinctcase/promiseintent, signedcallbacks useexistingmailtables/verifiedprojection; originalreminderoutbound remainsseparate. Accepted≠delivered≠paid. Unknown noautotry; quota/unknown/config-review explicitretry viafollowup endpoint. SQLgatesnewreply/dispute/contact/transport/remainingpositive, dedupsacceptedintent; graph/toolreceipts guardreplayafteracceptancefailure. max3automaticfollowupallocations/check, extraawaitapproval, no dailyStartquotasreintroduced. No sourcebalancewrites, attachmentemail, realERP/bankconnection or unattendedscheduling.
+
+UI followup-ui.js loads beforeworkflow-ui.js/app.js. Explicitdateinput/save/+7days and Checkduefollowups, durableprogress/resume; datealone nosend. Pollupdatescase/draft/headerstatus andfollowupdelivery; originalreminderhistory separatefromcurrentfollowupdraft. Sourceaging/ML usesoriginalsnapshotdate, democlock onlypromisechecks. All8tablecols retained. Desktopworkspaceboundedheightcalc100vh-40/max1000/min480; allcolumnsnormalpageflow/nonsticky, independenttable/customer/executionscroll. Queueheaderstickyinsidebody, persistentleft/rightbuttons/rangeslider andnativehorizontalbar. Responsive2/1columnsboundedpanels. No pixelviewportacceptanceclaimed; localHTTP/SSE/JSDOM/css/navigationchecks used.
+
+Setup merge/pull→SQL012→restart/manualRenderdeploy; no newrequirements/env/accounts. Healthfollowups.readytrue. Exercise10602seededmissedpromise workswithoutLLM; fresh10601typedpromise requiresenabledvalidLLM, record24Oct→advance25Oct→duecheck→review/send. Full10607stops, partial10608remaining15000,unmatched10609remaining8500. Clockperbrowserforwardonly; finish/resumechecks beforeadvance, no resetexistingcase mode/history. FreeLLM/mail/storage limits retained. Newlesson covers architecture, exacthands-onsteps andboundaries. Next guidedinterviewerwalkthrough, visitor editorlast. Validation:154fullregressiontests passed; afterfinalSQL/UI/recoveryrefinements15followupintegrationtests passedagain. Coverslimited/autopilot,3automaticallocations,fullpartialunmatched,stalereply/approval,clockbounds/isolation/RLS/migrationidempotence,unknownnoautotry+explicitretry,quota,restartjobauthority,accepted-send-beforeeffectfailure,anddraftpatch-beforecheckpointrecovery. Actual localHTTP/SSE/cookieJSDOM flow passed24rows/all8cols, CSSnonstickyagent/customeroverflow, arrows/rangeslider withsimulatedscrollgeometry, promise/date/due/followupsend/signeddelivery/reload/sourceunchanged. Existingautopilot localHTTP/SSE/JSDOM regression also passed. JSsyntax/Pythoncompilepassed. Providersmocked/SQLisolated; no realbrowserpixel/viewportverification.
+
+## Historical Start-quota correction
 
 PR#13 merged774234d357e751a51f20ac86c36b4e7d672cd62f, compare ac6389b0 to main showed merge only/no files. User supplies liveURL https://o2c-collections-agent.onrender.com/ and reportsgenericPT429onStartwhilelocalworks. Read-only livehealth confirmed24invoices, Supabaseok/publicmodeenabled, graphready, emailenabled/ready, LLMdisabled/keynotconfigured; webhookGETreachable. No signedPOST/savedlivecallback verified, no liveStart/provider call by assistant.
 

@@ -145,7 +145,7 @@ function renderQueue() {
   }).join('') : `<tr><td colspan="8" class="empty-state">${state.invoices.length?'No invoices match this filter.':'Waiting for invoice data.'}</td></tr>`;
   renderWorkflowSummary();renderCaseExecution();
   $("queue").querySelectorAll("tr[data-id]").forEach((row) => {
-    const select = () => {state.selectedId = row.dataset.id; renderQueue(); renderDetail();};
+    const select = () => {const changed=state.selectedId!==row.dataset.id;state.selectedId = row.dataset.id; renderQueue(); renderDetail();if(changed)document.querySelector('.right-stack').scrollTop=0;};
     row.addEventListener("click", select);
     row.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {event.preventDefault(); select();}
@@ -172,7 +172,7 @@ function renderDetail() {
     : `<p class="explain">${escapeHTML(prediction?.reason || 'No trained risk prediction in this historical snapshot.')}</p>`;
   const currentCase = visitorCases.find(c => c.invoice_id === row.id);
   const draftRow = currentCase?.snapshot.invoice || row;
-  const draft = draftRow.draft;
+  const draft = followupDraft(currentCase) || draftRow.draft;
   $("detail").innerHTML = `
     <div class="detail-top"><div><div class="detail-name">${escapeHTML(row.customer)}</div><div class="detail-id">${escapeHTML(row.id)} · ${escapeHTML(row.segment)}</div></div>
       <span class="tag ${row.score === null ? "state" : row.level}">${row.score ?? "—"}/100</span></div>
@@ -182,7 +182,7 @@ function renderDetail() {
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
       <div class="detail-metric"><label>Next action</label><strong id="detail-next-action">${escapeHTML(rowView(row).next)}</strong></div>
     </div>
-    <div class="draft"><div class="draft-head">Reminder <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send email</button></div>
+    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send email</button></div>
       ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Start the agent to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
     <p class="explain" id="draft-email-status"></p>
@@ -274,7 +274,7 @@ function clearRun() {
 }
 
 async function startRun(mode) {
-  if (state.status === "running" || ["waiting_for_portfolio","running"].includes(agentJob?.status)) return;
+  if (state.status === "running" || dueActive() || ["waiting_for_portfolio","running"].includes(agentJob?.status)) return;
   clearRun();
   pendingMode=mode;
   $("preview-caption").hidden = true;
@@ -343,7 +343,7 @@ async function refreshSavedRuns() {
 }
 
 async function openSavedRun() {
-  if (state.status === "running" || ["waiting_for_portfolio","running"].includes(agentJob?.status)) {toast("Let the current run finish first."); return;}
+  if (state.status === "running" || dueActive() || ["waiting_for_portfolio","running"].includes(agentJob?.status)) {toast("Let the current run finish first."); return;}
   const id = $("saved-runs").value;
   if (!id) {toast("Choose a saved run first."); return;}
   try {
@@ -365,6 +365,7 @@ async function openSavedRun() {
 $("open-saved-run").onclick = openSavedRun;
 $("refresh-runs").onclick = refreshSavedRuns;
 initWorkflowControls();
+initTableNavigation();
 for (const [id,stage] of [['stage-overdue','overdue'],['stage-preventive','pre_due']]) {
   $(id).onclick = () => {
     state.queueStage = stage; state.highOnly = false;
@@ -381,7 +382,7 @@ document.addEventListener('click',event => {if (!$('previous-runs').contains(eve
 document.addEventListener('keydown',event => {if (event.key === 'Escape') $('previous-runs').open = false;});
 $("reset-link").onclick = (event) => {
   event.preventDefault();
-  if (state.status === "running" || ["waiting_for_portfolio","running"].includes(agentJob?.status)) {toast("Let the active run finish before resetting the page."); return;}
+  if (state.status === "running" || dueActive() || ["waiting_for_portfolio","running"].includes(agentJob?.status)) {toast("Let the active run finish before resetting the page."); return;}
   clearRun(); loadPreview();
 };
 async function loadPreview() {
@@ -405,7 +406,7 @@ async function refreshCases(repaint = true) {
   if (repaint) renderDetail(); else {
     const newCase=visitorCases.find(c=>c.invoice_id===state.selectedId);
     if(JSON.stringify(oldCase)!==JSON.stringify(newCase)) {
-      renderCase();
+      if(JSON.stringify(oldCase?.workflow?.followup?.draft)!==JSON.stringify(newCase?.workflow?.followup?.draft))renderDetail();else renderCase();
       if(draftText && $('case-reply-text')){$('case-reply-text').value=draftText;if(focused)$('case-reply-text').focus();}
     }
     renderSendState();
@@ -441,6 +442,7 @@ function renderCase() {
     <p><span class="tag state">${escapeHTML(rowView(row).label)}</span></p>
     ${workflowExtras(current)}
     <p class="explain">Case snapshot: ${escapeHTML(current.snapshot.as_of_date)} · run ${escapeHTML(current.run_id.slice(0,8))}. Current AR is shown alongside it. A new run does not overwrite this case.</p>
+    ${(current.followups||[]).map(out=>`<article class="case-message followup-history"><b>Follow-up email · real Resend</b><p>${escapeHTML(out.subject)}</p><pre>${escapeHTML(out.body)}</pre><p>${escapeHTML(outboundLabel(out))}</p></article>`).join('')}
     ${current.messages.map(m => `<article class="case-message"><b>${m.channel === 'draft_preview' ? (current.outbound ? 'Reminder copy · real email status beside draft' : 'Unsent reminder copy · no email sent') : 'Simulated customer reply · entered on website'}</b><pre>${escapeHTML(m.text)}</pre>
       ${m.review ? `<p class="explain">${m.review.status === 'classified_for_review' ? `LLM classification: ${escapeHTML(m.review.classification.intent)}. The graph policy determines which actions require approval.` : m.review.status === 'pending_review' ? 'Saved before classification. Processing did not finish; manual review is required. Retrying this same message will not repeat a model call.' : 'LLM disabled, unavailable, capped or output rejected. Original text saved for manual review.'}</p>
         <details><summary>Classification evidence</summary><pre>${escapeHTML(JSON.stringify(m.review,null,2))}</pre></details>` : ''}</article>`).join('')}
@@ -487,6 +489,16 @@ function renderSendState() {
   const row = state.invoices.find(r => r.id === state.selectedId);
   const c = visitorCases.find(c => c.invoice_id === row?.id);
   const draftRow = c?.snapshot.invoice || row;
+  const follow=c?.workflow?.followup;
+  if(follow) {
+    const pending=c.workflow.pending?.tool==='send_followup_email';
+    const out=followupMail(c);
+    button.disabled=sendBusy||!mailEnabled||!(pending||['quota_wait','unknown','review_required'].includes(follow.status));
+    button.textContent=sendBusy?'Sending follow-up…':follow.status==='accepted'?'Follow-up sent':follow.status==='superseded'?'Follow-up superseded':follow.status==='declined'?'Follow-up declined':follow.status==='review_required'?'Retry reviewed follow-up':follow.status==='unknown'?'Retry same follow-up':follow.status==='quota_wait'?'Retry follow-up after quota reset':'Send follow-up';
+    $('draft-email-status').textContent=outboundLabel(out);
+    if($('detail-next-action') && row)$('detail-next-action').textContent=rowView(row).next;
+    return;
+  }
   const held = c && !['awaiting_outreach','awaiting_response'].includes(c.collection_status);
   const graphBlocked=c?.workflow && !c.workflow.pending && !c.outbound && c.workflow.status !== 'quota_wait';
   button.disabled = Boolean(graphBlocked) || sendBusy || !mailEnabled || !casesLoaded || Boolean(caseLoadError) || !(c || state.status === 'completed') || !draftRow?.draft || !draftRow.eligible || draftRow.dispute || held || c?.outbound?.state === 'accepted';
@@ -508,9 +520,10 @@ async function sendDraft() {
       visitorCases = [c,...visitorCases.filter(x => x.id !== c.id)];
       if (!opened.recorded) {renderDetail(); toast('Existing case restored. Review its displayed draft, then click Send email.'); return;}
     }
-    const response = await api(`/api/cases/${c.id}/send-email`,{method:'POST'});
+    const follow=Boolean(c.workflow?.followup);
+    const response = await api(`/api/cases/${c.id}/${follow?'followup-email':'send-email'}`,{method:'POST'});
     saveCase(response); renderDetail();
-    toast(outboundLabel(response.case.outbound));
+    toast(outboundLabel(followupMail(response.case)||response.case.outbound));
   } catch(error) {
     showError(error.message); await refreshCases(false);
   } finally {sendBusy = false; renderSendState();}
@@ -521,6 +534,7 @@ clearRun();
 api("/api/health").then(async (health) => {
   publicMode = Boolean(health.public_demo?.enabled);
   workflowReady=Boolean(health.workflow?.ready);
+  await initFollowups(health);
   $('demo-access-note').textContent = publicMode
     ? (health.public_demo.daily_run_limit_enabled === false
       ? 'Public demo · no daily Start limit. Model and real email allowances remain bounded; templates remain available when model quota is used.'
@@ -540,6 +554,8 @@ api("/api/health").then(async (health) => {
     agentJob=(await api('/api/agent-jobs')).job;
     renderWorkflowSummary();renderCaseExecution();
   }
+  renderFollowupControls();
+  $('start-run').disabled=dueActive()||['waiting_for_portfolio','running'].includes(agentJob?.status);
 }).catch((error) => {
   $("backend-label").textContent = "Backend unavailable";
   banner("OFFLINE", "Check Supabase setup and the FastAPI server");

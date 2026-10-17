@@ -4,7 +4,11 @@ Last updated: 2026-10-17
 Owner: Charan
 Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. PR#8 merged c5778663 and user confirms preload works. Current v2-visitor-cases implements conversation/case foundation, SQL007 setup pending; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
-## Current correction — remove daily Start quotas
+## Current milestone — V2.5 promise follow-ups and consistent scrolling
+
+PR#14 mergedebcbe469. User authorizes promise/due follow-ups and fixes for table length/hidden horizontal scrolling/inconsistentstickycolumns. Implement explicit browserdemo clock, durable duechecks, reconciliation-beforefollowup, limited/autopilot sending with separate intents/history; boundedthreepanels and visiblehorizontalnavigation. Setup SQL012+manualdeploy, no newpackages/env. Lesson docs/MILESTONE_V2_5.md; acceptancepending. Keep dailyStartunlimited, free-only model/mailbudgets, originalcasemodes and sourceARunchanged. No actualscheduler/provider/cloudmutationbyassistant. Next guidedinterviewerwalkthrough; visitor editorlast.
+
+## Historical correction — remove daily Start quotas
 
 PR#13 merged774234d3. User authorizes removing daily visitor/global Start limits; implement SQL011 plus truthful health/UI. Preserve public isolation, case history/idempotency, model/email quotas and existing capacity checks. Existing usage retained, not reset. Merge/pull, apply011 inSupabase and manuallydeploy; no packages/envchange. LiveURL https://o2c-collections-agent.onrender.com/ read-only health confirmed24rows/graphready/emailready, LLMoff; signedcallbacksuccess stillunverified. Validate repeatedStarts after old3/20counters and no acceptedemailresends. Learnerdeploymentacceptance pending.
 
