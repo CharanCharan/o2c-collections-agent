@@ -1,0 +1,6 @@
+{
+  "name": "collections-agent-sql-tests",
+  "private": true,
+  "description": "Optional local PostgreSQL/WASM test engine; never needed to run the app",
+  "devDependencies": {"@electric-sql/pglite": "0.5.10"}
+}

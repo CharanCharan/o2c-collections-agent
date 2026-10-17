@@ -1,3 +1,5 @@
+> Historical M1 lesson. Current M2 replaces local JSON and in-memory history with Supabase. For current setup and the replacement input-edit exercise, use [Milestone 2](MILESTONE_2.md).
+
 # Milestone 1 — website connected to Python
 
 ## Objective and boundaries

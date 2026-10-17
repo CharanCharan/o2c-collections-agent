@@ -110,7 +110,7 @@ function renderDetail() {
       ${row.draft ? `<div class="draft-subject">${escapeHTML(row.draft.subject)}</div><pre class="draft-body">${escapeHTML(row.draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : "Drafts are prepared for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
     <div class="detail-actions"><button class="secondary" id="record-btn" ${canApprove ? "" : "disabled"}>${row.contacted ? "Dry run already recorded" : "Approve & record dry run"}</button></div>
-    <p class="panel-sub">This records an approval in Python memory. Email sending arrives in Milestone 5.</p>`;
+    <p class="panel-sub">This saves an approval in Supabase. Email sending arrives in Milestone 5.</p>`;
   $("record-btn").onclick = () => {state.approvalId = row.id; $("modal").classList.add("show");};
 }
 
@@ -152,7 +152,8 @@ function handleEvent(event) {
     applySnapshot(event.result);
     state.source?.close();
     $("start-run").disabled = false;
-    banner("COMPLETE", "Run completed · review drafts and inspect step outputs");
+    banner("COMPLETE", "Run saved in Supabase · review drafts and inspect step outputs");
+    refreshSavedRuns();
     $("last-run").textContent = `Run ${state.currentRun.slice(0, 8)} · ${event.result.summary.draft_count} drafts`;
   } else if (event.status === "failed") {
     state.status = "failed";
@@ -199,6 +200,12 @@ async function startRun() {
     let failures = 0;
     const source = new EventSource(run.events_url);
     state.source = source;
+    source.addEventListener("connection-error", (message) => {
+      if (state.source !== source) return;
+      source.close(); state.status = "interrupted"; $("start-run").disabled = false;
+      banner("DISCONNECTED", "Database connection interrupted; check the backend terminal.");
+      showError(JSON.parse(message.data).message);
+    });
     source.addEventListener("update", (message) => {
       if (state.source !== source) return;
       failures = 0;
@@ -212,7 +219,11 @@ async function startRun() {
         const current = await api(`/api/runs/${run.run_id}`);
         if (state.source !== source) return;
         for (const event of current.events) if (!state.eventIds.has(event.event_id)) handleEvent(event);
-        if (current.status === "completed" || current.status === "failed" || current.status === "cancelled") {source.close(); return;}
+        if (["completed", "failed", "cancelled", "interrupted"].includes(current.status)) {
+          source.close(); state.status = current.status;
+          if (current.status === "interrupted") banner("INTERRUPTED", "Previous process stopped; start a new run.");
+          return;
+        }
         banner("RECONNECTING", "Connection interrupted; reconnecting to the same run…");
         if (failures < 3) return; // EventSource replays using Last-Event-ID.
       } catch (error) {
@@ -228,6 +239,38 @@ async function startRun() {
   }
 }
 
+async function refreshSavedRuns() {
+  try {
+    const data = await api("/api/runs");
+    const previous = $("saved-runs").value;
+    $("saved-runs").innerHTML = '<option value="">Choose a saved run…</option>' + data.runs.map((run) =>
+      `<option value="${escapeHTML(run.run_id)}">${escapeHTML(run.run_id.slice(0, 8))} · ${escapeHTML(run.status)} · ${escapeHTML(new Date(run.created_at).toLocaleString())}</option>`).join("");
+    if (data.runs.some((run) => run.run_id === previous)) $("saved-runs").value = previous;
+  } catch (error) {
+    $("saved-runs").innerHTML = '<option value="">Saved history unavailable</option>';
+  }
+}
+
+async function openSavedRun() {
+  if (state.status === "running") {toast("Let the current run finish first."); return;}
+  const id = $("saved-runs").value;
+  if (!id) {toast("Choose a saved run first."); return;}
+  try {
+    const run = await api(`/api/runs/${id}`);
+    if (["queued", "running"].includes(run.status)) {toast("That run is still active. Refresh history after it finishes."); return;}
+    clearRun(); state.currentRun = run.run_id; state.status = run.status;
+    for (const event of run.events) handleEvent(event);
+    state.status = run.status;
+    applySnapshot(run.result);
+    banner(run.status.toUpperCase(), `Opened saved run ${id.slice(0, 8)} from Supabase`);
+    $("last-run").textContent = `Saved run ${id.slice(0, 8)}`;
+    $("inspect-run").href = `/api/runs/${id}`;
+    $("inspect-run").hidden = false;
+  } catch (error) {showError(error.message);}
+}
+
+$("open-saved-run").onclick = openSavedRun;
+$("refresh-runs").onclick = refreshSavedRuns;
 $("start-run").onclick = startRun;
 $("filter-btn").onclick = () => {state.highOnly = !state.highOnly; $("filter-btn").textContent = state.highOnly ? "High urgency ×" : "All invoices ▾"; renderQueue();};
 $("reset-link").onclick = (event) => {
@@ -252,11 +295,12 @@ $("confirm-send").onclick = async () => {
 
 clearRun();
 api("/api/health").then(() => {
-  $("backend-label").textContent = "Python connected";
+  $("backend-label").textContent = "Supabase + Python connected";
   $("start-run").disabled = false;
   banner("READY", "Start a run to process the demo dataset");
-}).catch(() => {
+  refreshSavedRuns();
+}).catch((error) => {
   $("backend-label").textContent = "Backend unavailable";
-  banner("OFFLINE", "Open this page through the FastAPI server");
-  showError("Start Uvicorn from the project folder and open http://localhost:8000. The old python -m http.server command serves only static files.");
+  banner("OFFLINE", "Check Supabase setup and the FastAPI server");
+  showError(`${error.message}. See docs/MILESTONE_2.md for SQL setup and local .env configuration.`);
 });

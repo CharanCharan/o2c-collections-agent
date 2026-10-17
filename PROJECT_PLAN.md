@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 complete. M1 merged and normal local execution verified by Charan on 2026-10-17. Amount-edit exercise/understanding check pending; M2 planned.
+Current checkpoint: M0 complete. M1 merged and normal local execution verified by Charan on 2026-10-17. M2 implementation ready in PR #3; user created Supabase project. Live setup and M2 exercises pending. M1 amount-edit exercise superseded by M2 database exercise.
 
 ## Goal and scope
 
@@ -20,19 +20,11 @@ This is a hands-on learning project delivered one complete runnable milestone at
 - Read PROJECT_KNOWLEDGE.md, this plan and current code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
 - The original hosted Sites demo is a presentation prototype; this GitHub repository and the local Python application are the working source for the real POC.
 
-## Current implementation — be precise
+## Current implementation — M2 ready for review
 
-- M0 learner complete: Anaconda Python 3.13.5, local run, heading edit, Start handler inspection, Git installation and initial push confirmed.
-- M1: FastAPI serves frontend and API at one origin. Start creates an isolated run, reads data/invoices.json, validates six synthetic invoices, calculates policy urgency and priorities, and prepares reminder templates.
-- dist/index.html holds layout/styles. dist/app.js handles requests, SSE and rendering. Frontend JavaScript contains no hard-coded invoice records or finance totals.
-- Events record stage starts, successes/failures, actual outputs, timestamps, IDs, timing and source hash. All dashboard values derive from input. No fake work delays are inserted.
-- Urgency is rule-based, not an ML probability. Drafts use templates, not an LLM. No external data/API, database, LLM or email provider is connected yet.
-- Dry-run approval records once per invoice per run and blocks disputed or draft-ineligible invoices. It never sends email.
-- Runs, events and interactions are in Python process memory and clear on restart. M2 adds Postgres. UUID isolation is not production authentication.
-- M1 automated API checks passed on Python 3.12.14. Charan confirmed normal local execution and expected outputs on his Python 3.13.5 setup on 2026-10-17; the amount-edit exercise remains unconfirmed.
-- Implementation knowledge and resume context: PROJECT_KNOWLEDGE.md. Walkthrough: docs/MILESTONE_1.md. Next-milestone checklist: docs/MILESTONE_2_PLAN.md.
+Supabase Postgres replaces runtime JSON and process-memory history. Python reads a fresh source snapshot, validates, calculates policy urgency/priorities and prepares template drafts. Events/results/input/approvals are persisted transactionally; SSE and saved-run controls display them. No trained model, LLM or real email yet. One backend process per database; restart recovers abandoned jobs as interrupted, not resumed. Public access remains M6.
 
-Do not describe synthetic records, policy scores, templates or dry-run actions as real ERP ingestion, trained predictions, LLM generation or sent emails.
+Fourteen local tests passed including actual PostgreSQL-function checks; HTTP/SSE + frontend DOM checks passed. Live Supabase configuration and learner acceptance are pending. Read docs/MILESTONE_2.md for setup/exercises and PROJECT_KNOWLEDGE.md for contracts. M1 normal local run is confirmed; its JSON edit exercise is superseded by M2's DB edit.
 
 ## Recommended stack
 
@@ -78,11 +70,11 @@ Events should contain `run_id`, `event_id`, `stage`, `status`, `message`, `times
 
 Acceptance: Browser Start triggers Python execution. Changing the input changes actual results. No invented load counts or timer-only completion claims.
 
-### M2 — Supabase data source and persistence [PLANNED]
+### M2 — Supabase data source and persistence [CODE READY; LEARNER CHECKS PENDING]
 
 Use Supabase Free, a hosted Postgres database, as both the invoice data source and durable store. Replace runtime invoice JSON reads with Supabase reads; seed the same synthetic rows once using SQL. Keep a simple five-table design for settings, invoices, runs, events and interactions. M1's amount remains the outstanding balance; normalized payment/credit ledgers are deferred unless a later feature needs them.
 
-The revised checklist is docs/MILESTONE_2_PLAN.md. CSV import and a second hosted-source connector are removed from this milestone. Supabase project setup and M2 implementation are still pending.
+The revised checklist is docs/MILESTONE_2_PLAN.md. CSV import and a second hosted-source connector are removed from this milestone. Charan created the project. M2 code is ready in PR #3; executing SQL, private backend API configuration and live acceptance remain pending. Follow docs/MILESTONE_2.md.
 
 Acceptance: the Supabase rows produce the expected portfolio; owner data edits affect the next run; records/events/approvals survive Python restart; duplicate actions stay idempotent; failures are visible without JSON fallback. Historical run snapshots remain immutable.
 
@@ -153,3 +145,5 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | M1 normal local run verified | Charan reported expected results; amount-edit exercise/understanding check pending |
 | 2026-10-17 | Knowledge and M2 checklist prepared | PROJECT_KNOWLEDGE.md and docs/MILESTONE_2_PLAN.md; no M2 implementation yet |
 | 2026-10-17 | M2 scope simplified by user | Supabase Free source/store; runtime JSON replaced in M2; minimal schema; visitor edits deferred until after M6 |
+
+| 2026-10-17 | M2 implementation ready in PR #3 | Supabase source/history, SQL scripts, saved-run UI; 14 local tests + HTTP/SSE/DOM passed; cloud setup and learner exercises pending |

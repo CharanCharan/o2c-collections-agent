@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f5f7f7" />
-  <title>Charan’s Collections Agent · M1</title>
+  <title>Charan’s Collections Agent · M2</title>
   <style>
     :root{--ink:#142a2b;--muted:#728281;--line:#e3e9e8;--paper:#fff;--wash:#f5f7f7;--teal:#087e78;--teal2:#dff3f0;--lime:#b6e36b;--amber:#b7761c;--red:#bd514d;--shadow:0 10px 34px rgba(22,51,49,.06)}
     *{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #6ac9bf;outline-offset:2px}.shell{max-width:1440px;margin:0 auto;padding:0 30px 42px}.topbar{height:68px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin-bottom:25px}.brand{display:flex;align-items:center;gap:11px;font-weight:730;letter-spacing:-.02em}.brand-mark{width:31px;height:31px;border-radius:10px;background:#153c3b;color:#c9f088;display:grid;place-items:center;font-size:15px}.brand small{display:block;color:#82918f;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}.top-actions{display:flex;align-items:center;gap:12px}.pill{display:flex;align-items:center;gap:7px;padding:7px 10px;background:#fff;border:1px solid var(--line);border-radius:999px;color:#5d6e6c;font-size:11px}.dot{width:7px;height:7px;background:#42aa7d;border-radius:50%;box-shadow:0 0 0 3px #e1f4eb}.avatar{width:29px;height:29px;border-radius:50%;background:#e3ece9;color:#37635d;display:grid;place-items:center;font-weight:700;font-size:11px}
@@ -23,6 +23,7 @@
     .step.failed .step-icon {color:#bd514d;border-color:#bd514d;background:#fff0ed}
     .error-box {background:#fff0ed;border:1px solid #efc9c2;color:#943f39;padding:12px;border-radius:8px;margin:0 0 16px;font-size:12px;white-space:pre-wrap}
     [hidden] {display:none!important} .explain ul {padding-left:16px} .feed {max-height:330px}
+  .history-bar{display:flex;align-items:center;gap:10px;margin:0 0 16px;flex-wrap:wrap}.history-bar label{font-size:11px;font-weight:700}.history-bar select{max-width:100%;padding:7px;border:1px solid #dce5e2;border-radius:6px;background:white;color:#42615b;font-size:10px}
   </style>
   <script src="/assets/app.js" defer></script>
 </head>
@@ -33,10 +34,10 @@
     <div class="top-actions"><div class="pill"><i class="dot"></i><span id="backend-label">Connecting to Python…</span></div><div class="pill" id="as-of">Start to load the demo snapshot</div><div class="avatar">CS</div></div>
   </header>
   <section class="intro">
-    <div><div class="eyebrow">Order to cash · Milestone 1</div><h1>Charan's Collections Agent</h1><p>Watch Python load invoices, assess urgency, prioritize accounts and prepare reminder templates.</p></div>
+    <div><div class="eyebrow">Order to cash · Milestone 2</div><h1>Charan's Collections Agent</h1><p>Watch Python load invoices from Supabase, prioritize collections and save each run.</p></div>
     <div class="run-wrap"><div class="last-run" id="last-run">No active run</div><button class="primary" id="start-run" disabled><span class="play">▶</span> Start collections run</button></div>
   </section>
-  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices, real Python execution. Urgency uses rules; reminders use templates. No ML, LLM or email provider is connected yet. Run history clears when the server restarts.</span></div>
+  <div class="notice"><span>ⓘ</span><span><b>Learning POC:</b> synthetic invoices from Supabase, real Python execution and persistent history. Urgency uses rules; reminders use templates. No ML, LLM or email provider is connected yet.</span></div>
   <div class="error-box" id="error-box" role="alert" hidden></div>
   <section class="stats" aria-label="Accounts receivable summary">
     <div class="stat"><div class="stat-top">Open receivables <span class="stat-icon">◌</span></div><div class="stat-value" id="metric-open">—</div><div class="stat-foot" id="open-note">Calculated after loading data</div></div>
@@ -45,6 +46,7 @@
     <div class="stat"><div class="stat-top">High urgency · eligible <span class="stat-icon">⌁</span></div><div class="stat-value" id="metric-high">—</div><div class="stat-foot">Rule score of at least 65/100</div></div>
     <div class="stat"><div class="stat-top">Eligible exposure <span class="stat-icon">↗</span></div><div class="stat-value" id="metric-eligible">—</div><div class="stat-foot" id="eligible-note">Calculated after loading data</div></div>
   </section>
+  <section class="history-bar" aria-label="Saved run history"><label for="saved-runs">Saved runs</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open saved run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · stored in Supabase</span></section>
   <main class="grid">
     <section class="panel">
       <div class="panel-head"><div><div class="panel-title">Collections work queue</div><div class="panel-sub" id="queue-sub">Start to load invoices</div></div><button class="filter" id="filter-btn">All invoices ▾</button></div>
@@ -59,9 +61,9 @@
       <section class="panel detail" id="detail" aria-label="Selected invoice"></section>
     </div>
   </main>
-  <footer class="footer"><span>Collections Agent · M1 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
+  <footer class="footer"><span>Collections Agent · M2 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
 </div>
-<div class="modal-backdrop" id="modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title"><h2 id="approval-title">Record a dry-run approval?</h2><p>Python will record this invoice's approved template once in this run's event history. No email is sent. This is temporary memory until database persistence is added in M2.</p><button class="primary" id="confirm-send">Approve &amp; record dry run</button><button class="secondary" id="cancel-send">Go back</button></div></div>
+<div class="modal-backdrop" id="modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title"><h2 id="approval-title">Record a dry-run approval?</h2><p>Python will record this invoice's approved template once in this run's saved event history. No email is sent. The approval and its event are saved together in Supabase.</p><button class="primary" id="confirm-send">Approve &amp; record dry run</button><button class="secondary" id="cancel-send">Go back</button></div></div>
 <div class="toast" id="toast" role="status"></div>
 </body>
 </html>

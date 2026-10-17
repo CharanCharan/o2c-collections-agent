@@ -1,6 +1,6 @@
 """Business operations. These functions do the work; they do not update the UI.
 
-M1 uses a transparent policy score and reminder template. ML and LLMs are later
+The POC uses a transparent policy score and reminder template. ML and LLMs are later
 milestones. Monetary calculations use Decimal; JSON amounts are decimal strings.
 """
 
@@ -8,7 +8,6 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
-from pathlib import Path
 
 from .models import ReceivablesSnapshot
 
@@ -29,16 +28,17 @@ class Context:
     source_sha256: str = ""
 
 
-def ingest(context: Context, path: Path) -> dict:
-    # Read once: each run works with its own input snapshot, even if the file changes.
-    content = path.read_bytes()
+def ingest(context: Context, source: dict) -> dict:
+    # Supabase returns an atomic settings/invoice snapshot. Canonical JSON bytes
+    # provide a reproducible hash; there is no local file read or fallback.
+    content = json.dumps(source, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     if len(content) > 1_000_000:
         raise ValueError("Demo source exceeds the 1 MB limit")
     context.raw = json.loads(content)
     context.source_sha256 = hashlib.sha256(content).hexdigest()
     return {
-        "message": f"Read {path.name} from the local demo dataset.",
-        "source": path.name,
+        "message": "Read the synthetic invoice snapshot directly from Supabase tables.",
+        "source": "Supabase: ca_demo_settings + ca_invoices",
         "source_sha256": context.source_sha256,
         "bytes_read": len(content),
     }
