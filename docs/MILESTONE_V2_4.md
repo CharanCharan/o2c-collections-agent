@@ -20,6 +20,7 @@ In Supabase SQL Editor run these complete files, one at a time, in this order:
 
 1. `sql/009_case_workflow.sql` — case workflow, checkpoints, tool receipts and durable jobs.
 2. `sql/010_seed_scenarios.sql` — fifteen additional synthetic invoices and their evidence.
+3. `sql/011_unlimited_demo_starts.sql` — remove the daily browser/global Start limits. If009/010are already applied, run only011 for this correction.
 
 Earlier SQL001–008 are prerequisites. SQL003 supplies the three preventive invoices. With the original nine plus this seed you get **24 invoices, 21 overdue and 3 preventive, source open balance USD610,400**. These totals assume you have not edited the seed amounts. SQL010 uses insert-on-conflict-do-nothing, so rerunning it preserves source edits; it does not reset conversations, balances or scenarios.
 
@@ -156,3 +157,13 @@ To run the automated suite locally, install Node test dependencies once (`npm in
 In your existing Render service → Environment, set `EMAIL_ENABLED=true`. Preserve `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET` for that exact Resend endpoint, `EMAIL_FROM`, `EMAIL_TEST_RECIPIENT` and `EMAIL_RECEIVING_DOMAIN`. Keep secrets private. Save/redeploy and wait for the new process to become live. Check `/api/health`: expect `email.enabled` and `email.ready` both true; otherwise follow `email.configuration_error`. The repository's render.yaml defaults false intentionally; editing a local .env does not change cloud settings.
 
 In Resend replay one failed sent/delivered event against `https://YOUR-ACTUAL-HOST/api/webhooks/resend`, then inspect the response and matching saved activity. A received event should appear in the private inbound review flow. Do not resend the original email to repair a callback. A reachable GET proves routing only; a signed POST and matching stored evidence prove processing. Live confirmation requires the actual website URL and event outcome.
+
+## Remove the daily Start limits (SQL011)
+
+The daily three-per-browser and twenty-global run limits are removed at Charan's request. After merging this update, pull main, run the complete `sql/011_unlimited_demo_starts.sql` in Supabase SQL Editor, then manually deploy the existing Render service. No new package or environment variable. Do not set PUBLIC_DEMO=false: signed browser isolation and private data filtering stay enabled.
+
+SQL011 is additive and safe to rerun. Existing runs, cases, conversations and usage records are preserved. Old daily run counters no longer block Start and new Starts no longer consume them. `/api/health` should report `public_demo.daily_run_limit_enabled:false`, `daily_run_cap:null` and `per_browser_runs:null`. Before migration, health/UI honestly show that daily Start limits remain active.
+
+The real-email allowance (ten new reservations/day), free-only model budgets and per-job three automatic reminders remain. Model exhaustion falls back to templates/manual review instead of blocking portfolio analysis. Repeated Starts reuse saved cases and do not resend accepted emails or reset case mode. Existing storage/reply capacities and the five-simultaneous-analysis server guard remain separate from daily Start limits; their messages distinguish them from daily run quotas.
+
+Live site: https://o2c-collections-agent.onrender.com/. Read-only check before this update confirmed24invoices, LangGraphready, emailenabled/ready and reachable webhookGET; LLMdisabled/templateonly. This is not a signed callback delivery check. Assistant did not deploy SQL011 or trigger a live run/provider call.

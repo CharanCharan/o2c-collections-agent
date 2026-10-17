@@ -333,3 +333,22 @@ def test_server_start_records_analysis_failure_without_case_actions(store_factor
             time.sleep(.005)
         assert saved.json()['status']=='analysis_failed',saved.text
         assert not provider.sent and not c.get('/api/cases').json()['cases']
+
+
+def test_repeated_autopilot_starts_preserve_case_history_and_do_not_resend(store_factory):
+    provider=ResendMock()
+    with client(store_factory,provider) as c:
+        ids=None
+        for _ in range(4):
+            response=c.post('/api/runs',json={'mode':'autopilot'})
+            assert response.status_code==202,response.text
+            rid=response.json()['run_id']
+            for _ in range(1500):
+                saved=c.get(f'/api/runs/{rid}/agent').json()
+                if saved['status'] not in {'waiting_for_portfolio','running'}:break
+                time.sleep(.005)
+            assert saved['status']=='completed',saved
+            current={x['id'] for x in c.get('/api/cases').json()['cases']}
+            if ids is None:ids=current
+            assert current==ids and len(current)==6
+            assert len(provider.sent)==3

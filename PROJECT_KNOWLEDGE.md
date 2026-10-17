@@ -3,7 +3,7 @@ document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
 implementation_milestone: V2_4_durable_langgraph
-implementation_branch: langgraph-case-workflow
+implementation_branch: remove-daily-start-limits
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
 pending_learning_check: apply_SQL009_010_deploy_and_verify_case_workflow
@@ -11,6 +11,16 @@ next_milestone: demo_clock_due_tasks_then_optional_visitor_editor
 ---
 
 # Project knowledge — continuation context
+
+## Current correction — unlimited daily Starts, metered tools still bounded
+
+PR#13 merged774234d357e751a51f20ac86c36b4e7d672cd62f, compare ac6389b0 to main showed merge only/no files. User supplies liveURL https://o2c-collections-agent.onrender.com/ and reportsgenericPT429onStartwhilelocalworks. Read-only livehealth confirmed24invoices, Supabaseok/publicmodeenabled, graphready, emailenabled/ready, LLMdisabled/keynotconfigured; webhookGETreachable. No signedPOST/savedlivecallback verified, no liveStart/provider call by assistant.
+
+User explicitly requests removing unnecessary checks so visitors can test. Remove only daily Start/browser/global runquotas; no disabling PUBLIC_DEMO/sessionisolation, LLM/emailspend limits or idempotency. SQL011_unlimited_demo_starts.sql after009/010 replaces ca_public_create without dailyreserve and ca_public_reserve runcompatibility returns true without touching usage; LLMbranch same40global8browser/UTCday. Old usage/history retained. ca_public_health version11 reports daily_run_limit_enabledfalse and nullable runlimits; mainhealth reflects actualDB response, not a falseclaim beforemigration. NewUIaccessnote no dailyStartlimit onlyafterSQL011. Beforemigrationreportsoldlimits +setupinstruction. No newenv/packages/account. UsermustapplySQL011thenmanuallydeploy; assistantdoesnot.
+
+Repeated newruns keep signedownership, originalcase snapshot/mode/history, do not resend accepted mail. Max3newautomaticreminders/job and10globalmailreservations/day retained; model8/browser40global20/process4draft/run remain, templates/manualreview onquota. Storage32cases/browser500global,12replies/case and20browser120globalreplies/day unchanged; these are distinct from dailyStart. Fiveactiveportfolioanalysis guard remains capacityprotection, with explicitbusy message. Adapter429messages now distinguish activework, oldmissingSQL011, casecapacity, replyallowance and mailquota; no rawSQL/providererrorleak. No automatic accountupgrade, budgetreset/historydeletion or cloudpublicmodeoff.
+
+Setup: merge/pull, SQL011 inSupabase, manualRenderdeploy. Confirm health public_demo daily_run_limit_enabledfalse/daily_run_capnull/per_browser_runsnull, thenStart repeatedlyinownbrowser; olddailyusage no longerblocks. LessonV2_4andREADMEupdated. Tests coverold3/20usage with new/restartedbrowsers, migrationidempotencepreservingLLMquota, pre-migrationhealthtruth, repeatedautopilotStartwithoutresend; 35 targeted public/graph tests passed, including simultaneous-server capacity reporting, repeated Starts after old usage limits and no duplicate accepted-email sends. LocalHTTP/SSE/JSDOM full limitedmode UI passed, including restored8columns and caseworkflow. Full regression suite138passed; final35targeted public/graph tests also passed including the additional capacity-message check. JSsyntax and Pythoncompile passed. All providers mocked/SQLisolated; no liveStart/send/model call/SQLmigration/deploy performed.
 
 ## V2.4 correction — restore risk columns and diagnose disabled webhook
 

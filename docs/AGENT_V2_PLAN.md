@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+User override: SQL011 removes daily browser/global Start quotas; signed ownership and all metered model/email limits stay. No daily run allowance after migration, repeatedStarts preserve cases and do not resend. Apply SQL011 +manualdeploy; see current lesson. Prior run-cap design below is historical.
+
 V2.4 implements the durable case workflow described in [the hands-on lesson](MILESTONE_V2_4.md). Actual LangGraph nodes, Supabase checkpoints, limited-mode interrupts, bounded autopilot, server-side Start continuation and controlled scenario tools are implemented on langgraph-case-workflow; merge/SQL009+010/deploy and learner acceptance remain pending. PR#11 UI is merged. No live external calls/deployment by assistant.
 
 The AR table separates source balance, collection status, next action and completed activity. Send simulated reply automatically processes website events; real outbound still uses Resend to the configured project test inbox. Source AR is never marked paid by a claim/demo match. Existing cases keep original mode/history, autopilot reserves max3 newly eligible sends/job, free-only/global limits remain. Documentary evidence is synthetic and retrieved for review, not automatically emailed. Promise check-after dates are stored; demo clock/unattended due scheduling/voice/editor remain future work. Real inbound remains the private review channel.

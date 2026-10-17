@@ -1,3 +1,5 @@
+> Latest correction: daily Start quotas removed. After merge, run `sql/011_unlimited_demo_starts.sql` in Supabase and redeploy. Repeated visitor runs preserve cases/history; email/model allowances remain. Keep PUBLIC_DEMO=true. [Setup](docs/MILESTONE_V2_4.md#remove-the-daily-start-limits-sql011).
+
 > Latest V2.4: [setup and hands-on lesson](docs/MILESTONE_V2_4.md). After merge/pull, apply SQL009 then010 in Supabase, install updated requirements and manually deploy the existing Render service. Adds15 synthetic scenarios (24total with original9), durable graph checkpoints and limited/autopilot modes. No new paid service or API key. Existing cases/history are preserved.
 
 # Charan's O2C Collections Agent
@@ -115,6 +117,6 @@ EMAIL_ENABLED defaults false. Resend key/signing secret stay private. The websit
 
 ## Public deployment boundary
 
-PUBLIC_DEMO requires a32+character DEMO_SESSION_SECRET. An optional legacy EMAIL_OWNER_TOKEN, if configured, must be distinct and32+characters. Render refuses unrestricted local mode. Secure signed browser cookies isolate run history; owner login unlocks private email/history. Global daily SQL caps:20runs and40modelattempts; visitors3runs/8attempts. Cookie clearing is not person-level authentication; global caps still apply. All email shares10new reservations/day. No paid-provider fallback. Free Render sleeps, so manually wake/check before interviews; a stable URL is not always-on hosting. Supabase remains durable storage. Monitor hosting billing/allowances and provider Free status.
+PUBLIC_DEMO requires a32+character DEMO_SESSION_SECRET. An optional legacy EMAIL_OWNER_TOKEN, if configured, must be distinct and32+characters. Render refuses unrestricted local mode. Secure signed browser cookies isolate run history; owner login unlocks private email/history. After SQL011, Starts have no daily browser/global quota. Model SQL caps remain40global/8pervisitor attempts per UTC day. Cookie clearing is not person-level authentication; global caps still apply. All email shares10new reservations/day. No paid-provider fallback. Free Render sleeps, so manually wake/check before interviews; a stable URL is not always-on hosting. Supabase remains durable storage. Monitor hosting billing/allowances and provider Free status.
 
 GET `/api/webhooks/resend` reports reachability; actual callback requires a signature. Update Resend to the real cloud URL, use its endpoint signing secret, then Replay failed events instead of resending the email. See M6 for precise diagnosis/acceptance and provider limitations.
