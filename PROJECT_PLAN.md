@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 — UI prototype exported; learner has not yet confirmed running it locally.
+Current checkpoint: M0 complete. M1 code prepared and tested; awaiting Charan’s local run and input-edit exercise.
 
 ## Goal and scope
 
@@ -10,23 +10,29 @@ Build a publicly shareable collections-agent POC. A visitor clicks Start and see
 
 Preserve this workflow: ingest AR data → validate and identify exceptions → score payment risk → prioritize accounts → draft reminders → approve/send controlled emails → capture replies → record promises and follow-ups → show audit history.
 
-This is a hands-on learning project. Explain one change at a time, let Charan perform the work, and inspect his result before advancing. Do not substitute a large unexplained code dump for the lesson.
+This is a hands-on learning project delivered one complete runnable milestone at a time, as agreed on 2026-10-17. Provide tested code through a GitHub pull request, explain its components, then let Charan run, inspect and modify it. Verify his results before marking a milestone learner-complete.
+
+## Canonical source and delivery workflow
+
+- Use only https://github.com/CharanCharan/o2c-collections-agent .
+- Charan's uploaded baseline: 4777bb5a1d6fa5d7d4fc71507ddf980bd6f87db1.
+- The duplicate CharanCharan/collections-agent is unused; Charan handles its deletion.
+- Read the current repository plan and code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
+- The original hosted Sites demo is a presentation prototype; this GitHub repository and the local Python application are the working source for the real POC.
 
 ## Current implementation — be precise
 
-- The working website is a browser-only prototype in `dist/index.html`.
-- HTML, CSS, JavaScript, and sample data are embedded in that one file.
-- There are six actual sample invoice objects, not 128 loaded records.
-- Headline totals, 128-invoice messages, draft counts, and forecast figures are illustrative UI content; they are not derived from a real data source.
-- Payment-risk values are hard-coded. They are not predictions from a trained model.
-- Queue sorting is executed in JavaScript using a simple balance/risk/aging formula.
-- The run uses `setTimeout` to display prewritten stage events.
-- Reminder wording is a fixed template, not LLM-generated text.
-- Email actions and replies are simulations. No email is sent or received.
-- State exists only in browser memory and is lost on reload. There is no database or backend.
-- The current site is publicly accessible at https://collections-agent-live-demo.blithecomet33.chatgpt.site/ .
+- M0 learner complete: Anaconda Python 3.13.5, local run, heading edit, Start handler inspection, Git installation and initial push confirmed.
+- M1: FastAPI serves frontend and API at one origin. Start creates an isolated run, reads data/invoices.json, validates six synthetic invoices, calculates policy urgency and priorities, and prepares reminder templates.
+- dist/index.html holds layout/styles. dist/app.js handles requests, SSE and rendering. Frontend JavaScript contains no hard-coded invoice records or finance totals.
+- Events record stage starts, successes/failures, actual outputs, timestamps, IDs, timing and source hash. All dashboard values derive from input. No fake work delays are inserted.
+- Urgency is rule-based, not an ML probability. Drafts use templates, not an LLM. No external data/API, database, LLM or email provider is connected yet.
+- Dry-run approval records once per invoice per run and blocks disputed or draft-ineligible invoices. It never sends email.
+- Runs, events and interactions are in Python process memory and clear on restart. M2 adds Postgres. UUID isolation is not production authentication.
+- M1 automated API checks passed on Python 3.12.14; Charan's Python 3.13.5 run and exercise are pending.
+- Walkthrough: docs/MILESTONE_1.md.
 
-Do not present this starting point as a finished agent. Replace each simulated component with real execution and label remaining simulations.
+Do not describe synthetic records, policy scores, templates or dry-run actions as real ERP ingestion, trained predictions, LLM generation or sent emails.
 
 ## Recommended stack
 
@@ -46,7 +52,7 @@ Keep secrets in local environment variables and host-managed secrets. Never put 
 
 ## Milestones and acceptance checks
 
-### M0 — Own and understand the existing code [CURRENT]
+### M0 — Own and understand the existing code [LEARNER COMPLETE]
 
 1. Download and extract the source bundle.
 2. Open the folder in VS Code.
@@ -57,7 +63,7 @@ Keep secrets in local environment variables and host-managed secrets. Never put 
 
 Acceptance: Charan can start the site locally, edit it, and identify which parts are simulated.
 
-### M1 — Execute a real backend run
+### M1 — Execute a real backend run [CODE READY; LEARNER CHECK PENDING]
 
 Build a small FastAPI service. First serve the existing frontend and a health endpoint. Then add a run endpoint and an event stream. Replace timer-driven claims with backend-produced results calculated from the six sample invoices. Calculate displayed totals and counts from the data.
 
@@ -129,7 +135,7 @@ Official references:
 
 ## Session protocol
 
-At the start of a continuation: read this file, inspect current code, and identify the last learner-confirmed checkpoint. State one learning objective. Explain inputs, code change, execution, and expected output. Ask Charan to run that step, inspect his result, then update the progress log. Do not assume he installed tools or completed a prior lesson.
+At continuation, read the canonical repository plan/code and identify the last learner-confirmed checkpoint. Deliver a runnable milestone through a PR with explanation, test evidence, setup and an exercise. Verify Charan’s execution before updating learner acceptance. Implementation tests alone do not establish learner completion.
 
 ## Progress log
 
@@ -137,3 +143,8 @@ At the start of a continuation: read this file, inspect current code, and identi
 |---|---|---|
 | 2026-10-17 | UI prototype live | Browser run and dry-run approval checked; no real integrations |
 | 2026-10-17 | Portable source and guide prepared | Next: Charan runs `dist` locally and edits the heading |
+
+
+| 2026-10-17 | M0 learner complete | Local run, heading edit and commit 4777bb5 confirmed |
+| 2026-10-17 | Delivery workflow agreed | Runnable milestone PRs in o2c-collections-agent; Charan merges/pulls and learns locally |
+| 2026-10-17 | M1 code ready | Backend, JSON input, SSE, rule scoring, templates, dry-run approval and tests; learner verification pending |

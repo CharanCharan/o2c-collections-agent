@@ -1,0 +1,12 @@
+{
+  "as_of_date": "2026-10-17",
+  "currency": "USD",
+  "invoices": [
+    {"id":"INV-10482","customer":"Northstar Medical Group","segment":"Healthcare · Enterprise","amount":"86400.00","due":"2026-09-18","previous_invoices":10,"late_payments":6,"broken_promises":1,"disputed":false},
+    {"id":"INV-10431","customer":"Meridian Components","segment":"Manufacturing · Strategic","amount":"52750.00","due":"2026-09-25","previous_invoices":10,"late_payments":4,"broken_promises":1,"disputed":false},
+    {"id":"INV-10398","customer":"BluePeak Logistics","segment":"Transportation · Mid-market","amount":"38900.00","due":"2026-10-02","previous_invoices":10,"late_payments":8,"broken_promises":0,"disputed":false},
+    {"id":"INV-10287","customer":"Cedar & Finch Retail","segment":"Retail · Enterprise","amount":"115200.00","due":"2026-08-22","previous_invoices":10,"late_payments":9,"broken_promises":2,"disputed":false},
+    {"id":"INV-10405","customer":"Atlas Office Systems","segment":"Business services · Mid-market","amount":"14750.00","due":"2026-10-05","previous_invoices":10,"late_payments":1,"broken_promises":0,"disputed":false},
+    {"id":"INV-10317","customer":"Solace Energy Partners","segment":"Energy · Enterprise","amount":"64200.00","due":"2026-09-04","previous_invoices":10,"late_payments":7,"broken_promises":1,"disputed":true}
+  ]
+}
