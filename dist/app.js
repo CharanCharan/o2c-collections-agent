@@ -133,8 +133,8 @@ function renderQueue() {
   $("filter-btn").setAttribute('aria-pressed', String(state.highOnly));
   $("queue").innerHTML = rows.length ? rows.map((row) => {
     const v=rowView(row);
-    return `<tr tabindex="0" data-id="${escapeHTML(row.id)}" aria-label="Inspect ${escapeHTML(row.customer)}" class="${row.id===state.selectedId?'selected':''}">
-      <td><div class="cust">${escapeHTML(row.customer)}</div><div class="subline">${escapeHTML(row.id)}</div></td>
+    return `<tr tabindex="-1" data-id="${escapeHTML(row.id)}" aria-label="Open invoice ${escapeHTML(row.id)} for ${escapeHTML(row.customer)}" aria-haspopup="dialog" aria-controls="invoice-dialog" class="${row.id===state.selectedId?'selected':''}">
+      <td><div class="cust">${escapeHTML(row.customer)}</div><div class="subline">${escapeHTML(row.id)}</div><button class="invoice-open" type="button" aria-haspopup="dialog" aria-controls="invoice-dialog" aria-label="Open invoice ${escapeHTML(row.id)} for ${escapeHTML(row.customer)}">Open invoice <span aria-hidden="true">›</span></button></td>
       <td class="amount">${money(row.amount)}${v.w?.reconciliation?`<div class="subline">Demo remaining ${money(v.w.reconciliation.remaining_amount)}</div>`:''}</td>
       <td>${dateLabel(row.due)}<div class="subline">${escapeHTML(timingLabel(row))}</div></td>
       <td><span class="tag ${row.score == null ? 'state' : row.level}">${row.score == null ? (row.days === 0 ? 'Not overdue' : 'Awaiting rules') : `${row.score}/100 · ${escapeHTML(row.level)}`}</span></td>
@@ -145,10 +145,10 @@ function renderQueue() {
   }).join('') : `<tr><td colspan="8" class="empty-state">${state.invoices.length?'No invoices match this filter.':'Waiting for invoice data.'}</td></tr>`;
   renderWorkflowSummary();renderCaseExecution();
   $("queue").querySelectorAll("tr[data-id]").forEach((row) => {
-    const select = () => {const changed=state.selectedId!==row.dataset.id;state.selectedId = row.dataset.id; renderQueue(); renderDetail();if(changed)document.querySelector('.right-stack').scrollTop=0;};
+    const select = () => openInvoiceWorkspace(row.dataset.id);
     row.addEventListener("click", select);
     row.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {event.preventDefault(); select();}
+      if (event.target === row && (event.key === "Enter" || event.key === " ")) {event.preventDefault(); select();}
     });
   });
 }
@@ -170,6 +170,7 @@ function renderDetail() {
       <p>Ranking index: ${row.priority_index ? money(row.priority_index) : 'Awaiting ranking'} = balance × predicted risk; ranked only within this invoice stage, not a cash forecast. Disputes stay paused.</p>
       <details><summary>Inspect model inputs and version</summary><pre>${escapeHTML(JSON.stringify(prediction, null, 2))}</pre></details></div>`
     : `<p class="explain">${escapeHTML(prediction?.reason || 'No trained risk prediction in this historical snapshot.')}</p>`;
+  updateInvoiceDialogTitle(row);
   const currentCase = visitorCases.find(c => c.invoice_id === row.id);
   const draftRow = currentCase?.snapshot.invoice || row;
   const draft = followupDraft(currentCase) || draftRow.draft;
@@ -367,6 +368,7 @@ $("open-saved-run").onclick = openSavedRun;
 $("refresh-runs").onclick = refreshSavedRuns;
 initWorkflowControls();
 initTableNavigation();
+initInvoiceWorkspace();
 for (const [id,stage] of [['stage-overdue','overdue'],['stage-preventive','pre_due']]) {
   $(id).onclick = () => {
     state.queueStage = stage; state.highOnly = false;
@@ -411,7 +413,7 @@ async function refreshCases(repaint = true) {
     const newCase=visitorCases.find(c=>c.invoice_id===state.selectedId);
     if(JSON.stringify(oldCase)!==JSON.stringify(newCase)) {
       if(JSON.stringify(oldCase?.workflow?.followup?.draft)!==JSON.stringify(newCase?.workflow?.followup?.draft))renderDetail();else renderCase();
-      if(draftText && $('case-reply-text')){$('case-reply-text').value=draftText;if(focused)$('case-reply-text').focus();}
+      if(draftText && state.selectedId===oldCase?.invoice_id && $('case-reply-text')){$('case-reply-text').value=draftText;if(focused)$('case-reply-text').focus();}
     }
     renderSendState();
   }
@@ -432,8 +434,8 @@ function renderCase() {
     $('case-reload').onclick = refreshCases; return;
   }
   if (!current) {
-    panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${!casesLoaded ? 'Loading saved cases…' : row ? 'Run collections, then open this invoice to test customer replies. This browser’s cases survive reload.' : 'Select an invoice to see its saved conversation.'}</p>
-      <button class="secondary" id="case-open" ${casesLoaded && row && state.status === 'completed' && agentJob?.status !== 'running' ? '' : 'disabled'}>Open invoice workspace</button>
+    panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${!casesLoaded ? 'Loading saved cases…' : row ? 'Run collections from the queue to prepare this invoice’s reminder and enable customer replies. This browser’s cases survive reload.' : 'Select an invoice to see its saved conversation.'}</p>
+      <button class="secondary" id="case-open" ${casesLoaded && row && state.status === 'completed' && agentJob?.status !== 'running' ? '' : 'disabled'} ${state.status !== 'completed' ? 'hidden' : ''}>Enable customer replies</button>
       <p class="explain">Opening a case saves an unsent draft copy. It does not deliver email. Use Send reminder beside the draft for a real Resend send to the project test inbox.</p>`;
     $('case-open').onclick = async () => {
       const button = $('case-open'); button.disabled = true;
@@ -442,17 +444,22 @@ function renderCase() {
     };
     return;
   }
-  panel.innerHTML = `<div class="panel-title">Customer conversation · ${escapeHTML(current.invoice_id)}</div>
+  const historyOpen=$('message-history')?.open || false;
+  panel.innerHTML = `<div class="panel-title">Simulate customer reply</div>
+    <p class="explain">Act as the customer and test how collections responds. This form records a simulated reply; it does not send or receive an email.</p>
+    <form id="case-reply-form"><label for="case-reply-text">Act as the customer · simulated reply</label><textarea id="case-reply-text" maxlength="4000" required placeholder="Example: We believe this invoice was already paid. Please check your records."></textarea>
+      <button class="secondary" type="submit" ${caseActionBusy?'disabled':''}>${caseActionBusy?'Agent is processing…':'Send simulated reply'}</button></form>
     <p><span class="tag state">${escapeHTML(rowView(row).label)}</span></p>
     ${workflowExtras(current)}
-    <p class="explain">Case snapshot: ${escapeHTML(current.snapshot.as_of_date)} · run ${escapeHTML(current.run_id.slice(0,8))}. Current AR is shown alongside it. A new run does not overwrite this case.</p>
+    <details class="conversation-history" id="message-history" ${historyOpen?'open':''}><summary>Message history · ${current.messages.length+(current.followups||[]).length}</summary>
     ${(current.followups||[]).map(out=>`<article class="case-message followup-history"><b>Follow-up email · real Resend</b><p>${escapeHTML(out.subject)}</p><pre>${escapeHTML(out.body)}</pre><p>${escapeHTML(outboundLabel(out))}</p></article>`).join('')}
     ${current.messages.map(m => `<article class="case-message"><b>${m.channel === 'draft_preview' ? (current.outbound ? 'Reminder copy · real email status beside draft' : 'Unsent reminder copy · no email sent') : 'Simulated customer reply · entered on website'}</b><pre>${escapeHTML(m.text)}</pre>
       ${m.review ? `<p class="explain">${m.review.status === 'classified_for_review' ? `LLM classification: ${escapeHTML(m.review.classification.intent)}. The graph policy determines which actions require approval.` : m.review.status === 'pending_review' ? 'Saved before classification. Processing did not finish; manual review is required. Retrying this same message will not repeat a model call.' : 'LLM disabled, unavailable, capped or output rejected. Original text saved for manual review.'}</p>
         <details><summary>Classification evidence</summary><pre>${escapeHTML(JSON.stringify(m.review,null,2))}</pre></details>` : ''}</article>`).join('')}
-    <form id="case-reply-form"><label for="case-reply-text">Act as the customer · simulated reply</label><textarea id="case-reply-text" maxlength="4000" required placeholder="Example: We believe this invoice was already paid. Please check your records."></textarea>
-      <button class="secondary" type="submit" ${caseActionBusy?'disabled':''}>${caseActionBusy?'Agent is processing…':'Send simulated reply'}</button></form>
-    <p class="explain">No email is received or sent by this form. Classification uses the configured free model and existing limits; unavailable models fall back to manual review. The agent processes the reply under this case’s control mode. Supported promises save a check-after date; payment matches use synthetic evidence. Source balances stay unchanged.</p>`;
+    </details>
+    <p class="panel-sub">Saved case snapshot ${escapeHTML(current.snapshot.as_of_date)}. Source AR stays unchanged. Classification uses the configured model; unavailable models require review.</p>`;
+  if(replyDrafts.has(current.id))$('case-reply-text').value=replyDrafts.get(current.id);
+  $('case-reply-text').oninput=()=>{replyDrafts.set(current.id,$('case-reply-text').value);};
   $('case-reply-form').onsubmit = async event => {
     event.preventDefault();
     const text = $('case-reply-text').value.trim();
@@ -467,13 +474,13 @@ function renderCase() {
     button.textContent = 'Saving and checking reply…';
     try {
       const response = await api(`/api/cases/${current.id}/replies`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({request_id:pending.request_id,text})});
-      pendingCaseReply = null; saveCase(response);
+      pendingCaseReply = null; replyDrafts.delete(current.id); saveCase(response);
       toast(response.recorded ? 'Reply and review status saved. Invoice balance unchanged.' : 'Saved reply reopened; no duplicate model call.');
     } catch(error) {replyFailed=true;showError(error.message);await refreshCases(false);}
     finally{caseActionBusy=false;renderCase();renderSendState();if(replyFailed && $('case-reply-text'))$('case-reply-text').value=text;}
   };
   const suggested=current.workflow?.scenario?.suggested_reply || scenarioSummaries.find(s=>s.invoice_id===current.invoice_id)?.suggested_reply;
-  if(suggested){const b=document.createElement('button');b.className='secondary';b.type='button';b.textContent='Use this scenario’s suggested reply';b.onclick=()=>{$('case-reply-text').value=suggested;$('case-reply-text').focus();};$('case-reply-form').prepend(b);}
+  if(suggested){const b=document.createElement('button');b.className='secondary';b.type='button';b.textContent='Use this scenario’s suggested reply';b.onclick=()=>{$('case-reply-text').value=suggested;replyDrafts.set(current.id,suggested);$('case-reply-text').focus();};$('case-reply-form').prepend(b);}
   bindWorkflowExtras(current);
 }
 

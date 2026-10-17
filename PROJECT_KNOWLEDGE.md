@@ -2,17 +2,29 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_6_collections_controls
-implementation_branch: collections-controls-ux
+implementation_milestone: V2_7_queue_invoice_dialog
+implementation_branch: queue-first-invoice-dialog
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_business_controls_and_selected_invoice_continuation
+pending_learning_check: deploy_queue_dialog_favicon_and_verify_native_modal_layout
 next_milestone: guided_interviewer_walkthrough_then_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.6 collections controls — authoritative current checkpoint
+## V2.7 queue-first invoice dialog — authoritative current checkpoint
+
+PR16 merged2a0e80f6f620cc5ae11c9bae01d86a6ad0acfa77; user asks landingonlytable+execution, rowopenscustomer/emailandreplysidebyside, subtleclickhint and favicon. Branch queue-first-invoice-dialog. UI-only/noSQL/packages/env/backendchanges; existingSQL012prerequisite. Lesson docs/MILESTONE_V2_7.md. Learnermerge/manualdeploy/nativebrowseracceptancepending; no liveprovidercalls/cloudwrites/deploy byassistant.
+
+Landing main has queueandCollectionsactivity only; desktopgrid3.1fr/1fr, moreARwidth, boundedscroll/all8cols andhorizontalcontrols retained; <=1000activitystacks. Existing #detail/#case-conversation movedonce into native#invoice-dialog, notduplicated. Headercustomer/invoice title, Backtoqueue, two independentlyscrollable desktop panes; mobile stacks. Composerfirst,rightpane status/approvals+expandablemessagehistory; leftinvoice/email/caseref/conditionalContinue retained. Rowinstruction+Openinvoicebutton/nativekeyboardaffordance/hovers/aria-haspopupdialog; whole-rowclick alsoopens. No autoopen onload/poll/history; selectedrow/activity maypreload withoutopening. BeforeRunshowsrealpreview+setuphint, nofakeemail/reply. Openingdialog read-only, no casecreate/run/LLM/mail.
+
+New invoice-ui.js beforeotherclassicscripts handlesopen/close/selectedtitle, body scrolllock, Escape/backdrop/Backtoqueue andfocusreturn byinvoiceIDaftertableDOMrerender. Protectlatecloseeventfromnewlyreopeneddialog. Latestselectedinvoicepanelsupdatedviaexistingpoll; sourcefilters/runs/cases/contracts unchanged. Per-case unsentreplyDrafts Map browsermemory acrossclose/switch, clearonsuccess; notdurableacrossreload. Existing Send/approval/simulatedreply/resume endpoints/scopes/idempotency/budgets unchanged. Rowbuttonnativeaction singleTabtarget; trprogrammaticallyfocusable/EnterSpacefallback; no thirdlandingcustomercolumn.
+
+Custom code-nativefaviconSVG teal invoice+limecollectionarrow, ICOfallback16/32/48/64 andsharedheaderbrandSVG, servedexistingassetsmount; no externalassetservice/dependency. CSS/scriptscacheversionworkflow9, iconversion1. Faviconcachemayneedhardrefresh. Nativebrowsermodalprovidesactualmodality; fallbackopen usedforDOMtesting. No actualpixel/viewport/focustrapbrowseracceptanceclaimed.
+
+Validation:8 preview/email actualSQL/API regressions passed; JSsyntaxpassed. LocalHTTP/SSE/cookieJSDOM fulljourney passed2landingchildren, dialoginitialclosed/correcttitle/escape/focus,noStartonrowopen,customfaviconSVG/ICObytes,unsentreplyretention,all8cols, selectedcaseactualgraphfailure/resume,noextraLLM,promise/date/due/followupsend/signeddelivery/reload/sourceunchanged. Providersmocked/SQLisolated. Setupmerge/pull/manualdeployonly. Nextguidedinterviewerwalkthrough, visitoreditorlast.
+
+## Historical V2.6 collections controls
 
 PR#15 merged aeebec1b0aea5a8684ecf39f284aceef38d4c589; compare03c79629 to main showed mergeonly/nofiles. User explicitly approves business-friendly names, asks to move overview/promise banners to buttons beside Run collections, and invoice-specific continuation atop selected customer/email. Branch collections-controls-ux, lesson docs/MILESTONE_V2_6.md. UI-only: no backend/SQL/dependencies/envchanges. KeepSQL012previousprerequisite. Learnerreview/merge/manualdeploy/acceptancepending.
 
