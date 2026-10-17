@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f5f7f7" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-6" />
-  <script src="/assets/workflow-ui.js?v=workflow-6" defer></script>
-  <script src="/assets/app.js?v=workflow-6" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-7" />
+  <script src="/assets/followup-ui.js?v=workflow-7" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-7" defer></script>
+  <script src="/assets/app.js?v=workflow-7" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -36,6 +37,7 @@
   </section>
   <p class="panel-sub" id="preview-caption" hidden>Current AR data · read-only preview. Start the agent to prepare and save collection actions.</p>
   <section id="workflow-summary" class="workflow-summary" aria-label="Case outcomes" aria-live="polite"></section>
+  <section id="followup-controls" class="followup-controls" aria-label="Promise follow-up simulator"></section>
   <main class="grid">
     <section class="panel queue-column" aria-label="Accounts receivable work queue">
       <div class="panel-head">
@@ -49,7 +51,8 @@
         </div>
         <p class="panel-sub" id="preventive-caption">Prevention is scored seven days before due.</p>
       </div>
-      <div class="table-wrap" tabindex="0" role="region" aria-label="Invoice queue; scroll horizontally for all columns"><table class="ar-table"><thead><tr><th>Customer / invoice</th><th>Source balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Collection status</th><th>Next action</th><th>Latest activity</th></tr></thead><tbody id="queue"></tbody></table></div>
+      <div class="table-navigation"><span id="table-scroll-hint">Scroll sideways for all 8 columns →</span><div><button class="secondary" id="table-scroll-left" aria-label="Scroll invoice table left">←</button><input id="table-position" type="range" min="0" max="100" value="0" aria-label="Horizontal position in invoice table"><button class="secondary" id="table-scroll-right" aria-label="Scroll invoice table right">→</button></div></div>
+      <div id="queue-scroll" class="table-wrap" tabindex="0" role="region" aria-label="Invoice queue; scroll horizontally for all columns"><table class="ar-table"><thead><tr><th>Customer / invoice</th><th>Source balance</th><th>Due / aging</th><th>Rule urgency</th><th>ML risk · target shown</th><th>Collection status</th><th>Next action</th><th>Latest activity</th></tr></thead><tbody id="queue"></tbody></table></div>
     </section>
     <div class="right-stack">
       <section class="panel detail" id="detail" aria-label="Selected invoice"></section>

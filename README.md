@@ -1,3 +1,5 @@
+> Latest V2.5: [promise follow-ups and scrolling lesson](docs/MILESTONE_V2_5.md). After merge/pull, apply SQL012 then manually deploy. Adds an explicit demo clock, resumable due checks, separate authorized follow-up emails and consistent bounded three-panel scrolling with horizontal table controls. No new packages or environment settings.
+
 > Latest correction: daily Start quotas removed. After merge, run `sql/011_unlimited_demo_starts.sql` in Supabase and redeploy. Repeated visitor runs preserve cases/history; email/model allowances remain. Keep PUBLIC_DEMO=true. [Setup](docs/MILESTONE_V2_4.md#remove-the-daily-start-limits-sql011).
 
 > Latest V2.4: [setup and hands-on lesson](docs/MILESTONE_V2_4.md). After merge/pull, apply SQL009 then010 in Supabase, install updated requirements and manually deploy the existing Render service. Adds15 synthetic scenarios (24total with original9), durable graph checkpoints and limited/autopilot modes. No new paid service or API key. Existing cases/history are preserved.

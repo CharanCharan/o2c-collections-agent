@@ -109,6 +109,36 @@ class MailService:
                     await self.store.rpc('ca_mail_finish',{'p_id':job['id'],'p_provider_id':provider_id,'p_error':None})
             return {'case':await self.store.rpc('ca_case_get',{'p_session_key':session_key,'p_case_id':case_id})}
 
+    async def send_followup(self,session_key,case_id,event_key,explicit_retry=False):
+        """Separate, deduplicated real follow-up; uses the same fixed test recipient."""
+        self.config.check()
+        await self.readiness()
+        async with self.lock:
+            case=await self.store.rpc('ca_case_get',{'p_session_key':session_key,'p_case_id':case_id})
+            if not case:raise HTTPException(404,'Case not found in this browser session.')
+            follow=(case.get('workflow') or {}).get('followup') or {}
+            if follow.get('event_key')!=event_key or not follow.get('draft'):
+                raise HTTPException(409,'Follow-up draft is stale. Refresh the case.')
+            ident=str(uuid4());draft=follow['draft']
+            payload={'from':self.config.sender,'to':[self.config.recipient],
+                'reply_to':'collections-'+ident+'@'+self.config.receiving_domain,
+                'subject':'[O2C DEMO] '+draft['subject'],
+                'text':'SYNTHETIC COLLECTIONS DEMO — no real debt or payment request.\n\n'+draft['body']}
+            job=await self.store.rpc('ca_followup_mail_prepare',{'p_session_key':session_key,'p_case_id':case_id,
+                'p_event_key':event_key,'p_id':ident,'p_payload':payload,'p_reply_to':payload['reply_to']})
+            if job['state']!='accepted':
+                if job['state']=='uncertain' and not explicit_retry:
+                    return {'case':await self.store.rpc('ca_case_get',{'p_session_key':session_key,'p_case_id':case_id})}
+                if job['payload']['to']!=[self.config.recipient] or job['payload']['from']!=self.config.sender:
+                    raise HTTPException(409,'Stored recipient/sender changed. Review existing intent.')
+                age=datetime.now(timezone.utc)-datetime.fromisoformat(job['created_at'].replace('Z','+00:00'))
+                if age>timedelta(hours=20):raise HTTPException(409,'Unresolved email is older than20hours. Reconcile in Resend before retrying.')
+                try:provider_id=await self.provider.send(job)
+                except HTTPException as exc:
+                    await self.store.rpc('ca_mail_finish',{'p_id':job['id'],'p_provider_id':None,'p_error':exc.detail})
+                else:await self.store.rpc('ca_mail_finish',{'p_id':job['id'],'p_provider_id':provider_id,'p_error':None})
+            return {'case':await self.store.rpc('ca_case_get',{'p_session_key':session_key,'p_case_id':case_id})}
+
     async def webhook(self,raw,headers):
         self.config.check()
         event_id=verify(raw,headers,self.config.webhook_secret)

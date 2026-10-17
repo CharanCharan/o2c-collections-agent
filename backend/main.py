@@ -1,6 +1,7 @@
 """One FastAPI server for the website, Supabase-backed runs and SSE."""
 
 import asyncio
+from datetime import date
 import json
 import time
 from contextlib import asynccontextmanager
@@ -18,6 +19,7 @@ from .language import LanguageService, facts_for
 from .mail.service import MailService
 from .cases import CaseService
 from .workflow.agent import CaseAgent
+from .workflow.followups import FollowupService
 from .public_demo import PublicConfig, PublicAccess, ACTOR
 from pydantic import BaseModel, ConfigDict, Field
 from .storage import StorageError, StoreRequestError, SupabaseStore
@@ -42,6 +44,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
 
     agent = CaseAgent(store,service.language,mail,cases) if service else None
     if cases:cases.agent=agent
+    followups = FollowupService(store,agent) if service else None
 
     public = PublicAccess(public_config or PublicConfig.from_env(),store)
     if service and public.config.enabled:
@@ -66,6 +69,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     app = FastAPI(title="Collections Agent · Milestone 6", lifespan=lifespan)
     app.state.runs = service
     app.state.agent = agent
+    app.state.followups = followups
 
     @app.middleware('http')
     async def demo_boundary(request: Request,call_next):
@@ -234,6 +238,60 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     async def scenarios():
         return {'scenarios':await backend().store.rpc('ca_scenarios_list')}
 
+    class ClockRequest(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        demo_date: date
+
+    class DueRequest(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        request_id: UUID
+
+    @app.get('/api/demo-clock')
+    async def read_clock(request: Request):
+        backend()
+        return await followups.clock(public.actor(request)[0])
+
+    @app.post('/api/demo-clock')
+    async def advance_clock(body: ClockRequest,request: Request):
+        backend()
+        return await followups.clock(public.actor(request)[0],body.demo_date)
+
+    def schedule_due(actor,job):
+        if job['created']:
+            task=asyncio.create_task(followups.run(actor,job['job']['id']))
+            service.tasks.add(task);task.add_done_callback(service.tasks.discard)
+        return job
+
+    @app.post('/api/followup-checks')
+    async def start_due(body: DueRequest,request: Request):
+        backend();actor=public.actor(request)[0]
+        return schedule_due(actor,await followups.start(actor,str(body.request_id)))
+
+    @app.get('/api/followup-checks')
+    async def latest_due(request: Request):
+        backend()
+        return {'job':await followups.job(public.actor(request)[0])}
+
+    @app.get('/api/followup-checks/{job_id}')
+    async def read_due(job_id: UUID,request: Request):
+        backend()
+        return await followups.job(public.actor(request)[0],str(job_id))
+
+    @app.post('/api/followup-checks/{job_id}/resume')
+    async def resume_due(job_id: UUID,request: Request):
+        backend();actor=public.actor(request)[0]
+        return schedule_due(actor,await followups.resume(actor,str(job_id)))
+
+    @app.post('/api/cases/{case_id}/followup-email')
+    async def send_followup_email(case_id: UUID,request: Request):
+        backend()
+        if await request.body():raise HTTPException(422,'No recipient or body overrides allowed.')
+        actor=public.actor(request)[0];c=await agent.case(actor,str(case_id));w=c.get('workflow') or {};pending=w.get('pending')
+        if pending and pending['tool']=='send_followup_email':return await agent.approve(actor,str(case_id),pending['event_key'],True)
+        if pending:raise HTTPException(409,'A different action is awaiting review.')
+        if (w.get('followup') or {}).get('status')=='accepted':return {'case':c}
+        return await agent.retry_followup(actor,str(case_id))
+
     @app.get("/api/model")
     async def model_info():
         return risk_model.model_card(risk_model.load_model())
@@ -260,6 +318,11 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             workflow={'ready':True,'engine':'langgraph','version':'1.2.16'}
         except StorageError:
             workflow={'ready':False,'error':'Run sql/009_case_workflow.sql to enable the case agent.'}
+        try:
+            await s.store.rpc('ca_followup_health')
+            followup_status={'ready':True,'schema':12,'scheduler':'explicit_demo_check'}
+        except StorageError:
+            followup_status={'ready':False,'error':'Apply sql/012_promise_followups.sql to enable demo-clock follow-ups.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
         return {"status": "ok", "milestone": "M6", "storage": "supabase_postgres",
@@ -269,7 +332,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
                                 "daily_run_cap":public_info.get('daily_run_cap',20) if public.config.enabled else None,
                                 "per_browser_runs":public_info.get('per_browser_runs',3) if public.config.enabled else None,
                                 "daily_llm_attempt_cap":40,"per_browser_llm_attempts":8},
-                "workflow":workflow,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
+                "workflow":workflow,"followups":followup_status,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
 
     @app.get('/api/reply-examples')
     async def reply_examples():

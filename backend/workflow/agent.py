@@ -37,12 +37,15 @@ class CaseAgent:
         self.store,self.language,self.mail,self.cases=store,language,mail,cases
         self.locks=defaultdict(asyncio.Lock)
         g=StateGraph(State)
-        for name in ['load','interpret','choose','approval','execute','finish']:
+        for name in ['load','interpret','choose','approval','execute','plan_followup','finish']:
             g.add_node(name,getattr(self,name))
         g.add_edge(START,'load');g.add_edge('load','interpret');g.add_edge('interpret','choose')
-        g.add_conditional_edges('choose',lambda s:'finish' if s['proposal']['tool']=='none' else 'approval' if s['proposal']['tool'] in {'send_email','record_promise'} else 'execute',
+        g.add_conditional_edges('choose',lambda s:'finish' if s['proposal']['tool']=='none' else 'approval' if s['proposal']['tool'] in {'send_email','send_followup_email','record_promise'} else 'execute',
             {'finish':'finish','approval':'approval','execute':'execute'})
-        g.add_edge('approval','execute');g.add_edge('execute','finish');g.add_edge('finish',END)
+        g.add_edge('approval','execute')
+        g.add_conditional_edges('execute',lambda s:'plan_followup' if s['event']=='due' and s['proposal']['tool']=='check_due' else 'finish',{'plan_followup':'plan_followup','finish':'finish'})
+        g.add_conditional_edges('plan_followup',lambda s:'approval' if s['proposal']['tool']=='send_followup_email' else 'finish',{'approval':'approval','finish':'finish'})
+        g.add_edge('finish',END)
         self.graph=g.compile(checkpointer=SupabaseSaver(store))
 
     async def case(self,actor,case_id):
@@ -61,6 +64,10 @@ class CaseAgent:
         c=await self.case(s['actor'],s['case_id'])
         scenario=(c.get('workflow') or {}).get('scenario')
         if scenario is None:scenario=await self.store.rpc('ca_scenario',{'p_invoice_id':c['invoice_id']})
+        if s['event']=='reply':
+            follow=(c.get('workflow') or {}).get('followup') or {}
+            if follow.get('status') in {'draft_ready','quota_wait','unknown','review_required'}:
+                await self.patch(s,{'followup':{**follow,'status':'superseded'}},'supersede','New customer reply supersedes the unsent follow-up.')
         await self.patch(s,{'version':'langgraph-case-v1','mode':s['mode'],'scenario':scenario,
             'pending':None,'processing':True,'status':'processing','next_action':'Inspect case and evidence'},'load','Loaded saved case, policy and synthetic evidence.')
         return {}
@@ -107,6 +114,10 @@ class CaseAgent:
             elif intent=='request_info':
                 proposal={'tool':'retrieve_documents','status':'document_review_required','next_action':'Retrieve available synthetic documents','message':'Retrieve only controlled documents belonging to this invoice.'}
         elif s['event']=='due':
+            if row['dispute'] or c['collection_status']=='dispute_hold_review_required':
+                proposal.update(status='dispute_hold_review_required',next_action='Review dispute evidence',message='Dispute hold prevents follow-up.')
+                await self.patch(s,{'proposal':proposal,'status':proposal['status'],'next_action':proposal['next_action']},'choose',proposal['message'])
+                return {'proposal':proposal}
             promise=w.get('promise') or sc.get('prior_promise')
             today=date.fromisoformat(w.get('demo_date',c['snapshot']['as_of_date']))
             if promise and today>date.fromisoformat(promise.get('promise_date') or promise['date']):
@@ -132,7 +143,7 @@ class CaseAgent:
 
     async def approval(self,s):
         tool=s['proposal']['tool']
-        needs=tool in {'send_email','record_promise'} and (s['mode']=='limited' or (tool=='send_email' and not s.get('allow_auto_send')))
+        needs=tool in {'send_email','send_followup_email','record_promise'} and (s['mode']=='limited' or (tool in {'send_email','send_followup_email'} and not s.get('allow_auto_send')))
         if not needs:
             await self.patch(s,{},'authorization','Autopilot policy allowed this bounded case action.')
             return {'approved':True}
@@ -158,8 +169,10 @@ class CaseAgent:
         tool=s['proposal']['tool'];c=await self.case(s['actor'],s['case_id']);proposal=s['proposal']
         newest=next((m for m in reversed(c['messages']) if m['channel']=='simulated_customer_reply'),None)
         superseded=s['event']=='reply' and newest and newest['id']!=s['event_key']
-        if (tool in {'send_email','record_promise'} and not s.get('approved')) or superseded:
-            await self.patch(s,{'status':'manual_review_required','pending':None,'next_action':'Review before any action'},'execute','Action declined or superseded. No side effect executed.')
+        if (tool in {'send_email','send_followup_email','record_promise'} and not s.get('approved')) or superseded:
+            patch={'status':'manual_review_required','pending':None,'next_action':'Review before any action'}
+            if tool=='send_followup_email':patch['followup']={**c['workflow'].get('followup',{}),'status':'declined'}
+            await self.patch(s,patch,'execute','Action declined or superseded. No side effect executed.')
             return {}
         if tool=='none':return {}
         await self.patch(s,{'processing':True},'execute','Running allowed tool: '+tool,'started')
@@ -177,9 +190,23 @@ class CaseAgent:
                     limited=(exc.status_code if isinstance(exc,HTTPException) else exc.status)==429
                     patch.update(status='quota_wait' if limited else 'manual_review_required',next_action='Retry manually after the UTC mail quota resets' if limited else 'Review email configuration/policy before sending')
                     result['message']='No email sent: '+str(exc.detail if isinstance(exc,HTTPException) else exc)
+        elif tool=='send_followup_email':
+            follow=dict(c['workflow']['followup'])
+            try:
+                sent=(await self.mail.send_followup(s['actor'],s['case_id'],s['event_key']))['case']
+                out=next(x for x in sent['followups'] if x['event_key']==s['event_key'])
+                follow['status']='accepted' if out['state']=='accepted' else 'unknown'
+                patch.update(status='awaiting_delivery' if out['state']=='accepted' else 'delivery_unknown',next_action='Await follow-up delivery and customer response' if out['state']=='accepted' else 'Review follow-up outcome; retry only explicitly')
+                result.update(message='Resend accepted follow-up; payment remains outstanding.' if out['state']=='accepted' else 'Follow-up outcome unknown; no automatic retry.',synthetic_evidence=False,mail_id=out['id'])
+            except (HTTPException,StoreRequestError) as exc:
+                limited=(exc.status_code if isinstance(exc,HTTPException) else exc.status)==429
+                follow['status']='quota_wait' if limited else 'review_required'
+                patch.update(status='quota_wait' if limited else 'manual_review_required',next_action='Retry follow-up explicitly after mail quota resets' if limited else 'Review follow-up configuration or case hold')
+                result['message']='No follow-up sent: '+str(exc.detail if isinstance(exc,HTTPException) else exc)
+            patch['followup']=follow
         elif tool=='record_promise':
             v=proposal['promise'];follow=(date.fromisoformat(v['promise_date'])+timedelta(days=1)).isoformat()
-            patch.update(status='promise_recorded',collection_status='promise_recorded',promise=v,followup_date=follow,next_action='Check demo payment on '+follow)
+            patch.update(status='promise_recorded',collection_status='promise_recorded',promise=v,promise_event_key=s['event_key'],followup=None,followup_date=follow,next_action='Check demo payment on '+follow)
             result['message']='Supported promise recorded; check-after date saved. No unattended email scheduled.'
         elif tool in {'reconcile','check_due'}:
             match=self.match(c);full=match['financial_state']=='fully_matched'
@@ -202,6 +229,45 @@ class CaseAgent:
             'p_tool':tool,'p_result':result,'p_patch':patch})
         return {}
 
+    async def plan_followup(self,s):
+        c=await self.case(s['actor'],s['case_id']);w=c['workflow'];sc=w.get('scenario',{});m=w.get('reconciliation') or {}
+        row=c['snapshot']['invoice'];prior=w.get('followup') or {}
+        promise=w.get('promise') or sc.get('prior_promise') or {}
+        promised=promise.get('promise_date') or promise.get('date')
+        newest=next((x for x in reversed(c['messages']) if x['channel']=='simulated_customer_reply'),None)
+        reason=None
+        if m.get('financial_state')=='fully_matched':reason='Payment matched in demo ledger. No follow-up email needed.'
+        elif m.get('financial_state')=='review_overpayment':reason='Payment evidence needs review; no follow-up generated.'
+        elif row['dispute'] or c['collection_status']=='dispute_hold_review_required':reason='Dispute hold blocks outreach.'
+        elif sc.get('missing_contact') or sc.get('prior_transport'):reason='Contact or simulated delivery issue requires review.'
+        elif newest and newest['id']!=w.get('promise_event_key'):reason='A newer or unsupported reply needs review before chasing a promise.'
+        elif not promised:reason='No supported promise date.'
+        elif any(e['type'] in {'email.bounced','email.complained','email.failed','email.suppressed'} for e in (c.get('outbound') or {}).get('events',[])):reason='Original delivery issue requires review.'
+        elif c.get('outbound') and c['outbound']['state']!='accepted':reason='Original reminder outcome is unknown; reconcile it before new outreach.'
+        elif prior.get('event_key')==s['event_key']:
+            if prior.get('status')=='draft_ready':
+                # Business patch can persist before the node checkpoint. Replay must
+                # still reach authorization, not strand an unsendable saved draft.
+                return {'proposal':{'tool':'send_followup_email','status':'followup_due','next_action':'Send missed-promise follow-up'},'approved':False}
+            reason='Existing follow-up retained; no duplicate draft or send.'
+        if reason:
+            status=w.get('status','manual_review_required')
+            if m.get('financial_state')!='fully_matched':
+                status='contact_required' if sc.get('missing_contact') else 'delivery_exception' if sc.get('prior_transport') else 'manual_review_required'
+                if row['dispute'] or c['collection_status']=='dispute_hold_review_required':status='dispute_hold_review_required'
+            await self.patch(s,{'status':status,'next_action':reason},'plan_followup',reason)
+            return {'proposal':{'tool':'none'}}
+        remaining=Decimal(m['remaining_amount']);currency=c['snapshot']['currency']
+        draft={'subject':'Payment promise follow-up — '+row['id'],
+            'body':f"Hello {row['customer']},\n\nOur demo records show a payment promise for invoice {row['id']} dated {promised}. "
+                f"After checking the available synthetic payment evidence, {currency} {remaining:,.2f} remains unmatched. "
+                "Please confirm the payment date or share remittance details if payment has been made.\n\nThank you,\nCollections team",
+            'generation_mode':'template_no_llm','remaining_amount':f'{remaining:.2f}'}
+        follow={'event_key':s['event_key'],'promise_date':promised,'as_of_date':w.get('demo_date',c['snapshot']['as_of_date']),'draft':draft,'status':'draft_ready'}
+        proposal={'tool':'send_followup_email','status':'followup_due','next_action':'Send missed-promise follow-up','message':'Payment evidence checked; prepare reminder only for the demo remaining amount.'}
+        await self.patch(s,{'followup':follow,'proposal':proposal,'status':'followup_due','next_action':proposal['next_action']},'plan_followup','Follow-up template prepared from saved promise and synthetic remaining balance. No model call.')
+        return {'proposal':proposal,'approved':False}
+
     async def finish(self,s):
         await self.patch(s,{'processing':False,'pending':None},'finish','This case invocation finished. Waiting/review states remain open.')
         return {}
@@ -212,7 +278,7 @@ class CaseAgent:
             config=self.config(case_id)
             with tracing_context(enabled=False):
                 previous=await self.graph.aget_state(config)
-                if event=='start' and previous.values:
+                if (event=='start' or (event=='due' and previous.values.get('event_key')==event_key)) and previous.values:
                     if previous.next and not any(t.interrupts for t in previous.tasks):
                         await self.graph.ainvoke(None,config,durability='sync')
                     return await self.case(actor,case_id)  # New runs never silently change prior authority.
@@ -257,6 +323,17 @@ class CaseAgent:
             s={'actor':actor,'case_id':case_id,'event_key':'retry:'+str(uuid4())}
             c=await self.patch(s,{'status':'awaiting_delivery' if accepted else 'delivery_unknown','next_action':'Await verified delivery' if accepted else 'Review unknown outcome','pending':None,'processing':False},
                 'execute','Explicit email action accepted by Resend.' if accepted else 'Explicit retry outcome remains unknown.')
+            return {'case':c}
+
+    async def retry_followup(self,actor,case_id):
+        async with self.locks[case_id]:
+            c=await self.case(actor,case_id);follow=(c.get('workflow') or {}).get('followup') or {}
+            if follow.get('status') not in {'quota_wait','unknown','review_required'}:raise HTTPException(409,'No follow-up is waiting for explicit retry.')
+            result=await self.mail.send_followup(actor,case_id,follow['event_key'],explicit_retry=True)
+            out=next(x for x in result['case']['followups'] if x['event_key']==follow['event_key'])
+            accepted=out['state']=='accepted';follow['status']='accepted' if accepted else 'unknown'
+            s={'actor':actor,'case_id':case_id,'event_key':'followup-retry:'+str(uuid4())}
+            c=await self.patch(s,{'followup':follow,'status':'awaiting_delivery' if accepted else 'delivery_unknown','next_action':'Await follow-up delivery' if accepted else 'Review unknown follow-up outcome'},'execute','Explicit follow-up accepted by Resend.' if accepted else 'Follow-up outcome still unknown.')
             return {'case':c}
 
     async def run_job(self,actor,run_id,mode):
