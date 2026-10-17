@@ -17,6 +17,11 @@ const state = {
   invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
   highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null, approvalId: null,
 };
+let mailEnabled = false;
+let ownerRecipient = "";
+let emailState = null;
+let emailRun = null;
+let emailRefreshBusy = false;
 const $ = (id) => document.getElementById(id);
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -160,7 +165,7 @@ function renderDetail() {
     </div>
     ${row.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(row.draft_audit, null, 2))}</pre></details>` : ''}
     <div class="detail-actions"><button class="secondary" id="record-btn" ${canApprove ? "" : "disabled"}>${row.contacted ? "Dry run already recorded" : "Approve & record dry run"}</button></div>
-    <p class="panel-sub">This saves an approval in Supabase. Email sending arrives in Milestone 5.</p>
+    <p class="panel-sub">This saves an approval in Supabase. Use the separate controlled email panel to send to your configured test inbox.</p>
     <div class="explain"><b>Review a synthetic reply example</b><p>No email was received. This only tests classification; payment and dispute status stay unchanged.</p>
       <select id="reply-example"><option value="promise">Promise to pay</option><option value="paid">Customer claims paid</option><option value="dispute">Dispute</option><option value="documents">Request documents</option><option value="injection">Untrusted instructions</option></select>
       <button class="secondary" id="classify-reply" ${state.status === 'completed' ? '' : 'disabled'}>Classify example</button>
@@ -176,6 +181,7 @@ function renderDetail() {
     } catch (error) {showError(error.message); button.disabled = false;}
   };
   $("record-btn").onclick = () => {state.approvalId = row.id; $("modal").classList.add("show");};
+  renderMail();
 }
 
 function renderFlow() {
@@ -234,6 +240,8 @@ function handleEvent(event) {
 }
 
 function clearRun() {
+  emailState = null; emailRun = null;
+  if ($("email-activity")) $("email-activity").textContent = "Complete a run to inspect email activity.";
   state.source?.close();
   Object.assign(state, {invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
     highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null, approvalId: null});
@@ -325,7 +333,7 @@ async function openSavedRun() {
     const run = await api(`/api/runs/${id}`);
     if (["queued", "running"].includes(run.status)) {toast("That run is still active. Refresh history after it finishes."); return;}
     clearRun(); state.currentRun = run.run_id; state.status = run.status;
-    state.legacyRun = !["M3", "M4"].includes(run.result.workflow_version);
+    state.legacyRun = !["M3", "M4", "M5"].includes(run.result.workflow_version);
     for (const event of run.events) handleEvent(event);
     state.status = run.status;
     applySnapshot(run.result);
@@ -361,9 +369,87 @@ $("confirm-send").onclick = async () => {
   finally {$("confirm-send").disabled = false;}
 };
 
+function applyEmailActivity(response) {
+  emailState = response.mail; emailRun = response.run.run_id;
+  if (state.currentRun !== emailRun) return;
+  for (const event of response.run.events) if (!state.eventIds.has(event.event_id)) addEvent(event);
+  renderMail();
+}
+
+async function refreshEmail() {
+  if (!state.currentRun || state.status !== 'completed' || emailRefreshBusy) return;
+  emailRefreshBusy = true;
+  const id = state.currentRun;
+  try {
+    const response = await api(`/api/runs/${id}/email`);
+    if (state.currentRun === id && (emailRun !== id || JSON.stringify(emailState) !== JSON.stringify(response.mail))) applyEmailActivity(response);
+  } catch (error) { if (mailEnabled) $("email-activity").textContent = error.message; }
+  finally { emailRefreshBusy = false; }
+}
+
+function renderMail() {
+  const panel = $("email-activity");
+  if (!state.currentRun || state.status !== 'completed') {panel.textContent = 'Complete a run to inspect email activity.'; return;}
+  const row = state.invoices.find(r => r.id === state.selectedId);
+  if (!row) return;
+  const saved = emailRun === state.currentRun ? emailState : null;
+  const messages = (saved?.messages || []).filter(m => m.invoice_id === row.id);
+  const mail = messages[0];
+  const replies = (saved?.replies || []).filter(r => messages.some(m => m.id === r.mail_id));
+  const followups = (saved?.followups || []).filter(f => replies.some(r => r.id === f.reply_id));
+  const events = (saved?.delivery_events || []).filter(e => messages.some(m => m.id === e.mail_id));
+  panel.innerHTML = `<div class="panel-title">Controlled email · ${escapeHTML(row.id)}</div>
+    <p class="explain">${mail ? `Resend acceptance: <b>${escapeHTML(mail.state)}</b>. ${mail.state === 'accepted' ? 'Acceptance does not confirm delivery.' : 'Inspect Resend before manually retrying the same intent.'}` : 'No email send intent recorded.'}</p>
+    <button class="secondary" id="live-email-send" ${mailEnabled && ownerRecipient && row.eligible && row.draft && mail?.state !== 'accepted' ? '' : 'disabled'}>${mail ? 'Retry same approved email' : 'Review & send test email'}</button>
+    <button class="secondary" id="email-refresh">Refresh email activity</button>
+    <p class="explain">${ownerRecipient ? `Test inbox: ${escapeHTML(ownerRecipient)}` : 'Unlock owner access above to send.'} All messages are labelled synthetic demos.</p>
+    <details class="explain"><summary>Send and verified delivery evidence</summary><pre>${escapeHTML(JSON.stringify({messages,delivery_events:events},null,2))}</pre></details>
+    ${replies.map(reply => `<div class="draft"><b>Received reply · ${escapeHTML(reply.review.status)}</b><p class="explain">Thread verified: ${reply.review.thread_verified}. Human review required. No payment state changed.</p><pre>${escapeHTML(reply.review.text)}</pre>
+      <details><summary>Classification and receipt evidence</summary><pre>${escapeHTML(JSON.stringify(reply.review,null,2))}</pre></details>
+      ${reply.resolution ? `<p>Review saved: ${escapeHTML(reply.resolution.intent)}</p>` : `<form class="reply-resolution" data-reply="${escapeHTML(reply.id)}">
+        <label>Reviewed intent <select name="intent">${['promise_to_pay','payment_claim','dispute','request_info','other'].map(intent => `<option ${intent === (reply.review.classification?.intent || 'other') ? 'selected' : ''}>${intent}</option>`).join('')}</select></label>
+        <p><label>Promise date (literal YYYY-MM-DD) <input name="promise_date" value="${escapeHTML(reply.review.classification?.promise_date || '')}"></label></p>
+        <p><label>Promise amount (optional exact two decimals) <input name="promise_amount" value="${escapeHTML(reply.review.classification?.promise_amount || '')}"></label></p>
+        <p><label>Exact supporting quote <textarea name="evidence_quote" maxlength="500">${escapeHTML(reply.review.classification?.evidence_quote || '')}</textarea></label></p>
+        <button class="secondary" ${ownerRecipient ? '' : 'disabled'}>Confirm review & schedule follow-up task</button></form>`}</div>`).join('')}
+    <p class="explain">Follow-ups are saved AR work tasks, not automatically sent emails. Promise checks fall on the day after the promised date; other reviews on tomorrow's UTC date.</p>
+    <pre>${escapeHTML(JSON.stringify(followups,null,2))}</pre>`;
+  $("email-refresh").onclick = refreshEmail;
+  $("live-email-send").onclick = async () => {
+    if (!window.confirm(`I reviewed ${row.id}'s displayed draft. Send this synthetic demo only to ${ownerRecipient}?`)) return;
+    $("live-email-send").disabled = true;
+    try {
+      applyEmailActivity(await api(`/api/runs/${state.currentRun}/invoices/${encodeURIComponent(row.id)}/send-email`, {
+        method:'POST',headers:{'Content-Type':'application/json','X-Collections-Owner':$("email-owner-token").value},body:JSON.stringify({confirm_reviewed:true})}));
+      toast('Email outcome saved. Inspect acceptance and delivery evidence.');
+    } catch(error) {showError(error.message); renderMail();}
+  };
+  for (const form of panel.querySelectorAll('.reply-resolution')) form.onsubmit = async event => {
+    event.preventDefault();
+    if (!window.confirm('Confirm human review and save one follow-up task? No invoice payment state will change.')) return;
+    const body = {intent:form.elements.intent.value,promise_date:form.elements.promise_date.value || null,
+      promise_amount:form.elements.promise_amount.value || null,evidence_quote:form.elements.evidence_quote.value};
+    form.querySelector('button').disabled = true;
+    try {applyEmailActivity(await api(`/api/runs/${state.currentRun}/replies/${form.dataset.reply}/resolve`, {
+      method:'POST',headers:{'Content-Type':'application/json','X-Collections-Owner':$("email-owner-token").value},body:JSON.stringify(body)}));}
+    catch(error) {showError(error.message); form.querySelector('button').disabled = false;}
+  };
+}
+$("email-unlock").onclick = async () => {
+  try {
+    const config = await api('/api/email/owner-config',{headers:{'X-Collections-Owner':$("email-owner-token").value}});
+    ownerRecipient = config.recipient; $("email-target").textContent = `Only ${config.recipient} can receive this demo. Sender: ${config.sender}`;
+    renderMail(); await refreshEmail();
+  } catch(error) {ownerRecipient = ''; $("email-target").textContent = error.message; renderMail();}
+};
+$("email-owner-token").oninput = () => {ownerRecipient = ''; $("email-target").textContent = ''; renderMail();};
+setInterval(refreshEmail,5000);
+
 clearRun();
 api("/api/health").then((health) => {
   const language = health.language;
+  mailEnabled = Boolean(health.email?.ready);
+  $("email-mode").textContent = mailEnabled ? "Live email configured. Owner approval sends only to the server-configured test inbox. Ten reservations per UTC day." : (health.email?.configuration_error || "Live email disabled. See M5 setup.");
   $("backend-label").textContent = language ? (language.configuration_error ? "Supabase · LLM configuration blocked" : language.enabled ? (language.key_configured ? `Supabase · ${language.provider} · ${language.model}` : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";
   $("start-run").disabled = false;
   banner("READY", "Start a run to process the demo dataset");

@@ -13,7 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from .runner import RunService, STAGES
 from . import risk_model
 from .language import LanguageService, facts_for
-from pydantic import BaseModel, ConfigDict
+from .mail.service import MailService
+from pydantic import BaseModel, ConfigDict, Field
 from .storage import StorageError, StoreRequestError, SupabaseStore
 
 
@@ -21,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
 
 
-def create_app(store=None, language=None):
+def create_app(store=None, language=None, mail_config=None, mail_transport=None):
     config_error = None
     if store is None:
         try:
@@ -29,6 +30,8 @@ def create_app(store=None, language=None):
         except StorageError as exc:
             config_error = str(exc)
     service = RunService(store, language=language) if store is not None else None
+
+    mail = MailService(store,service.language,config=mail_config,transport=mail_transport) if service else None
 
     @asynccontextmanager
     async def lifespan(app):
@@ -38,10 +41,12 @@ def create_app(store=None, language=None):
             except StorageError:
                 pass  # Still serve the page and an actionable health error.
         yield
+        if mail:
+            await mail.close()
         if service:
             await service.close()
 
-    app = FastAPI(title="Collections Agent · Milestone 4", lifespan=lifespan)
+    app = FastAPI(title="Collections Agent · Milestone 5", lifespan=lifespan)
     app.state.runs = service
 
     def backend():
@@ -74,10 +79,10 @@ def create_app(store=None, language=None):
         await s.store.rpc("ca_language_health")
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "milestone": "M4", "storage": "supabase_postgres",
+        return {"status": "ok", "milestone": "M5", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
-                "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
+                "email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
 
     @app.get('/api/reply-examples')
     async def reply_examples():
@@ -113,6 +118,47 @@ def create_app(store=None, language=None):
             review.update({'example_id': body.example_id, 'example_text': example['text']})
             return await s.store.rpc('ca_record_reply_example', {'p_run_id': str(run_id),
                 'p_invoice_id': invoice_id, 'p_example_id': body.example_id, 'p_review': review})
+
+    class SendRequest(BaseModel):
+        model_config = ConfigDict(extra='forbid',strict=True)
+        confirm_reviewed: bool
+
+    class ResolveRequest(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+        intent: str = Field(max_length=30)
+        promise_date: str | None = Field(default=None,max_length=10)
+        promise_amount: str | None = Field(default=None,max_length=20)
+        evidence_quote: str = Field(default='',max_length=500)
+
+    def email_backend():
+        backend()
+        return mail
+
+    @app.get('/api/email/owner-config')
+    async def email_owner_config(x_collections_owner: str | None = Header(default=None)):
+        m=email_backend(); m.authorize(x_collections_owner)
+        return {'recipient':m.config.recipient,'sender':m.config.sender}
+
+    @app.get('/api/runs/{run_id}/email')
+    async def email_activity(run_id: UUID):
+        return await email_backend().activity(str(run_id))
+
+    @app.post('/api/runs/{run_id}/invoices/{invoice_id}/send-email')
+    async def send_email(run_id: UUID,invoice_id: str,body: SendRequest,x_collections_owner: str | None = Header(default=None)):
+        if body.confirm_reviewed is not True:raise HTTPException(422,'Confirm that you reviewed the displayed draft.')
+        return await email_backend().send(str(run_id),invoice_id,x_collections_owner)
+
+    @app.post('/api/runs/{run_id}/replies/{reply_id}/resolve')
+    async def resolve_reply(run_id: UUID,reply_id: UUID,body: ResolveRequest,x_collections_owner: str | None = Header(default=None)):
+        return await email_backend().resolve(str(run_id),str(reply_id),body,x_collections_owner)
+
+    @app.post('/api/webhooks/resend')
+    async def resend_webhook(request: Request):
+        raw=bytearray()
+        async for chunk in request.stream():
+            raw.extend(chunk)
+            if len(raw)>65536:raise HTTPException(413,'Webhook exceeds POC size limit.')
+        return await email_backend().webhook(bytes(raw),request.headers)
 
     @app.post("/api/runs", status_code=202)
     async def start_run():
