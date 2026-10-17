@@ -364,7 +364,7 @@ $("confirm-send").onclick = async () => {
 clearRun();
 api("/api/health").then((health) => {
   const language = health.language;
-  $("backend-label").textContent = language ? (language.enabled ? (language.key_configured ? "Supabase · LLM enabled" : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";
+  $("backend-label").textContent = language ? (language.configuration_error ? "Supabase · LLM configuration blocked" : language.enabled ? (language.key_configured ? `Supabase · ${language.provider} · ${language.model}` : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";
   $("start-run").disabled = false;
   banner("READY", "Start a run to process the demo dataset");
   refreshSavedRuns();

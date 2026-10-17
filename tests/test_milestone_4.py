@@ -50,7 +50,7 @@ def mock_service(mode='valid', **kwargs):
         if mode == 'refusal': content=[{'type':'refusal','refusal':'Cannot comply.'}]
         return httpx.Response(200,json={'id':'resp_test','model':'gpt-5.6-luna','status':'completed',
             'output':[{'type':'message','content':content}], 'usage':{'input_tokens':300,'output_tokens':100,'total_tokens':400}})
-    return LanguageService(enabled=True,key='secret-test',transport=httpx.MockTransport(transport),**kwargs), requests
+    return LanguageService(enabled=True,key='secret-test',provider='openai',free_only=False,transport=httpx.MockTransport(transport),**kwargs), requests
 
 
 def test_strict_fact_echo_and_prose_guards():

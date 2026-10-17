@@ -22,9 +22,9 @@ This is a hands-on learning project delivered one complete runnable milestone at
 
 ## Current implementation — M4 prepared for review
 
-M3 merge f3acb263; user reported completion. Two ML risk models and separate queues remain. M4 adds explicit LLM drafting/reply-classification tools, structured schemas, deterministic fact rendering/guards, provider audit and labelled fallback. Live OpenAI is opt-in; default template mode costs no API calls. Model GPT-5.6 Luna, bounded requests and output. All generated wording requires human review; no semantic correctness guarantee from keyword checks.
+M3 merge f3acb263; user reported completion. Two ML risk models and separate queues remain. M4 adds explicit LLM drafting/reply-classification tools, structured schemas, deterministic fact rendering/guards, provider audit and labelled fallback. Groq / openai/gpt-oss-20b is the default for the requested Free account, with opt-in calls, modular adapters and environment-configurable models/keys/limits. LLM_FREE_ONLY blocks paid-provider routing, not paid Groq accounts: verify Free manually. Default templates make no calls; no provider failover. All generated wording requires human review; no semantic correctness guarantee from keyword checks.
 
-SQL004 adds only readiness/review functions. Fixed synthetic reply reviews persist atomically and deduplicate, without actual email receipt, payment/dispute updates or scheduled followups. Provider/sending loop remains M5. Pre-due stays review-only; overdue eligibility/draft rules unchanged.42tests and local HTTP/SSE/DOM passed using isolated SQL and mocked provider; no live OpenAI verification/charges. Setup docs/MILESTONE_4.md. User Python3.13.5/live SQL004/API checks pending.
+SQL004 adds only readiness/review functions. Fixed synthetic reply reviews persist atomically and deduplicate, without actual email receipt, payment/dispute updates or scheduled followups. Provider/sending loop remains M5. Pre-due stays review-only; overdue eligibility/draft rules unchanged.64 tests and local Groq HTTP/SSE/DOM passed using isolated SQL and mocked provider; no live provider/account verification or charges. Setup docs/MILESTONE_4.md. User Python3.13.5/live SQL004/API checks pending.
 
 ## Recommended stack
 
@@ -90,7 +90,7 @@ PR#4 merged; learner reported done. Optional deeper checks still not separately 
 
 Use an LLM for reminder drafts and structured reply classification. Use SQL/Python for finance calculations and policy checks. Validate LLM output against invoice facts. Implement explicit tools and state transitions; no multi-agent expansion unless a demonstrated need arises.
 
-Implemented: OpenAI Responses structured language tools with exact fact echo and Python financial block; nonfinancial prose guards/human review; version/usage/hash/duration audit; visible provider/validation/cap fallbacks; five fixed synthetic reply cases and quote/promise checks, always review-only. Paid calls require local opt-in, no credentials received/spending by assistant. SQL004 stores review/event atomically, duplicates avoid another provider call. See M4 lesson for cost explanation and local controls.
+Implemented: modular Groq Chat Completions/default Free model and optional explicitly selected OpenAI Responses structured language tools with exact fact echo and Python financial block; nonfinancial prose guards/human review; version/usage/hash/duration audit; visible provider/validation/cap fallbacks; five fixed synthetic reply cases and quote/promise checks, always review-only. Live calls require local opt-in and a confirmed Groq Free account for zero-cost operation, no credentials received/spending by assistant. SQL004 stores review/event atomically, duplicates avoid another provider call. See M4 lesson for cost explanation and local controls.
 
 Acceptance pending: successful live API draft/evidence, invalid-output fallback understanding, sample classification/dedup/restart persistence, user can explain policy and limitations. Drafts use validated amounts and dates; disputed accounts pause; invalid output routes to review; tool inputs, outputs, versions, duration, and errors are recorded. Display action summaries and evidence, not private chain-of-thought.
 
@@ -152,4 +152,6 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | M3 implementation prepared | Synthetic-trained logistic model, saved evidence, risk ranking and lesson; 22 local tests + HTTP/SSE/DOM; learner verification pending |
 | 2026-10-17 | M3 extended at user request | PR#4 now includes due-7 prevention plus overdue recovery, SQL003 examples and separate queues; 29 local checks; learner confirmation pending |
 | 2026-10-17 | M3 merged / learner normal run confirmed | PR#4 merge f3acb263; user said done/next; optional exercises not separately confirmed |
-| 2026-10-17 | M4 prepared | LLM-assisted phrasing, bounded API adapter, visible fallbacks and sample reply review;42localtests/mock provider; live setup pending |
+| 2026-10-17 | M4 prepared | LLM-assisted phrasing, bounded API adapter, visible fallbacks and sample reply review;64 local tests/mock providers; live setup pending |
+
+| 2026-10-17 | User requested free model and modular control | PR#5 updated to Groq default, separate provider adapters/keys, env model/limits, free-only routing, no paid failover; account Free status/live output still learner checks |
