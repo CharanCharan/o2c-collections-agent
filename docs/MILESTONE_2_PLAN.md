@@ -1,112 +1,67 @@
-# Milestone 2 — data ingestion and persistent receivables history
+# Milestone 2 — Supabase source and persistent run history
 
-Status: PLANNED ONLY. No Supabase project, database migrations, CSV importer or
-online connector has been implemented or user-confirmed yet.
+Status: PLANNED. Scope simplified by Charan on 2026-10-17 for a disposable, low-cost interview POC. Current M1 still reads JSON until M2 is implemented and merged.
 
-## Outcome
+## Decisions
 
-Import receivables into durable Postgres storage, calculate open balances from
-invoice values/credits/payments, and preserve runs, events and approved dry runs
-after restarting Python. Keep the current frontend/API and observable workflow.
-Add CSV import and one configured HTTPS source for documented synthetic AR data.
+- Use Supabase Free, which hosts Postgres. These are one database choice, not two competing databases.
+- Runtime invoice data comes directly from Supabase tables through Python using Supabase's HTTPS data API/client. Supabase is both the online data source and durable store.
+- Replace data/invoices.json as runtime input. Seed the same synthetic invoices once using a checked-in SQL script; no local JSON fallback will masquerade as database ingestion.
+- Keep the current FastAPI/frontend/SSE flow and simple business rules. No extra import service, ORM, separate database server, customer-login system or queue infrastructure is required for this milestone.
+- Drop the previously planned CSV importer and second arbitrary HTTPS dataset connector from M2. Owner data setup uses Supabase's SQL/table editor.
+- Browser visitors editing data is deferred until all core milestones M0–M6 are complete. Owner edits in Supabase for learning/testing are allowed now; the app UI remains read-only apart from existing run/approval controls.
 
-This extends M1; ML is M3, LLM tasks M4, email/replies M5, public deployment M6.
-Persisted history does not automatically make in-progress execution crash-resilient.
+## Cost boundary
 
-## Prerequisite and decision checklist
+Supabase pricing checked 2026-10-17: Free is USD 0/month with 500 MB database space and a limit of two active projects. Free projects pause after one week of inactivity. This is suitable for the small POC but is not guaranteed always-on hosting. Check/resume the project before demonstrations; do not introduce a paid plan or artificial keep-alive automation to hide this limitation.
 
-- [x] Canonical GitHub repository established; M1 PR merged.
-- [x] Charan reported normal local M1 output matching expected values.
-- [ ] Finish/record the small M1 amount-edit exercise, or explicitly defer it.
-- [ ] Commit/push any learner edits; check current main and clean local status.
-- [ ] Guide Charan to create/select his own Supabase project on an eligible plan.
-      Inspect current plan limits before choosing services; no paid upgrade assumed.
-- [ ] Select the server-to-Postgres connection method and document its configuration.
-      A pooled TLS DATABASE_URL is the initial preference, subject to account access.
-- [ ] Configure credentials locally/server-side with ignored .env and blank
-      .env.example names. Never ask for passwords/keys in chat or put them in JS.
-- [ ] Choose one controlled HTTPS location for sanitized synthetic CSV/JSON data;
-      hosting location is undecided. Record source URL, license/provenance, schema,
-      as-of date and synthetic status. Do not use contacts from public invoices.
+Source: https://supabase.com/pricing
+Data API: https://supabase.com/docs/guides/api
 
-## Implementation checklist
+## Minimal data design
 
-### A. Database foundation
+Start with five small tables; use additional schema only if a demonstrated requirement needs it:
 
-- [ ] Add a small storage/repository interface so pipeline functions stay readable.
-- [ ] Add versioned SQL migrations and a documented apply/rollback procedure.
-- [ ] Define tables and keys for datasets/imports/import_rows, customers, invoices,
-      payment applications, runs, run_events and interactions. Include the agreed
-      dispute/promise-to-pay structures, with no email/reply automation yet.
-- [ ] Use stable source IDs and dataset ownership/partition keys; different demo
-      visitors/runs must not overwrite one another's state.
-- [ ] Use NUMERIC/Decimal for amounts, explicit currency, UTC event times and
-      explicit as-of dates. Keep foreign keys and appropriate check constraints.
-- [ ] Define unique import/source identifiers and unique (run_id, event_id) keys.
-      Add an approval uniqueness constraint appropriate to one action/invoice/run.
-- [ ] Keep schema-only setup separate from seed imports. Do not store real data
-      or secrets in migrations.
+| Table | Purpose |
+|---|---|
+| demo_settings | Snapshot as-of date, currency and seed/demo label |
+| invoices | Existing source fields: stable ID, customer, segment, outstanding amount, due date, payment history and dispute flag |
+| runs | Run ID/status, immutable input snapshot, final result and timestamps |
+| run_events | Ordered event IDs and exact stage output/error payloads per run |
+| interactions | Approved dry-run records; uniqueness by run/invoice/action |
 
-### B. Import and finance data
+For this milestone amount remains the supplied outstanding balance, as in M1. Normalized customer/payment/credit masters and an invoice-application ledger are deferred unless needed by a later feature; do not claim payment reconciliation is implemented. Preserve Decimal/NUMERIC amounts and USD-only checks. Store per-run input snapshots so source edits cannot rewrite historical results.
 
-- [ ] Introduce invoice_amount, credit_amount and applied payments with a written
-      definition of open_balance. Current M1 amount is already an open balance.
-- [ ] Handle partial payments and closed invoices. Keep unapplied cash distinct;
-      a customer email saying paid is never proof of an applied payment.
-- [ ] Implement CSV import using a fixed documented schema and safe size/row limits.
-- [ ] Add one server-configured HTTPS connector; validate content and source,
-      use timeouts, and avoid arbitrary visitor-supplied fetch URLs.
-- [ ] Record import batch ID, source, raw/sanitized input reference/hash, timestamp,
-      accepted/rejected rows and clear validation reasons.
-- [ ] Define retry/idempotency behavior so reimport does not duplicate invoices or
-      payment applications. Keep historical run input snapshots immutable.
-- [ ] Reject/segregate unsupported currencies; no silent cross-currency totals.
-- [ ] Seed a small readable synthetic dataset with partial-payment, duplicate and
-      dispute examples. Keep labels explicit; this is not yet an ML training claim.
+## Setup and implementation TODO
 
-### C. Persistent runs and event stream
+- [x] M1 merged; Charan confirmed expected local results.
+- [ ] Record or explicitly defer the M1 amount-edit exercise; push any learner edits.
+- [ ] Charan creates/selects a Supabase project on Free under his own account.
+- [ ] Add SQL schema and idempotent synthetic seed scripts; execute in Supabase SQL editor.
+- [ ] Guide local backend configuration using ignored .env; check in only blank .env.example. Keep server credentials out of browser code, Git and chat.
+- [ ] Add one small storage module around the Supabase HTTPS API/client. Show connection/configuration failures clearly.
+- [ ] Replace JSON-file ingest with a fresh database read per run; validate the returned rows and record source/time/snapshot hash.
+- [ ] Persist run state, ordered events, result snapshots and approvals. Emit persisted-success events only after writes succeed.
+- [ ] Enforce dry-run approval uniqueness transactionally in Postgres, including retry/concurrent requests.
+- [ ] Reopen/replay a saved completed run after Python restart using existing run/event endpoints.
+- [ ] Define interrupted-run behavior after restart; do not claim persisted history automatically resumes background work.
+- [ ] Remove runtime JSON dependency and update source/storage labels, code map, tests and guides.
+- [ ] Keep visitor-edit controls out of M2. Add a lightweight history/open-run control only if needed to demonstrate persistence.
+- [ ] Prepare the complete runnable M2 PR and docs/MILESTONE_2.md; Charan merges, pulls and verifies locally.
 
-- [ ] Save a run and its input snapshot before starting work.
-- [ ] Persist event order, operation outputs, errors and final results; emit success
-      only after the corresponding record is committed.
-- [ ] Read run history and replay SSE events from Postgres after a restart.
-- [ ] Preserve the existing browser deduplication and Last-Event-ID behavior.
-- [ ] Record dry-run approvals transactionally and idempotently across processes,
-      not only under an in-memory lock.
-- [ ] Define interrupted-run behavior on restart. Mark abandoned work interrupted
-      rather than complete; no automatic replay of side effects is assumed.
-- [ ] Show a truthful database-unavailable failure. Do not silently fall back to
-      temporary memory while claiming records are persistent.
+## Acceptance checks
 
-### D. Learner interface and documentation
+- [ ] Database-seeded sample produces the same six invoices, USD 372,200 open balance, USD 308,000 eligible exposure and four drafts.
+- [ ] Owner changes Northstar's balance in Supabase; the next run shows the new amount and totals, without editing local invoice JSON.
+- [ ] Restoring seed data restores expected results without duplicate rows.
+- [ ] Restart Python, then retrieve the same completed run, stage events and approval.
+- [ ] Historical run results remain unchanged after source-table edits.
+- [ ] Different runs do not overwrite one another's approval state.
+- [ ] Duplicate/concurrent approval creates only one interaction.
+- [ ] Disputes and low-urgency/no-draft rules retain M1 behavior.
+- [ ] A paused/unavailable database produces a visible failure, never silent fallback or invented success.
+- [ ] Charan can explain the database read, inspect rows in SQL, and demonstrate restart persistence.
 
-- [ ] Add only the controls needed to import/select the demo dataset and reopen
-      a saved run; keep the Start/event/queue experience recognizable.
-- [ ] Show import source, row counts, as-of date and rejection reasons.
-- [ ] Update health/storage labeling so users can distinguish configured Postgres
-      from any explicit local-only learning mode.
-- [ ] Add docs/MILESTONE_2.md with setup, schema map, import flow, SQL inspection
-      queries, expected results and a restart-persistence exercise.
-- [ ] Update PROJECT_PLAN.md and PROJECT_KNOWLEDGE.md based on implemented behavior.
+## Deferred work
 
-## Required verification and acceptance
-
-- [ ] Import a known valid dataset and verify counts and exact Decimal balances.
-- [ ] Reimport/retry without duplicate invoice/payment records.
-- [ ] Invalid/duplicate rows get explicit treatment; valid/rejected counts reconcile.
-- [ ] Partial payment reduces the correct invoice; closed invoices get no reminder.
-- [ ] A dispute remains paused regardless of urgency.
-- [ ] Run IDs isolate results and approvals; no cross-run overwrites.
-- [ ] Restart Python and retrieve the same completed run, events and approved action.
-- [ ] SSE replay returns only events after Last-Event-ID, without new duplicates.
-- [ ] Duplicate/concurrent approval does not create multiple interactions.
-- [ ] An interrupted run is not reported completed after restart.
-- [ ] Database outage and connector timeout fail visibly, without invented success.
-- [ ] Charan imports a dataset, checks a balance using SQL, restarts the app and
-      retrieves saved history himself. Only then mark M2 learner-complete.
-
-## Delivery
-
-One tested milestone PR in CharanCharan/o2c-collections-agent. Charan merges and
-pulls before running the guide. Do not create a second repository or change the
-original public prototype to imply these integrations already exist.
+M3: trained payment model. M4: LLM drafting/reply classification. M5: real email/replies. M6: public deployment and essential access/usage controls. After M6: optional visitor-edit playground with isolated/resettable data, not edits to the shared seed portfolio.

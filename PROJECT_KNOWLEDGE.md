@@ -12,6 +12,12 @@ next_milestone: M2_ingestion_and_persistence
 
 # Project knowledge — read this when continuing the work
 
+## Latest scope decision — 2026-10-17
+
+Charan specified a disposable POC with a free database and visitor data editing only at the very end. Use Supabase Free (hosted Postgres) as the runtime invoice source and persistent store in M2. Replace invoice JSON reads with database reads; seed synthetic rows through SQL. Keep one simple Supabase storage/API module. The earlier CSV importer, second hosted dataset connector and normalized finance schema are no longer M2 requirements. Current M1 behavior is unchanged until M2 is implemented. Visitors editing data is a post-M6 enhancement; owner edits in Supabase remain available for learning.
+
+Free projects can pause after one inactive week; this does not provide a guaranteed always-on database. Check/resume before demos rather than assuming a paid plan. See docs/MILESTONE_2_PLAN.md for the revised minimal five-table design and acceptance checks.
+
 ## 1. Purpose and document hierarchy
 
 Charan is building a publicly shareable O2C Collections Agent POC for interviews.
@@ -146,7 +152,7 @@ late_payments, broken_promises and disputed. Unknown fields are rejected. Amount
 must be nonnegative with at most two decimal places. Dates must parse; history
 counts must be nonnegative; late_payments cannot exceed previous_invoices; IDs
 must be unique. M1 amount represents the outstanding balance already supplied.
-M2 will derive it from invoice value, credits and applied payments.
+The simplified M2 keeps this outstanding-balance definition. Deriving it from invoice value, credits and applied payments is deferred until a feature requires it.
 
 Days overdue = max(0, as_of_date minus due date). Invoices due today or later,
 zero balances and disputes are ineligible for reminders.

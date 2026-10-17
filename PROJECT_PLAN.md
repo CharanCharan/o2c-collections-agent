@@ -78,15 +78,13 @@ Events should contain `run_id`, `event_id`, `stage`, `status`, `message`, `times
 
 Acceptance: Browser Start triggers Python execution. Changing the input changes actual results. No invented load counts or timer-only completion claims.
 
-### M2 — Ingest and persist AR data [PLANNED]
+### M2 — Supabase data source and persistence [PLANNED]
 
-Detailed implementation and acceptance checklist: docs/MILESTONE_2_PLAN.md. No database or online connector is implemented yet.
+Use Supabase Free, a hosted Postgres database, as both the invoice data source and durable store. Replace runtime invoice JSON reads with Supabase reads; seed the same synthetic rows once using SQL. Keep a simple five-table design for settings, invoices, runs, events and interactions. M1's amount remains the outstanding balance; normalized payment/credit ledgers are deferred unless a later feature needs them.
 
-Create customers, invoices, payment applications, runs, run_events, interactions, disputes, and promises_to_pay tables. Start with a documented hosted synthetic AR source and CSV import, then one REST connector. Capture source, import timestamp, and validation failures. Store amounts accurately; calculate outstanding balance from invoice amounts, credits, and applied payments. Fix a clear as-of date for aging. Avoid mixing currencies in totals.
+The revised checklist is docs/MILESTONE_2_PLAN.md. CSV import and a second hosted-source connector are removed from this milestone. Supabase project setup and M2 implementation are still pending.
 
-Public data may be an ingestion example, but verify business direction, fields, and license. A government paying supplier invoices is AP data and must not be presented as commercial customer AR. Any synthetic records and labels must stay visibly identified.
-
-Acceptance: Records and event history survive refresh/restart; malformed or duplicate input is handled; each run can be replayed from recorded inputs and outputs.
+Acceptance: the Supabase rows produce the expected portfolio; owner data edits affect the next run; records/events/approvals survive Python restart; duplicate actions stay idempotent; failures are visible without JSON fallback. Historical run snapshots remain immutable.
 
 ### M3 — Train and evaluate payment risk
 
@@ -117,6 +115,10 @@ Deploy the repository under Charan's own account. Keep one service for UI/API. U
 Make the demo understandable without narration: purpose, Start, stage explanation, input/output evidence, updated queue, action history, and final summary. Clearly distinguish synthetic data, predictions, generated text, and actual delivery/reply events.
 
 Acceptance: An independent visitor opens one URL, starts an isolated run, sees real events, and can inspect the final result. A failed integration shows a truthful error. Charan can redeploy a visible change from his own GitHub repository.
+
+## Optional enhancement after M0–M6
+
+Offer visitors a data-edit/testing playground only after the core milestones are achieved. Use an isolated/resettable portfolio per session so edits do not change shared seed data or another visitor's run. Do not add these UI controls during M2; Charan can edit the source tables through Supabase for learning.
 
 ## Cost notes — checked 2026-10-17, verify before purchasing
 
@@ -150,3 +152,4 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | M1 implementation merged | PR #1; implementation 05fa17b, merge af9944b; API, HTTP/SSE and DOM checks passed |
 | 2026-10-17 | M1 normal local run verified | Charan reported expected results; amount-edit exercise/understanding check pending |
 | 2026-10-17 | Knowledge and M2 checklist prepared | PROJECT_KNOWLEDGE.md and docs/MILESTONE_2_PLAN.md; no M2 implementation yet |
+| 2026-10-17 | M2 scope simplified by user | Supabase Free source/store; runtime JSON replaced in M2; minimal schema; visitor edits deferred until after M6 |

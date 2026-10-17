@@ -11,3 +11,5 @@ Do not silently add external services, credentials, paid plans, or arbitrary ema
 
 When delivering implementation changes, update PROJECT_KNOWLEDGE.md for changed contracts, calculations, limits, setup and troubleshooting, and PROJECT_PLAN.md for progress. Record Charan's evidence accurately: M1's normal local run and expected outputs are confirmed; its amount-edit exercise is not yet confirmed. Never claim documentation provides automatic memory in unrelated sessions; continue from the current repository documents.
 
+
+Scope decision 2026-10-17: this is a throwaway POC. M2 uses Supabase Free (hosted Postgres), reads invoice data directly from its tables and persists history there. Replace runtime invoice JSON; seed via SQL. Prefer one small server-side Supabase API module and the revised minimal tables. CSV import, an additional online data-source connector, normalized payment masters and extra production infrastructure are not M2 requirements. Visitor data editing is deferred until after M0–M6; owner Supabase edits for learning are allowed. Respect the Free plan's inactivity pause rather than assuming always-on availability or a paid upgrade.
