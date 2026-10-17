@@ -131,16 +131,17 @@ function renderQueue() {
   $("overdue-count").textContent = state.invoices.filter(r => r.days > 0).length;
   $("preventive-count").textContent = state.invoices.filter(r => ['pre_due','due_today'].includes(r.lifecycle)).length;
   $("filter-btn").setAttribute('aria-pressed', String(state.highOnly));
-  $("queue").innerHTML = rows.length ? rows.map((row) => `
-    <tr tabindex="0" data-id="${escapeHTML(row.id)}" aria-label="Inspect ${escapeHTML(row.customer)}"
-        class="${row.id === state.selectedId ? "selected" : ""}">
-      <td><div class="cust">${escapeHTML(row.customer)}</div><div class="subline">${escapeHTML(row.id)} · ${escapeHTML(row.segment)} · ${escapeHTML(stageLabel(row))}</div></td>
-      <td class="amount">${money(row.amount)}</td>
-      <td><div>${dateLabel(row.due)}</div><div class="subline">${escapeHTML(timingLabel(row))}</div></td>
-      <td><span class="tag ${row.score === null ? "state" : row.level}">${row.score === null ? (row.days === 0 ? "Not overdue" : "Awaiting rules") : `${row.score}/100 · ${row.level}`}</span></td>
-      <td>${row.prediction?.status === 'scored' ? `<strong>${(100 * probability(row.prediction)).toFixed(1)}%</strong><div class="subline">${isPreDue(row.prediction) ? "Becomes overdue" : "Unpaid in 30 days"}</div>` : '<span class="subline">No matching prediction</span>'}</td>
-      <td><span class="tag ${row.dispute ? "warn" : row.contacted ? "done" : "state"}">${escapeHTML(row.action)}</span>${visitorCases.some(c => c.invoice_id === row.id) ? `<div class="subline">${escapeHTML(caseLabels[visitorCases.find(c => c.invoice_id === row.id).collection_status] || "Case saved")}</div>` : ""}</td>
-    </tr>`).join("") : `<tr><td colspan="6" class="empty-state">${state.invoices.length ? 'No invoices match this filter.' : 'Waiting for invoice data.'}</td></tr>`;
+  $("queue").innerHTML = rows.length ? rows.map((row) => {
+    const v=rowView(row);
+    return `<tr tabindex="0" data-id="${escapeHTML(row.id)}" aria-label="Inspect ${escapeHTML(row.customer)}" class="${row.id===state.selectedId?'selected':''}">
+      <td><div class="cust">${escapeHTML(row.customer)}</div><div class="subline">${escapeHTML(row.id)} · ${escapeHTML(timingLabel(row))}</div>
+        ${row.prediction?.status==='scored'?`<div class="subline">${(100*probability(row.prediction)).toFixed(1)}% ${isPreDue(row.prediction)?'becomes overdue':'unpaid in 30 days'}</div>`:''}</td>
+      <td class="amount">${money(row.amount)}${v.w?.reconciliation?`<div class="subline">Demo remaining ${money(v.w.reconciliation.remaining_amount)}</div>`:''}</td>
+      <td><span class="tag ${v.status.includes('dispute')?'warn':'state'}">${escapeHTML(v.label)}</span></td>
+      <td>${escapeHTML(v.next)}</td><td>${escapeHTML(v.latest)}${v.timestamp?`<div class="subline">${escapeHTML(new Date(v.timestamp).toLocaleTimeString())}</div>`:''}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5" class="empty-state">${state.invoices.length?'No invoices match this filter.':'Waiting for invoice data.'}</td></tr>`;
+  renderWorkflowSummary();renderCaseExecution();
   $("queue").querySelectorAll("tr[data-id]").forEach((row) => {
     const select = () => {state.selectedId = row.dataset.id; renderQueue(); renderDetail();};
     row.addEventListener("click", select);
@@ -177,7 +178,7 @@ function renderDetail() {
       <div class="detail-metric"><label>Open balance</label><strong>${money(row.amount)}</strong></div>
       <div class="detail-metric"><label>Timing</label><strong>${escapeHTML(timingLabel(row))}</strong></div>
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
-      <div class="detail-metric"><label>Suggested action</label><strong>${escapeHTML(row.action)}</strong></div>
+      <div class="detail-metric"><label>Next action</label><strong id="detail-next-action">${escapeHTML(rowView(row).next)}</strong></div>
     </div>
     <div class="draft"><div class="draft-head">Reminder <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send email</button></div>
       ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Start the agent to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
@@ -234,7 +235,8 @@ function handleEvent(event) {
     applySnapshot(event.result);
     state.source?.close();
     $("start-run").disabled = false;
-    banner("COMPLETE", "Run saved in Supabase · review drafts and inspect step outputs");
+    if(pendingMode){pendingMode=null;$('start-run').disabled=true;banner('AGENT RUNNING','Portfolio prepared; processing saved collection cases.');}
+    else banner("COMPLETE", "Run saved in Supabase · review drafts and inspect step outputs");
     refreshSavedRuns();
     $("last-run").textContent = `Run ${state.currentRun.slice(0, 8)} · ${event.result.summary.draft_count} drafts`;
   } else if (event.status === "failed") {
@@ -251,6 +253,7 @@ function handleEvent(event) {
 }
 
 function clearRun() {
+  pendingMode=null;
   state.source?.close();
   const selectedStage = state.queueStage;
   Object.assign(state, {invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
@@ -268,15 +271,17 @@ function clearRun() {
   renderModel(null); renderQueue(); renderDetail(); renderFlow();
 }
 
-async function startRun() {
-  if (state.status === "running") return;
+async function startRun(mode) {
+  if (state.status === "running" || ["waiting_for_portfolio","running"].includes(agentJob?.status)) return;
   clearRun();
+  pendingMode=mode;
   $("preview-caption").hidden = true;
   state.status = "running";
   $("start-run").disabled = true;
   banner("STARTING", "Requesting a Python collections run…");
   try {
-    const run = await api("/api/runs", {method: "POST"});
+    const run = await api("/api/runs", {method: "POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode})});
+    agentJob={run_id:run.run_id,mode,status:"waiting_for_portfolio",progress:{}};
     state.currentRun = run.run_id;
     $("last-run").textContent = `Run ${run.run_id.slice(0, 8)} · backend execution`;
     $("inspect-run").href = `/api/runs/${run.run_id}`;
@@ -336,7 +341,7 @@ async function refreshSavedRuns() {
 }
 
 async function openSavedRun() {
-  if (state.status === "running") {toast("Let the current run finish first."); return;}
+  if (state.status === "running" || ["waiting_for_portfolio","running"].includes(agentJob?.status)) {toast("Let the current run finish first."); return;}
   const id = $("saved-runs").value;
   if (!id) {toast("Choose a saved run first."); return;}
   try {
@@ -357,7 +362,7 @@ async function openSavedRun() {
 
 $("open-saved-run").onclick = openSavedRun;
 $("refresh-runs").onclick = refreshSavedRuns;
-$("start-run").onclick = startRun;
+initWorkflowControls();
 for (const [id,stage] of [['stage-overdue','overdue'],['stage-preventive','pre_due']]) {
   $(id).onclick = () => {
     state.queueStage = stage; state.highOnly = false;
@@ -374,7 +379,7 @@ document.addEventListener('click',event => {if (!$('previous-runs').contains(eve
 document.addEventListener('keydown',event => {if (event.key === 'Escape') $('previous-runs').open = false;});
 $("reset-link").onclick = (event) => {
   event.preventDefault();
-  if (state.status === "running") {toast("Let the active run finish before resetting the page."); return;}
+  if (state.status === "running" || ["waiting_for_portfolio","running"].includes(agentJob?.status)) {toast("Let the active run finish before resetting the page."); return;}
   clearRun(); loadPreview();
 };
 async function loadPreview() {
@@ -388,12 +393,21 @@ async function loadPreview() {
 }
 
 async function refreshCases(repaint = true) {
+  const oldCase=visitorCases.find(c=>c.invoice_id===state.selectedId);
+  const composer=$('case-reply-text');const draftText=composer?.value;const focused=document.activeElement===composer;
   try {
     visitorCases = (await api('/api/cases')).cases;
     casesLoaded = true; caseLoadError = '';
   } catch(error) {caseLoadError = error.message;}
   renderQueue();
-  if (repaint) renderDetail(); else renderSendState();
+  if (repaint) renderDetail(); else {
+    const newCase=visitorCases.find(c=>c.invoice_id===state.selectedId);
+    if(JSON.stringify(oldCase)!==JSON.stringify(newCase)) {
+      renderCase();
+      if(draftText && $('case-reply-text')){$('case-reply-text').value=draftText;if(focused)$('case-reply-text').focus();}
+    }
+    renderSendState();
+  }
 }
 
 function saveCase(response) {
@@ -412,7 +426,7 @@ function renderCase() {
   }
   if (!current) {
     panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${!casesLoaded ? 'Loading saved cases…' : row ? 'Open a case after a successful run to test customer replies. This browser’s cases survive reload.' : 'Select an invoice to see its saved conversation.'}</p>
-      <button class="secondary" id="case-open" ${casesLoaded && row && state.status === 'completed' ? '' : 'disabled'}>Open collection case</button>
+      <button class="secondary" id="case-open" ${casesLoaded && row && state.status === 'completed' && agentJob?.status !== 'running' ? '' : 'disabled'}>Open collection case</button>
       <p class="explain">Opening a case saves an unsent draft copy. It does not deliver email. Use Send email beside the draft for a real Resend send to the project test inbox.</p>`;
     $('case-open').onclick = async () => {
       const button = $('case-open'); button.disabled = true;
@@ -422,14 +436,15 @@ function renderCase() {
     return;
   }
   panel.innerHTML = `<div class="panel-title">Customer conversation · ${escapeHTML(current.invoice_id)}</div>
-    <p><span class="tag state">${escapeHTML(caseLabels[current.collection_status] || current.collection_status)}</span></p>
+    <p><span class="tag state">${escapeHTML(rowView(row).label)}</span></p>
+    ${workflowExtras(current)}
     <p class="explain">Case snapshot: ${escapeHTML(current.snapshot.as_of_date)} · run ${escapeHTML(current.run_id.slice(0,8))}. Current AR is shown alongside it. A new run does not overwrite this case.</p>
     ${current.messages.map(m => `<article class="case-message"><b>${m.channel === 'draft_preview' ? (current.outbound ? 'Reminder copy · real email status beside draft' : 'Unsent reminder copy · no email sent') : 'Simulated customer reply · entered on website'}</b><pre>${escapeHTML(m.text)}</pre>
-      ${m.review ? `<p class="explain">${m.review.status === 'classified_for_review' ? `LLM classification: ${escapeHTML(m.review.classification.intent)}. Proposal only; human review required.` : m.review.status === 'pending_review' ? 'Saved before classification. Processing did not finish; manual review is required. Retrying this same message will not repeat a model call.' : 'LLM disabled, unavailable, capped or output rejected. Original text saved for manual review.'}</p>
+      ${m.review ? `<p class="explain">${m.review.status === 'classified_for_review' ? `LLM classification: ${escapeHTML(m.review.classification.intent)}. The graph policy determines which actions require approval.` : m.review.status === 'pending_review' ? 'Saved before classification. Processing did not finish; manual review is required. Retrying this same message will not repeat a model call.' : 'LLM disabled, unavailable, capped or output rejected. Original text saved for manual review.'}</p>
         <details><summary>Classification evidence</summary><pre>${escapeHTML(JSON.stringify(m.review,null,2))}</pre></details>` : ''}</article>`).join('')}
     <form id="case-reply-form"><label for="case-reply-text">Act as the customer · simulated reply</label><textarea id="case-reply-text" maxlength="4000" required placeholder="Example: We believe this invoice was already paid. Please check your records."></textarea>
-      <button class="secondary" type="submit">Save reply & classify</button></form>
-    <p class="explain">No email is received or sent by this form. Classification uses the configured free model and existing limits; unavailable models fall back to manual review. No invoice balance changes, promise commitment or follow-up task is created. Case holds pause further reminders.</p>`;
+      <button class="secondary" type="submit" ${caseActionBusy?'disabled':''}>${caseActionBusy?'Agent is processing…':'Send simulated reply'}</button></form>
+    <p class="explain">No email is received or sent by this form. Classification uses the configured free model and existing limits; unavailable models fall back to manual review. The agent processes the reply under this case’s control mode. Supported promises save a check-after date; payment matches use synthetic evidence. Source balances stay unchanged.</p>`;
   $('case-reply-form').onsubmit = async event => {
     event.preventDefault();
     const text = $('case-reply-text').value.trim();
@@ -438,14 +453,20 @@ function renderCase() {
       pendingCaseReply = {caseId:current.id,text,request_id:crypto.randomUUID()};
     }
     const pending = pendingCaseReply;
-    const button = event.currentTarget.querySelector('button'); button.disabled = true;
+    caseActionBusy=true;
+    const button = event.currentTarget.querySelector('button[type="submit"]'); button.disabled = true;
+    let replyFailed=false;
     button.textContent = 'Saving and checking reply…';
     try {
       const response = await api(`/api/cases/${current.id}/replies`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({request_id:pending.request_id,text})});
       pendingCaseReply = null; saveCase(response);
       toast(response.recorded ? 'Reply and review status saved. Invoice balance unchanged.' : 'Saved reply reopened; no duplicate model call.');
-    } catch(error) {showError(error.message); button.disabled = false; button.textContent = 'Retry same reply safely';}
+    } catch(error) {replyFailed=true;showError(error.message);}
+    finally{caseActionBusy=false;renderCase();if(replyFailed && $('case-reply-text'))$('case-reply-text').value=text;}
   };
+  const suggested=current.workflow?.scenario?.suggested_reply || scenarioSummaries.find(s=>s.invoice_id===current.invoice_id)?.suggested_reply;
+  if(suggested){const b=document.createElement('button');b.className='secondary';b.type='button';b.textContent='Use this scenario’s suggested reply';b.onclick=()=>{$('case-reply-text').value=suggested;$('case-reply-text').focus();};$('case-reply-form').prepend(b);}
+  bindWorkflowExtras(current);
 }
 
 function outboundLabel(outbound) {
@@ -465,8 +486,10 @@ function renderSendState() {
   const c = visitorCases.find(c => c.invoice_id === row?.id);
   const draftRow = c?.snapshot.invoice || row;
   const held = c && !['awaiting_outreach','awaiting_response'].includes(c.collection_status);
-  button.disabled = sendBusy || !mailEnabled || !casesLoaded || Boolean(caseLoadError) || !(c || state.status === 'completed') || !draftRow?.draft || !draftRow.eligible || draftRow.dispute || held || c?.outbound?.state === 'accepted';
-  button.textContent = sendBusy ? 'Sending…' : c?.outbound?.state === 'accepted' ? 'Email sent' : c?.outbound ? 'Retry same email' : 'Send email';
+  const graphBlocked=c?.workflow && !c.workflow.pending && !c.outbound && c.workflow.status !== 'quota_wait';
+  button.disabled = Boolean(graphBlocked) || sendBusy || !mailEnabled || !casesLoaded || Boolean(caseLoadError) || !(c || state.status === 'completed') || !draftRow?.draft || !draftRow.eligible || draftRow.dispute || held || c?.outbound?.state === 'accepted';
+  button.textContent = sendBusy ? 'Sending…' : c?.outbound?.state === 'accepted' ? 'Email sent' : c?.outbound ? 'Retry same email' : c?.workflow?.status === 'quota_wait' ? 'Retry email after quota reset' : 'Send email';
+  if($('detail-next-action') && row)$('detail-next-action').textContent=rowView(row).next;
   $('draft-email-status').textContent = held && !c.outbound ? 'Reminder paused: review this case before further outreach.' : !mailEnabled ? 'Email is disabled or not configured on the server.' : outboundLabel(c?.outbound);
 }
 
@@ -491,13 +514,11 @@ async function sendDraft() {
   } finally {sendBusy = false; renderSendState();}
 }
 
-setInterval(() => {
-  if (visitorCases.some(c => c.outbound && !c.outbound.events.some(e => ['email.delivered','email.bounced','email.complained','email.failed','email.suppressed'].includes(e.type)))) refreshCases(false);
-},5000);
 
 clearRun();
 api("/api/health").then(async (health) => {
   publicMode = Boolean(health.public_demo?.enabled);
+  workflowReady=Boolean(health.workflow?.ready);
   $("demo-access-note").textContent = publicMode ? 'Public demo · synthetic invoices · this browser gets 3 runs and 8 LLM attempts per UTC day. Shared daily caps also apply; templates remain available when LLM quota is used.' : 'Local learning mode · keep this instance private.';
   const language = health.language;
   mailEnabled = Boolean(health.email?.ready);
@@ -508,6 +529,11 @@ api("/api/health").then(async (health) => {
   banner("READY", "Current portfolio loaded. Start the agent to prepare and save a collection run.");
   refreshSavedRuns();
   await refreshCases();
+  if(workflowReady){
+    scenarioSummaries=(await api('/api/scenarios')).scenarios;
+    agentJob=(await api('/api/agent-jobs')).job;
+    renderWorkflowSummary();renderCaseExecution();
+  }
 }).catch((error) => {
   $("backend-label").textContent = "Backend unavailable";
   banner("OFFLINE", "Check Supabase setup and the FastAPI server");

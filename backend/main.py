@@ -6,6 +6,7 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import UUID
+from typing import Literal
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
@@ -16,6 +17,7 @@ from . import risk_model, pipeline
 from .language import LanguageService, facts_for
 from .mail.service import MailService
 from .cases import CaseService
+from .workflow.agent import CaseAgent
 from .public_demo import PublicConfig, PublicAccess, ACTOR
 from pydantic import BaseModel, ConfigDict, Field
 from .storage import StorageError, StoreRequestError, SupabaseStore
@@ -38,6 +40,9 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
 
     cases = CaseService(store,service.language) if service else None
 
+    agent = CaseAgent(store,service.language,mail,cases) if service else None
+    if cases:cases.agent=agent
+
     public = PublicAccess(public_config or PublicConfig.from_env(),store)
     if service and public.config.enabled:
         async def reserve_public_language():
@@ -49,6 +54,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         if service:
             try:
                 await service.initialize()
+                await service.store.rpc("ca_graph_recover")
             except StorageError:
                 pass  # Still serve the page and an actionable health error.
         yield
@@ -59,6 +65,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
 
     app = FastAPI(title="Collections Agent · Milestone 6", lifespan=lifespan)
     app.state.runs = service
+    app.state.agent = agent
 
     @app.middleware('http')
     async def demo_boundary(request: Request,call_next):
@@ -171,7 +178,61 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         # No recipient/body/mode overrides. This endpoint authorizes one explicit user action.
         if await request.body():
             raise HTTPException(422,'This action takes no message or recipient overrides.')
-        return await mail.send_case(public.actor(request)[0],str(case_id))
+        actor=public.actor(request)[0]
+        case=await agent.case(actor,str(case_id))
+        pending=(case.get('workflow') or {}).get('pending')
+        if pending:
+            if pending['tool']!='send_email':raise HTTPException(409,'This case is waiting for a different reviewed action.')
+            return await agent.approve(actor,str(case_id),pending['event_key'],True)
+        if case.get('workflow'):
+            if case.get('outbound') and case['outbound']['state']=='accepted':return {'case':case}
+            if case['workflow']['status'] in {'delivery_unknown','quota_wait'}:
+                return await agent.retry_email(actor,str(case_id))
+            raise HTTPException(409,'The graph has not authorized a reminder for this case. Review its pending action or hold.')
+        return await mail.send_case(actor,str(case_id))
+
+    class AgentRequest(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        mode: Literal['limited','autopilot']
+
+    class ApprovalRequest(BaseModel):
+        model_config=ConfigDict(extra='forbid',strict=True)
+        event_key: str=Field(min_length=1,max_length=100)
+        approved: bool
+
+    @app.post('/api/runs/{run_id}/agent')
+    async def start_case_agent(run_id: UUID,body: AgentRequest,request: Request):
+        await public.allowed(request,run_id)
+        s=backend();actor=public.actor(request)[0]
+        await s.store.rpc('ca_workflow_health')
+        result=await s.store.rpc('ca_agent_job',{'p_action':'create','p_session_key':actor,'p_run_id':str(run_id),'p_mode':body.mode})
+        if result['created']:
+            task=asyncio.create_task(agent.run_job(actor,str(run_id),body.mode))
+            s.tasks.add(task);task.add_done_callback(s.tasks.discard)
+        return result
+
+    @app.get('/api/runs/{run_id}/agent')
+    async def read_case_agent(run_id: UUID,request: Request):
+        await public.allowed(request,run_id);s=backend()
+        return await s.store.rpc('ca_agent_job',{'p_action':'get','p_session_key':public.actor(request)[0],'p_run_id':str(run_id)})
+
+    @app.post('/api/cases/{case_id}/approve')
+    async def approve_case(case_id: UUID,body: ApprovalRequest,request: Request):
+        backend()
+        return await agent.approve(public.actor(request)[0],str(case_id),body.event_key,body.approved)
+
+    @app.post('/api/cases/{case_id}/resume')
+    async def resume_case(case_id: UUID,request: Request):
+        backend()
+        return await agent.resume(public.actor(request)[0],str(case_id))
+
+    @app.get('/api/agent-jobs')
+    async def latest_case_agent(request: Request):
+        return {'job':await backend().store.rpc('ca_agent_latest',{'p_session_key':public.actor(request)[0]})}
+
+    @app.get('/api/scenarios')
+    async def scenarios():
+        return {'scenarios':await backend().store.rpc('ca_scenarios_list')}
 
     @app.get("/api/model")
     async def model_info():
@@ -193,13 +254,18 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
                 raise HTTPException(503,"Public demo requires valid free-only Groq configuration.")
         if mail.config.enabled:
             await mail.readiness()
+        try:
+            await s.store.rpc('ca_workflow_health')
+            workflow={'ready':True,'engine':'langgraph','version':'1.2.16'}
+        except StorageError:
+            workflow={'ready':False,'error':'Run sql/009_case_workflow.sql to enable the case agent.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
         return {"status": "ok", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_cap":20,"daily_llm_attempt_cap":40,"per_browser_runs":3,"per_browser_llm_attempts":8},
-                "email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
+                "workflow":workflow,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
 
     @app.get('/api/reply-examples')
     async def reply_examples():
@@ -280,9 +346,30 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             if len(raw)>65536:raise HTTPException(413,'Webhook exceeds POC size limit.')
         return await email_backend().webhook(bytes(raw),request.headers)
 
+    class RunStartRequest(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        mode: Literal['limited','autopilot']
+
     @app.post("/api/runs", status_code=202)
-    async def start_run(request: Request):
-        run = await backend().create(public_actor=public.actor(request) if public.config.enabled else None)
+    async def start_run(request: Request,body: RunStartRequest | None = None):
+        s=backend();actor=public.actor(request)[0]
+        async def plan(run):
+            await s.store.rpc('ca_agent_plan',{'p_session_key':actor,'p_run_id':run.id,'p_mode':body.mode})
+        async def after(run):
+            try:
+                if run.status!='completed':
+                    await s.store.rpc('ca_agent_job',{'p_action':'update','p_session_key':actor,'p_run_id':run.id,
+                        'p_progress':{'error':'Portfolio analysis did not finish. Start a new run.'},'p_status':'analysis_failed'})
+                else:
+                    job=await s.store.rpc('ca_agent_job',{'p_action':'create','p_session_key':actor,'p_run_id':run.id,'p_mode':body.mode})
+                    if job['created']:await agent.run_job(actor,run.id,body.mode)
+            except StorageError:
+                try:
+                    await s.store.rpc('ca_agent_job',{'p_action':'update','p_session_key':actor,'p_run_id':run.id,
+                        'p_progress':{'error':'Case processing interrupted. Resume the saved case job.'},'p_status':'interrupted'})
+                except StorageError:pass
+        run = await s.create(public_actor=public.actor(request) if public.config.enabled else None,
+            prepare_run=plan if body else None,after_run=after if body else None)
         return {"run_id": run.id, "status": run.status, "events_url": f"/api/runs/{run.id}/events"}
 
     @app.get("/api/runs")

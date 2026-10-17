@@ -4,6 +4,24 @@ Last updated: 2026-10-17
 Owner: Charan
 Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. PR#8 merged c5778663 and user confirms preload works. Current v2-visitor-cases implements conversation/case foundation, SQL007 setup pending; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
+## Current milestone — V2.4 implementation ready, learner acceptance pending
+
+PR#11 three-column UI merged58492dc5. The next milestone implements durable LangGraph cases, limited/autopilot modes, separate collection status/next action/latest activity, automatic processing of explicitly simulated website replies and15 additive scenarios. See [V2.4 lesson](docs/MILESTONE_V2_4.md) and authoritative PROJECT_KNOWLEDGE.md checkpoint. Existing two ML models, real fixed-recipient Resend delivery and free-only limits retained.
+
+Implementation validation:135 automated tests passed with actual graph/SQL and mocked providers, plus local HTTP/SSE/DOM checks. No live provider calls, merge or deployment by assistant. Charan must review/merge, pull, apply009then010, installrequirements, deploy and verify. No new paid service/envkey. Existing9+15source rows=24/610400USD unless edited; SQL010 does not reset edits or cases.
+
+Acceptance TODOs:
+
+- Confirm workflow health and current24rows before Start.
+- Limited mode: pending approval → Send email → actual delivery webhook.
+- Send simulated reply → automatic interpretation/tool → separate status/next/activity.
+- Explain source balance vs Demo remaining, partial/unmatched payment and dispute evidence.
+- Autopilot new cases: max3 automatic reminders, globalmail10/day, original case modes retained.
+- Reload/resume durable approval and explain graph/checkpointer code.
+- Then scope demo-clock/due-task execution/guided scenarios; visitor editor last; voice optional only if free.
+
+Older checkpoint paragraphs below are historical; this section and PROJECT_KNOWLEDGE's V2.4 entry govern current work.
+
 ## Goal and scope
 
 Build a publicly shareable collections-agent POC. A visitor clicks Start and sees genuine backend actions and results appear in plain language. Charan must be able to explain, run, edit, and deploy the code himself.
@@ -20,7 +38,7 @@ This is a hands-on learning project delivered one complete runnable milestone at
 - Read PROJECT_KNOWLEDGE.md, this plan and current code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
 - The original hosted Sites demo is a presentation prototype; this GitHub repository and the local Python application are the working source for the real POC.
 
-## Current implementation — M6 deployment prepared, actual cloud setup pending
+## Historical M6 implementation checkpoint
 
 M5 merged; user authorizes cloud hosting and reports Resend Connect errors for sent/delivered/received callbacks. Exact URL unprovided: connectivity root cause not verified. M6 uses one RenderFree Python web service/direct HTTPS webhook with existing Supabase. Adds signed browser sessions, visitor-owned history, owner-only real email data/private-event filtering and SQL-backed UTC caps (20runs/40LLMattempts global,3runs/8LLM perbrowser). Public paid routing blocked, no tier/account verification. No new paid infrastructure or runtime package.
 

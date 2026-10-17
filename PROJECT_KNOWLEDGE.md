@@ -2,17 +2,39 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-17
-implementation_milestone: V2_3_workspace_ui
-implementation_branch: three-column-workspace
+implementation_milestone: V2_4_durable_langgraph
+implementation_branch: langgraph-case-workflow
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: three_column_UI_redeploy_then_LangGraph
-next_milestone: durable_langgraph_control_modes_fixed_recipient_real_email
+pending_learning_check: apply_SQL009_010_deploy_and_verify_case_workflow
+next_milestone: demo_clock_due_tasks_then_optional_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## Latest V2.3 UI checkpoint — authoritative continuation
+## V2.4 durable case workflow — authoritative current checkpoint
+
+Canonical repository remains CharanCharan/o2c-collections-agent. PR#11 merged at58492dc54ad545126d59307a0e8953bea2564a7a; compare b014c814 to current main showed merge only/no file changes. User approved next milestone and asked to continue. Branch langgraph-case-workflow implements this milestone; learner merge/SQL/deploy/live acceptance pending. No assistant live provider calls, actual email sends, merge or deploy.
+
+Implemented actual StateGraph in backend/workflow/agent.py: load→interpret→choose→approval when needed→execute→finish; no-action/read-only branches. SupabaseSaver in checkpoints.py uses existing HTTPS private RPCs for serialized checkpoint, metadata, parent and pending writes; no pickle/memory/disk fallback. SQL009 adds workflow/scenario/checkpoint/write/effect/job storage, RLS and service-only RPCs; latest8 checkpoints/case/namespace,40activity entries,32cases/browser,500global. SQL010 additively seeds15 synthetic invoices INV-10601..10615, leaving existing source edits/history untouched. With original9,24rows610400USD (21overdue/3preventive). Source simulation date2026-10-17.
+
+Start body {mode:limited|autopilot} durably plans job before finance task; backend continuation activates graph after completed portfolio analysis, independent of browser SSE. Missing body retains legacy analysis-only API. Analysis failure records analysis_failed; restart marks active work interrupted; explicit job/case resume, not unattended recovery. Single backend/worker per database. No schema009 still allows source preview; UI blocks graphStart with setup message. GET/api/agent-jobs latestownedjob, GET/api/runs/{id}/agent status; POST same activates/resumes, POST/api/cases/{id}/approve event_key+approved, POST resume; GET/api/scenarios safe summaries. Case/mail ownership applies even local/owner UI. Case-mode history preserved: new runs do not reset/re-authorize/resend prior cases.
+
+Limited mode uses actual interrupt/Command resume for send and recording supported promises. Autopilot records supported promises and sends max3 newly eligible case reminders/job; reserved auto_case_ids persisted before actions and retained on retry. Global existing10mailreservations/UTCday unchanged. Further sends pause. Shared MailService.send_case retains fixed project test inbox, saved server payload, idempotency, signed webhook delivery, uncertain/stale protections and dispute gates. No visitor destination/body override or email-owner token UI. Accepted≠delivered≠paid. Daily quota failure is a visible case wait state, not abandonment of every other case. Explicit retry after quota availability only; graph replay never blindly retries unknown outcomes.
+
+Reply button renamed Send simulated reply: UUID/text saved before graph, atomic model-attempt reservation, existing modular LanguageService structured/literal validation. Existing free-only Groq budgets8/browser40global/UTCday, process20/run4 drafts unchanged. Unavailable/capped/invalid reply interpretation becomes manual review. Reserved attempt without saved result resumes manual review without another modelcall. Saved reply before initial checkpoint is recoverable. New replies supersede pending outreach approvals; stale event-key approvals rejected. Tool effects deduplicated; accepted-mail-before-checkpoint-failure replay tested without duplicate send. LangSmith tracing explicitly disabled; display action/evidence summaries only.
+
+Tools: bounded futurepromise+dayaftercheckdate; controlled synthetic invoice/PO/POD retrieval and price/quantity arithmetic/missingdoc report; exactinvoice/currency/posted/positive/unique-ref demoledger match full/partial/unmatched; missedpromise prior evidence check; missingcontact and simulated priorbounce/unknown holds; existing preventive risk review without pre-due sending. No external bank/ERP/docs service, documentemail/attachment/creditnote/IVR/scheduler. Real inbound still legacyprivatehumanreview, graphautomaticreplychannel is explicitly simulated website input. SourceAR/dispute fields never mutated by reply/demoledger. Demo remaining separate from sourcebalance; fullmatch label Payment matched · demo. Case invocation finished≠financial case closed. No demo clock UI/exacttime followup yet.
+
+UI keeps3columns AR|customer/draft/conversation|verticalexecution, headerPreviousruns, Overdue/Preventivebuttons/readableCSS. New5cols Customer/invoice,Sourcebalance,Collectionstatus,Nextaction,Latestactivity; latestactualnode/mailcallback evidence shown independently. CurrentAR+savedcases+latestjob preload, no run/LLM/email quota onload. workflow-ui.js loaded before app.js as sharedclassicdeferredscripts. Native mode dialog; case trace, approval/resume/evidence/demoreconciliation cards,1.5second active polling. Suggestedscenario reply only prefills typedcomposer; submit auto processes.
+
+Dependencies pin langgraph1.2.16,langgraph-checkpoint4.3.0,langchain-core1.6.12 in requirements; no new env/account/databasepassword. Apply009 after008 then010 (003 fororiginalpreventiveexamples), installrequirements locally, restart/manualRenderdeploy. Lesson docs/MILESTONE_V2_4.md covers exact Windows steps, architecture, scenarios, limits and code exercise. Source controls remain only this repository; user merges/pulls/deploys. SQL010 deliberately does not reset existing case mode or owner edits.
+
+Validation:135 pytest tests passed, real LangGraph with isolated PGlite/Postgres SQL and mocked model/Resend transports. Includes serverStart modes without SSE, failedsource→noactions, restartapproval, persistent3send cap/jobdedup, sourcepreservingseed, paymentfull/partial/unmatched, limited/autopromise, disputes/docs, ownership/RLS, interruptedmodel/send/job recovery, quota continuation and reply-beforecheckpoint recovery. JSsyntax passed. Cookie-aware real localHTTP/SSE + JSDOM checks cover limitedmode24rows, approvalsend/signeddelivery, simulatedreplyreconciliation, promiseapproval/date, reload/sourceunchanged. Autopilot localHTTP/SSE/JSDOM check also passed:3actual mocked sends, automatic promise, signed delivery, reply reconciliation and reload. Test callback selects the displayed invoice explicitly, not merely the latest sent message. No live provider/deploy or real browser pixel/viewport QA claimed.
+
+Next TODOs: Charan review/merge; pull; SQL009 then010; installrequirements; manualdeploy; validate health/workflow and24rows; limitedsend/delivery, simulatedreply and sourcebalance; autopilotnewcases withinquotas; reload/restartresume; explain code. Do not mark learnercomplete until confirmed. Then propose demo-clock/due-task execution and guided scenarios; visitor editor last, optional zero-cost voice later. Earlier milestone notes below are historical and superseded where they conflict with this section.
+
+## Historical V2.3 UI checkpoint
 
 PR#10 merged9c1405329d0bb40f2d94a73cedaa624c528ae2e1; compare implementation568c6f6b to main showed merge only/no file changes. User requests removing fixture classifier, larger text/use width, three desktop columns AR|customer/draft/conversation|visible vertical execution, Previous runs beside Start and two stage-filter buttons. User authorizes LangGraph after UI fixes; retain one runnable milestone perPR/Charan merge-deploy workflow. No separate skill/agent delegation used.
 

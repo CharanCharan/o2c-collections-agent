@@ -58,7 +58,7 @@ class RunService:
                 await self.store.recover(self.process_id)
                 self.initialized = True
 
-    async def create(self, public_actor=None):
+    async def create(self, public_actor=None, prepare_run=None, after_run=None):
         await self.initialize()
         run = Run(str(uuid4()), self.process_id, self.store)
         if public_actor is None:
@@ -67,12 +67,17 @@ class RunService:
             actor,owner=public_actor
             await self.store.rpc("ca_public_create", {"p_run_id":run.id,"p_process_id":self.process_id,
                 "p_initial_result":pipeline.result_snapshot(run.context),"p_session_key":actor,"p_owner":owner})
-        task = asyncio.create_task(self.execute(run))
+        if prepare_run:
+            try:await prepare_run(run)
+            except StorageError:
+                await self._fail(run,'case_agent_setup','failed','Could not save case-agent setup. No case actions started.',None)
+                raise
+        task = asyncio.create_task(self.execute(run,after_run))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
         return run
 
-    async def execute(self, run):
+    async def execute(self, run, after_run=None):
         stage = "ingest"
         try:
             for stage in STAGES:
@@ -108,6 +113,9 @@ class RunService:
             logging.warning("Collections run %s stopped at %s (%s)", run.id, stage, type(exc).__name__)
             await self._fail(run, stage, "failed", f"The {stage} operation failed.",
                              {"type": type(exc).__name__, "detail": detail})
+
+        finally:
+            if after_run:await after_run(run)
 
     async def _fail(self, run, stage, status, message, error):
         try:
