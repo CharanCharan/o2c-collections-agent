@@ -19,6 +19,7 @@ from ..language import facts_for
 from ..storage import StoreRequestError,StorageError
 from .checkpoints import SupabaseSaver
 from .reporting import case_snapshot, case_result
+from .diagnostics import failure
 
 
 class State(TypedDict,total=False):
@@ -37,6 +38,7 @@ class CaseAgent:
     def __init__(self,store,language,mail,cases):
         self.store,self.language,self.mail,self.cases=store,language,mail,cases
         self.locks=defaultdict(asyncio.Lock)
+        self.job_locks=defaultdict(asyncio.Lock)
         g=StateGraph(State)
         for name in ['load','interpret','choose','approval','execute','plan_followup','finish']:
             g.add_node(name,getattr(self,name))
@@ -348,31 +350,48 @@ class CaseAgent:
             report=progress['report']['invoices']
             progress['processed']=0
             run=await self.store.get_run(run_id);rows=run['result']['invoices'];progress['total']=len(rows)
+            progress.pop('error',None);progress.pop('failure',None)
             for row in rows:
-                opened=await self.cases.open(actor,run_id,row['id']);c=opened['case']
                 progress['current_invoice']=row['id']
-                entry=report.setdefault(row['id'],{'case_id':c['id'],'before':case_snapshot(c),'completed':False})
+                entry=report.setdefault(row['id'],{'completed':False})
                 if entry['completed']:
                     progress['processed']+=1
                     continue
-                ids=progress['auto_case_ids']
-                if opened['recorded'] and mode=='autopilot' and len(ids)<3 and row.get('draft') and row['eligible']:
-                    ids.append(c['id'])
-                await save()  # Reserve automatic authority durably before any send node.
-                if not c.get('workflow'):
-                    await self.invoke(actor,c['id'],mode=mode,allow_auto_send=c['id'] in ids)
-                elif c['workflow'].get('processing') and not c['workflow'].get('pending'):
-                    await self.resume(actor,c['id'])
-                c=await self.case(actor,c['id'])
-                entry.update(completed=True,after=case_snapshot(c),result=case_result(entry['before'],c))
-                progress['processed']+=1
+                phase='open_case'
+                try:
+                    opened=await self.cases.open(actor,run_id,row['id']);c=opened['case']
+                    entry.setdefault('case_id',c['id']);entry.setdefault('before',case_snapshot(c))
+                    ids=progress['auto_case_ids']
+                    if opened['recorded'] and mode=='autopilot' and len(ids)<3 and row.get('draft') and row['eligible']:
+                        ids.append(c['id'])
+                    phase='save_baseline'
+                    await save()  # Durable baseline and automatic authority before graph work.
+                    phase='process_invoice'
+                    if not c.get('workflow'):
+                        await self.invoke(actor,c['id'],mode=mode,allow_auto_send=c['id'] in ids)
+                    elif c['workflow'].get('processing') and not c['workflow'].get('pending'):
+                        await self.resume(actor,c['id'])
+                    phase='read_outcome'
+                    c=await self.case(actor,c['id'])
+                    entry.update(completed=True,after=case_snapshot(c),result=case_result(entry['before'],c))
+                    entry.pop('error',None)
+                    progress['processed']+=1
+                except Exception as exc:
+                    # A bad invoice cannot abandon the remaining portfolio. Never
+                    # replay a model/send here; explicit recovery uses checkpoints.
+                    if phase=='save_baseline':raise
+                    entry['error']=failure(exc,row['id'],phase)
+                progress['failed']=sum(bool(v.get('error')) for v in report.values())
+                progress['attempted']=sum(v.get('completed',False) or bool(v.get('error')) for v in report.values())
                 await save()
-            await save('completed')
+            await save('completed')  # Terminal scan; failures remain explicit in the report.
         except asyncio.CancelledError:
+            progress['failure']={'code':'server_stopped','message':'The server stopped before processing finished. Saved results are retained.','phase':'job','invoice_id':progress.get('current_invoice')}
             try:await save('interrupted')
             except StorageError:pass
             raise
-        except Exception:
-            progress['error']='Case processing stopped. Stored checkpoints remain available; refresh and resume the affected case.'
+        except Exception as exc:
+            progress['failure']=failure(exc,progress.get('current_invoice'),'save_or_load_job')
+            progress['error']=progress['failure']['message']
             try:await save('interrupted')
             except StorageError:pass

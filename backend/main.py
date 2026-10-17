@@ -19,6 +19,7 @@ from .language import LanguageService, facts_for
 from .mail.service import MailService
 from .cases import CaseService
 from .workflow.agent import CaseAgent
+from .workflow.diagnostics import failure
 from .workflow.followups import FollowupService
 from .public_demo import PublicConfig, PublicAccess, ACTOR
 from pydantic import BaseModel, ConfigDict, Field
@@ -209,11 +210,16 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         await public.allowed(request,run_id)
         s=backend();actor=public.actor(request)[0]
         await s.store.rpc('ca_workflow_health')
-        result=await s.store.rpc('ca_agent_job',{'p_action':'create','p_session_key':actor,'p_run_id':str(run_id),'p_mode':body.mode})
-        if result['created']:
-            task=asyncio.create_task(agent.run_job(actor,str(run_id),body.mode))
-            s.tasks.add(task);task.add_done_callback(s.tasks.discard)
-        return result
+        async with agent.job_locks[str(run_id)]:
+            result=await s.store.rpc('ca_agent_job',{'p_action':'create','p_session_key':actor,'p_run_id':str(run_id),'p_mode':body.mode})
+            if not result['created'] and result['job']['status']=='completed' and result['job']['progress'].get('failed',0)>0:
+                result['job']=await s.store.rpc('ca_agent_job',{'p_action':'update','p_session_key':actor,'p_run_id':str(run_id),
+                    'p_progress':result['job']['progress'],'p_status':'running'})
+                result['created']=True
+            if result['created']:
+                task=asyncio.create_task(agent.run_job(actor,str(run_id),body.mode))
+                s.tasks.add(task);task.add_done_callback(s.tasks.discard)
+            return result
 
     @app.get('/api/runs/{run_id}/agent')
     async def read_case_agent(run_id: UUID,request: Request):
@@ -325,7 +331,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             followup_status={'ready':False,'error':'Apply sql/012_promise_followups.sql to enable demo-clock follow-ups.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.10", "ui_version":"workflow-12", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,
@@ -430,11 +436,15 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
                 else:
                     job=await s.store.rpc('ca_agent_job',{'p_action':'create','p_session_key':actor,'p_run_id':run.id,'p_mode':body.mode})
                     if job['created']:await agent.run_job(actor,run.id,body.mode)
-            except StorageError:
+            except StorageError as exc:
+                detail=failure(exc,None,'start_case_job')
                 try:
+                    saved=await s.store.rpc('ca_agent_job',{'p_action':'get','p_session_key':actor,'p_run_id':run.id})
+                    progress={**saved['progress'],'failure':detail,'error':detail['message']}
                     await s.store.rpc('ca_agent_job',{'p_action':'update','p_session_key':actor,'p_run_id':run.id,
-                        'p_progress':{'error':'Case processing interrupted. Resume the saved case job.'},'p_status':'interrupted'})
-                except StorageError:pass
+                        'p_progress':progress,'p_status':'interrupted'})
+                except StorageError:pass  # Never overwrite a report we could not read.
+
         run = await s.create(public_actor=public.actor(request) if public.config.enabled else None,
             prepare_run=plan if body else None,after_run=after if body else None)
         return {"run_id": run.id, "status": run.status, "events_url": f"/api/runs/{run.id}/events"}

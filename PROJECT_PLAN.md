@@ -4,7 +4,11 @@ Last updated: 2026-10-18
 Owner: Charan
 Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. PR#8 merged c5778663 and user confirms preload works. Current v2-visitor-cases implements conversation/case foundation, SQL007 setup pending; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
-## Current milestone — V2.9 invoice next step and horizontal flow
+## Current milestone — V2.10 reliable portfolio results
+
+PR19 merged279cd108. Publiclivecheckfoundoldworkflow-6build; exactbrowserfailureunavailable. Fixprovenwholeloopabortwithperinvoiceexceptionisolation, safeoperationdiagnostics, explicitfailedcounts and retryfailedonly; retainfatalrecovery/partialresults. Processingdetailscollapsedbelowqueue. Newhealthapp_versionv2.10/ui_versionworkflow-12. NoSQL/packages/env. 40targetedchecks+localHTTP/SSE/JSDOMjourneypassed. Review/merge/manualdeploylatestandverifyversion+newrun; lessonV2_10. Guidedwalkthroughnext/editorlast.
+
+## Historical milestone — V2.9 invoice next step and horizontal flow
 
 PR18 mergeda0fcc746. UI-only: consistent topNextstep controls/explanation, fullwidthhorizontalportfolioflow+collapsedlog, fullwidthtable and invoice-specifichorizontalactivityinsidepopupwithread-onlyrefresh. NoSQL/packages/env. LessonV2_9. 10regressions+localHTTP/SSE/JSDOMselectedswitch/topactions/recovery/followups passed; learnermerge/manualdeploy/nativevisualacceptancepending. Nextguidedinterviewerwalkthrough, editorlast.
 

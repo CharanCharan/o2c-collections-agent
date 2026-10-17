@@ -315,3 +315,9 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 .trace-status {font-size:12px;color:#41745b}
 .case-trace-item small {display:block;margin-top:8px}
 @media(max-width:1000px) {.grid {height:76vh;min-height:480px;max-height:820px}.queue-column {height:100%}}
+
+/* Technical preparation stays available below the business workspace. */
+.portfolio-flow>summary {display:flex;gap:12px;align-items:center;padding:14px 16px;cursor:pointer;font-size:15px;font-weight:650;color:#48695b}
+.portfolio-flow>summary .panel-sub {font-weight:400}
+.run-diagnostics {margin:12px 0;padding:10px;border:1px solid #ead8ad;border-radius:8px;background:#fff9ed;font-size:14px}
+.run-diagnostics p {overflow-wrap:anywhere}

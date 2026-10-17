@@ -1,0 +1,24 @@
+"""Public-safe job diagnostics. Never persist raw exception/provider bodies."""
+import logging
+from uuid import uuid4
+from fastapi import HTTPException
+from ..storage import StorageError, StoreRequestError
+
+
+def failure(exc,invoice_id,phase):
+    code='case_processing_failed'
+    message='Invoice processing needs review. Other invoices will still be processed.'
+    if isinstance(exc,(StoreRequestError,HTTPException)):
+        status=exc.status if isinstance(exc,StoreRequestError) else exc.status_code
+        code='case_capacity' if status==429 else 'case_access_or_policy'
+        message='Case storage capacity needs owner attention.' if status==429 else 'Case access or policy blocked this operation.'
+    elif isinstance(exc,StorageError):
+        code=getattr(exc,'code','storage_operation_failed')
+        message={'network_unavailable':'The database connection failed during this invoice.',
+            'schema_missing':'A required database function is missing; apply the required migrations.',
+            'access_denied':'Database access was rejected; the owner must check configuration.'}.get(code,'A database operation failed during this invoice. Check schema and database availability.')
+    result={'error_id':str(uuid4()),'code':code,'message':message,'phase':phase,'invoice_id':invoice_id,'exception_type':type(exc).__name__}
+    if getattr(exc,'operation',None):result['operation']=exc.operation
+    logging.getLogger(__name__).error('Collection failure error_id=%s code=%s invoice=%s phase=%s operation=%s',
+        result['error_id'],code,invoice_id,phase,result.get('operation','-'))
+    return result
