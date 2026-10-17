@@ -119,7 +119,7 @@ How to read failures:
 |401| App reached; signing secret/raw bytes/timestamp mismatch |
 |403| A private tunnel/authentication gate or origin policy may be in front; callbacks use public cloud path |
 |404| Wrong path, old deployment or unrelated host |
-|409 email disabled| App reached; enable email and finish server settings |
+|409 `Live email is disabled. No email attempted.`| App reached; current process has `EMAIL_ENABLED=false` or unset. Set it to `true` in Render Environment, save/redeploy, check `email.ready=true` in `/api/health`, then Replay the failed event. Local `.env` changes do not update the cloud. |
 |503| Check cloud logs, Supabase/schema/config, provider reads or unmatched unresolved original send; replay after repair |
 |200| Request accepted/recorded, duplicate or intentionally ignored; inspect response and saved evidence |
 
