@@ -174,6 +174,7 @@ function renderDetail() {
   const draftRow = currentCase?.snapshot.invoice || row;
   const draft = followupDraft(currentCase) || draftRow.draft;
   $("detail").innerHTML = `
+    <section class="invoice-case-controls" id="invoice-case-controls" aria-label="Selected invoice processing" hidden></section>
     <div class="detail-top"><div><div class="detail-name">${escapeHTML(row.customer)}</div><div class="detail-id">${escapeHTML(row.id)} · ${escapeHTML(row.segment)}</div></div>
       <span class="tag ${row.score === null ? "state" : row.level}">${row.score ?? "—"}/100</span></div>
     <div class="detail-grid">
@@ -182,8 +183,8 @@ function renderDetail() {
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
       <div class="detail-metric"><label>Next action</label><strong id="detail-next-action">${escapeHTML(rowView(row).next)}</strong></div>
     </div>
-    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send email</button></div>
-      ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Start the agent to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
+    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send reminder</button></div>
+      ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Run collections to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
     <p class="explain" id="draft-email-status"></p>
     ${currentCase ? `<p class="panel-sub">Draft saved with case snapshot ${escapeHTML(currentCase.snapshot.as_of_date)} · run ${escapeHTML(currentCase.run_id.slice(0,8))}. Sending uses this displayed draft.</p>` : ''}
@@ -237,7 +238,7 @@ function handleEvent(event) {
     applySnapshot(event.result);
     state.source?.close();
     $("start-run").disabled = false;
-    if(pendingMode){pendingMode=null;$('start-run').disabled=true;banner('AGENT RUNNING','Portfolio prepared; processing saved collection cases.');}
+    if(pendingMode){pendingMode=null;$('start-run').disabled=true;banner('COLLECTIONS RUNNING','Portfolio prepared; processing saved collection actions.');}
     else banner("COMPLETE", "Run saved in Supabase · review drafts and inspect step outputs");
     refreshSavedRuns();
     $("last-run").textContent = `Run ${state.currentRun.slice(0, 8)} · ${event.result.summary.draft_count} drafts`;
@@ -267,7 +268,7 @@ function clearRun() {
   $("inspect-run").hidden = true;
   for (const id of ["metric-open", "metric-past-due", "metric-ninety", "metric-high", "metric-eligible"]) $(id).textContent = "—";
   for (const id of ["open-note", "past-due-note", "ninety-note", "eligible-note"]) $(id).textContent = "Calculated after loading data";
-  $("as-of").textContent = "Start to load the demo snapshot";
+  $("as-of").textContent = "Load current receivables";
   $("last-run").textContent = "No active run";
   $("preventive-caption").textContent = "Prevention is scored seven days before due.";
   renderModel(null); renderQueue(); renderDetail(); renderFlow();
@@ -280,7 +281,7 @@ async function startRun(mode) {
   $("preview-caption").hidden = true;
   state.status = "running";
   $("start-run").disabled = true;
-  banner("STARTING", "Requesting a Python collections run…");
+  banner("STARTING", "Starting collections analysis…");
   try {
     const run = await api("/api/runs", {method: "POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode})});
     agentJob={run_id:run.run_id,mode,status:"waiting_for_portfolio",progress:{}};
@@ -378,8 +379,11 @@ $("filter-btn").onclick = () => {
   $("filter-btn").textContent = state.highOnly ? 'High urgency only' : 'All urgency';
   renderQueue(); renderDetail();
 };
-document.addEventListener('click',event => {if (!$('previous-runs').contains(event.target)) $('previous-runs').open = false;});
-document.addEventListener('keydown',event => {if (event.key === 'Escape') $('previous-runs').open = false;});
+for(const menu of document.querySelectorAll('.header-menu')) {
+  menu.addEventListener('toggle',()=>{if(menu.open)for(const other of document.querySelectorAll('.header-menu'))if(other!==menu)other.open=false;});
+}
+document.addEventListener('click',event=>{for(const menu of document.querySelectorAll('.header-menu'))if(!menu.contains(event.target))menu.open=false;});
+document.addEventListener('keydown',event=>{if(event.key==='Escape')for(const menu of document.querySelectorAll('.header-menu'))if(menu.open){menu.open=false;menu.querySelector('summary').focus();}});
 $("reset-link").onclick = (event) => {
   event.preventDefault();
   if (state.status === "running" || dueActive() || ["waiting_for_portfolio","running"].includes(agentJob?.status)) {toast("Let the active run finish before resetting the page."); return;}
@@ -390,7 +394,7 @@ async function loadPreview() {
     const preview = await api('/api/portfolio');
     if (state.status === 'idle' && !state.currentRun) {
       applySnapshot(preview.portfolio); $("preview-caption").hidden = false;
-      banner('READY', 'Current portfolio loaded. Start the agent to prepare a collection run.');
+      banner('READY', 'Current portfolio loaded. Run collections to prepare a collection run.');
     }
   } catch(error) {showError(error.message);}
 }
@@ -428,9 +432,9 @@ function renderCase() {
     $('case-reload').onclick = refreshCases; return;
   }
   if (!current) {
-    panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${!casesLoaded ? 'Loading saved cases…' : row ? 'Open a case after a successful run to test customer replies. This browser’s cases survive reload.' : 'Select an invoice to see its saved conversation.'}</p>
-      <button class="secondary" id="case-open" ${casesLoaded && row && state.status === 'completed' && agentJob?.status !== 'running' ? '' : 'disabled'}>Open collection case</button>
-      <p class="explain">Opening a case saves an unsent draft copy. It does not deliver email. Use Send email beside the draft for a real Resend send to the project test inbox.</p>`;
+    panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${!casesLoaded ? 'Loading saved cases…' : row ? 'Run collections, then open this invoice to test customer replies. This browser’s cases survive reload.' : 'Select an invoice to see its saved conversation.'}</p>
+      <button class="secondary" id="case-open" ${casesLoaded && row && state.status === 'completed' && agentJob?.status !== 'running' ? '' : 'disabled'}>Open invoice workspace</button>
+      <p class="explain">Opening a case saves an unsent draft copy. It does not deliver email. Use Send reminder beside the draft for a real Resend send to the project test inbox.</p>`;
     $('case-open').onclick = async () => {
       const button = $('case-open'); button.disabled = true;
       try {saveCase(await api('/api/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.currentRun,invoice_id:row.id})}));}
@@ -465,8 +469,8 @@ function renderCase() {
       const response = await api(`/api/cases/${current.id}/replies`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({request_id:pending.request_id,text})});
       pendingCaseReply = null; saveCase(response);
       toast(response.recorded ? 'Reply and review status saved. Invoice balance unchanged.' : 'Saved reply reopened; no duplicate model call.');
-    } catch(error) {replyFailed=true;showError(error.message);}
-    finally{caseActionBusy=false;renderCase();if(replyFailed && $('case-reply-text'))$('case-reply-text').value=text;}
+    } catch(error) {replyFailed=true;showError(error.message);await refreshCases(false);}
+    finally{caseActionBusy=false;renderCase();renderSendState();if(replyFailed && $('case-reply-text'))$('case-reply-text').value=text;}
   };
   const suggested=current.workflow?.scenario?.suggested_reply || scenarioSummaries.find(s=>s.invoice_id===current.invoice_id)?.suggested_reply;
   if(suggested){const b=document.createElement('button');b.className='secondary';b.type='button';b.textContent='Use this scenario’s suggested reply';b.onclick=()=>{$('case-reply-text').value=suggested;$('case-reply-text').focus();};$('case-reply-form').prepend(b);}
@@ -488,6 +492,7 @@ function renderSendState() {
   if (!button) return;
   const row = state.invoices.find(r => r.id === state.selectedId);
   const c = visitorCases.find(c => c.invoice_id === row?.id);
+  refreshInvoiceCaseHeader(c);
   const draftRow = c?.snapshot.invoice || row;
   const follow=c?.workflow?.followup;
   if(follow) {
@@ -502,7 +507,7 @@ function renderSendState() {
   const held = c && !['awaiting_outreach','awaiting_response'].includes(c.collection_status);
   const graphBlocked=c?.workflow && !c.workflow.pending && !c.outbound && c.workflow.status !== 'quota_wait';
   button.disabled = Boolean(graphBlocked) || sendBusy || !mailEnabled || !casesLoaded || Boolean(caseLoadError) || !(c || state.status === 'completed') || !draftRow?.draft || !draftRow.eligible || draftRow.dispute || held || c?.outbound?.state === 'accepted';
-  button.textContent = sendBusy ? 'Sending…' : c?.outbound?.state === 'accepted' ? 'Email sent' : c?.outbound ? 'Retry same email' : c?.workflow?.status === 'quota_wait' ? 'Retry email after quota reset' : 'Send email';
+  button.textContent = sendBusy ? 'Sending…' : c?.outbound?.state === 'accepted' ? 'Email sent' : c?.outbound ? 'Retry same email' : c?.workflow?.status === 'quota_wait' ? 'Retry email after quota reset' : 'Send reminder';
   if($('detail-next-action') && row)$('detail-next-action').textContent=rowView(row).next;
   $('draft-email-status').textContent = held && !c.outbound ? 'Reminder paused: review this case before further outreach.' : !mailEnabled ? 'Email is disabled or not configured on the server.' : outboundLabel(c?.outbound);
 }
@@ -518,7 +523,7 @@ async function sendDraft() {
       const opened = await api('/api/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.currentRun,invoice_id:row.id})});
       c = opened.case;
       visitorCases = [c,...visitorCases.filter(x => x.id !== c.id)];
-      if (!opened.recorded) {renderDetail(); toast('Existing case restored. Review its displayed draft, then click Send email.'); return;}
+      if (!opened.recorded) {renderDetail(); toast('Existing case restored. Review its displayed draft, then click Send reminder.'); return;}
     }
     const follow=Boolean(c.workflow?.followup);
     const response = await api(`/api/cases/${c.id}/${follow?'followup-email':'send-email'}`,{method:'POST'});
@@ -546,7 +551,7 @@ api("/api/health").then(async (health) => {
   const preview = await api('/api/portfolio');
   if (state.status === 'idle' && !state.currentRun) {applySnapshot(preview.portfolio); $("preview-caption").hidden = false;}
   $("start-run").disabled = false;
-  banner("READY", "Current portfolio loaded. Start the agent to prepare and save a collection run.");
+  banner("READY", "Current portfolio loaded. Run collections to prepare and save a collection run.");
   refreshSavedRuns();
   await refreshCases();
   if(workflowReady){

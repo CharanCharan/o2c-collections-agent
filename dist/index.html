@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f5f7f7" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-7" />
-  <script src="/assets/followup-ui.js?v=workflow-7" defer></script>
-  <script src="/assets/workflow-ui.js?v=workflow-7" defer></script>
-  <script src="/assets/app.js?v=workflow-7" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-8" />
+  <script src="/assets/followup-ui.js?v=workflow-8" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-8" defer></script>
+  <script src="/assets/app.js?v=workflow-8" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -19,9 +19,11 @@
   <section class="intro">
     <div><div class="eyebrow">Order to cash · Collections workspace</div><h1>Charan's Collections Agent</h1><p>Review receivables, prioritize collections and inspect reminders and customer responses.</p></div>
     <div class="run-wrap">
-      <div class="run-actions">
-        <details class="previous-runs" id="previous-runs"><summary>Previous runs</summary><div class="history-popover">  <section class="history-bar" aria-label="Saved run history"><label for="saved-runs">Choose a previous run</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · stored in Supabase</span></section></div></details>
-        <button class="primary" id="start-run" disabled><span class="play">▶</span> Start agent</button>
+      <div class="run-actions" aria-label="Collections actions">
+        <button class="primary" id="start-run" disabled><span class="play">▶</span> Run collections</button>
+        <details class="header-menu" id="portfolio-menu"><summary>Portfolio overview <span class="menu-count" id="portfolio-count">—</span></summary><div class="action-popover"><section id="workflow-summary" class="workflow-summary" aria-label="Portfolio outcomes" aria-live="polite"></section></div></details>
+        <details class="header-menu" id="promises-menu"><summary>Payment promises <span class="menu-count" id="promise-count">—</span></summary><div class="action-popover promise-popover"><section id="followup-controls" class="followup-controls" aria-label="Promise-to-pay management"></section></div></details>
+        <details class="previous-runs header-menu" id="previous-runs"><summary>Collections run history</summary><div class="history-popover action-popover"><section class="history-bar" aria-label="Collections run history"><label for="saved-runs">Choose a collections run</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · saved history</span></section></div></details>
       </div>
       <div class="last-run" id="last-run">No active run</div>
     </div>
@@ -35,9 +37,7 @@
     <div class="stat"><div class="stat-top">High urgency · eligible <span class="stat-icon">⌁</span></div><div class="stat-value" id="metric-high">—</div><div class="stat-foot">Rule score of at least 65/100</div></div>
     <div class="stat"><div class="stat-top">Eligible exposure <span class="stat-icon">↗</span></div><div class="stat-value" id="metric-eligible">—</div><div class="stat-foot" id="eligible-note">Calculated after loading data</div></div>
   </section>
-  <p class="panel-sub" id="preview-caption" hidden>Current AR data · read-only preview. Start the agent to prepare and save collection actions.</p>
-  <section id="workflow-summary" class="workflow-summary" aria-label="Case outcomes" aria-live="polite"></section>
-  <section id="followup-controls" class="followup-controls" aria-label="Promise follow-up simulator"></section>
+  <p class="panel-sub" id="preview-caption" hidden>Current AR data · read-only preview. Run collections to prepare and save collection actions.</p>
   <main class="grid">
     <section class="panel queue-column" aria-label="Accounts receivable work queue">
       <div class="panel-head">
@@ -60,7 +60,7 @@
     </div>
     <aside class="agent-column" aria-label="Live agent execution">
       <section class="panel run-panel">
-        <div class="run-banner"><div><div class="panel-title">Agent execution</div><div class="panel-sub" id="run-caption">Connecting…</div></div><div class="run-state"><i class="dot"></i><span id="state-label">WAITING</span></div></div>
+        <div class="run-banner"><div><div class="panel-title">Collections activity</div><div class="panel-sub" id="run-caption">Connecting…</div></div><div class="run-state"><i class="dot"></i><span id="state-label">WAITING</span></div></div>
         <div class="flow" id="flow"></div><div class="progress"><span id="progress-bar"></span></div>
         <section class="activity" id="case-agent-activity" aria-label="Selected case execution" aria-live="polite"></section>
         <div class="activity"><div class="activity-head"><span class="activity-title">Live activity</span><span class="activity-count" id="event-count">0 events</span></div><div class="feed" id="feed" aria-live="polite"></div></div>
@@ -73,11 +73,11 @@
   <footer class="footer"><span>Collections Agent · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
 </div>
 <dialog id="agent-mode-dialog" aria-labelledby="agent-mode-title">
-  <h2 id="agent-mode-title">Choose agent control</h2>
+  <h2 id="agent-mode-title">Choose how to process collections</h2>
   <p>New cases use this mode. Existing cases retain their saved approvals and history.</p>
-  <button class="primary" id="mode-limited">Limited · review before sending or recording promises</button>
-  <button class="primary" id="mode-autopilot">Autopilot demo · act within the displayed policy</button>
-  <p class="explain">Autopilot can send up to3 new eligible reminders per run to the project test inbox. Disputes, contact problems and ambiguous replies pause. Payment tools use synthetic evidence; source balances stay unchanged.</p>
+  <button class="primary" id="mode-limited">Review &amp; approve</button><p class="mode-description">Prepare actions for approval before sending emails or recording payment promises.</p>
+  <button class="primary" id="mode-autopilot">Automatic processing</button><p class="mode-description">Execute eligible actions within the displayed policy. Exceptions require review.</p>
+  <p class="explain">Automatic processing can send up to3 new eligible reminders per run to the project test inbox. Disputes, contact problems and ambiguous replies pause. Payment tools use synthetic evidence; source balances stay unchanged.</p>
   <button class="secondary" id="mode-cancel">Cancel</button>
 </dialog>
 <div class="toast" id="toast" role="status"></div>

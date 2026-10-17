@@ -1,3 +1,5 @@
+> Latest V2.6: [collections controls and invoice continuation](docs/MILESTONE_V2_6.md). Compact Portfolio overview and Payment promises beside Run collections; business-friendly labels and a conditional Continue invoice processing control above the selected email. Merge/pull and manual deploy only; no new SQL or packages.
+
 > Latest V2.5: [promise follow-ups and scrolling lesson](docs/MILESTONE_V2_5.md). After merge/pull, apply SQL012 then manually deploy. Adds an explicit demo clock, resumable due checks, separate authorized follow-up emails and consistent bounded three-panel scrolling with horizontal table controls. No new packages or environment settings.
 
 > Latest correction: daily Start quotas removed. After merge, run `sql/011_unlimited_demo_starts.sql` in Supabase and redeploy. Repeated visitor runs preserve cases/history; email/model allowances remain. Keep PUBLIC_DEMO=true. [Setup](docs/MILESTONE_V2_4.md#remove-the-daily-start-limits-sql011).
