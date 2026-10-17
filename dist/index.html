@@ -49,7 +49,8 @@
     <div class="stat"><div class="stat-top">Eligible exposure <span class="stat-icon">↗</span></div><div class="stat-value" id="metric-eligible">—</div><div class="stat-foot" id="eligible-note">Calculated after loading data</div></div>
   </section>
   <section class="history-bar" aria-label="Saved run history"><label for="saved-runs">Saved runs</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open saved run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · stored in Supabase</span></section>
-  <details class="model-evidence"><summary>Controlled email demo · owner access</summary><p id="email-mode">Email is disabled until configured. Drafting works without email or LLM access.</p><label for="email-owner-token">Email owner token (kept in this page memory only)</label> <input type="password" id="email-owner-token" autocomplete="off" placeholder="Private owner token"><button class="secondary" id="email-unlock">Unlock test sending</button><p id="email-target" class="explain"></p></details>
+  <details class="model-evidence"><summary>Controlled email demo · owner access</summary><p id="email-mode">Email is disabled until configured. Drafting works without email or LLM access.</p><label for="email-owner-token">Email owner token (kept in this page memory only)</label> <input type="password" id="email-owner-token" autocomplete="off" placeholder="Private owner token"><button class="secondary" id="email-unlock">Unlock owner tools</button><button class="secondary" id="email-logout">Close owner access</button><p id="email-target" class="explain"></p></details>
+  <p class="panel-sub" id="demo-access-note">Checking demo access…</p>
   <p class="panel-sub" id="preventive-caption">Start to inspect the preventive review queue.</p>
   <details id="model-evidence" class="model-evidence"><summary>Payment-risk model evidence</summary><p>Start a run to inspect the model used for that snapshot.</p></details>
   <main class="grid">
@@ -67,7 +68,7 @@
       <section class="panel detail" id="email-activity" aria-label="Email activity"><p class="explain">Complete a run to inspect email delivery, replies and follow-up tasks.</p></section>
     </div>
   </main>
-  <footer class="footer"><span>Collections Agent · M5 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
+  <footer class="footer"><span>Collections Agent · M6 · Synthetic data</span><span><a id="inspect-run" href="#" target="_blank" rel="noopener" hidden>Inspect run JSON</a> · <a href="/docs" target="_blank" rel="noopener">API explorer</a> · <a href="#" id="reset-link">Reset page</a></span></footer>
 </div>
 <div class="modal-backdrop" id="modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title"><h2 id="approval-title">Record a dry-run approval?</h2><p>Python will record this invoice's approved reminder once in this run's saved event history. No email is sent. The approval and its event are saved together in Supabase.</p><button class="primary" id="confirm-send">Approve &amp; record dry run</button><button class="secondary" id="cancel-send">Go back</button></div></div>
 <div class="toast" id="toast" role="status"></div>

@@ -18,6 +18,8 @@ const state = {
   highOnly: false, queueStage: "all", events: [], eventIds: new Set(), stageStatus: {}, source: null, approvalId: null,
 };
 let mailEnabled = false;
+let publicMode = false;
+let ownerLoggedIn = false;
 let ownerRecipient = "";
 let emailState = null;
 let emailRun = null;
@@ -34,7 +36,9 @@ const dateLabel = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-US
 });
 
 async function api(path, options = {}) {
-  const response = await fetch(path, {cache: "no-store", ...options});
+  const token = document.getElementById('email-owner-token')?.value || '';
+  const headers = {...(token ? {'X-Collections-Owner':token} : {}), ...(options.headers || {})};
+  const response = await fetch(path, {cache: "no-store", ...options, headers});
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
   return data;
@@ -333,7 +337,7 @@ async function openSavedRun() {
     const run = await api(`/api/runs/${id}`);
     if (["queued", "running"].includes(run.status)) {toast("That run is still active. Refresh history after it finishes."); return;}
     clearRun(); state.currentRun = run.run_id; state.status = run.status;
-    state.legacyRun = !["M3", "M4", "M5"].includes(run.result.workflow_version);
+    state.legacyRun = !["M3", "M4", "M5", "M6"].includes(run.result.workflow_version);
     for (const event of run.events) handleEvent(event);
     state.status = run.status;
     applySnapshot(run.result);
@@ -377,7 +381,7 @@ function applyEmailActivity(response) {
 }
 
 async function refreshEmail() {
-  if (!state.currentRun || state.status !== 'completed' || emailRefreshBusy) return;
+  if (!state.currentRun || state.status !== 'completed' || emailRefreshBusy || (publicMode && !ownerLoggedIn)) return;
   emailRefreshBusy = true;
   const id = state.currentRun;
   try {
@@ -389,6 +393,7 @@ async function refreshEmail() {
 
 function renderMail() {
   const panel = $("email-activity");
+  if (publicMode && !ownerLoggedIn) {panel.textContent = "Private email activity is available to the project owner. You can inspect this browser’s collection runs above."; return;}
   if (!state.currentRun || state.status !== 'completed') {panel.textContent = 'Complete a run to inspect email activity.'; return;}
   const row = state.invoices.find(r => r.id === state.selectedId);
   if (!row) return;
@@ -437,16 +442,30 @@ function renderMail() {
 }
 $("email-unlock").onclick = async () => {
   try {
-    const config = await api('/api/email/owner-config',{headers:{'X-Collections-Owner':$("email-owner-token").value}});
+    if (publicMode) {
+      await api('/api/operator/login',{method:'POST'});
+      ownerLoggedIn = true;
+      await refreshSavedRuns();
+      if (!mailEnabled) {$("email-target").textContent = 'Owner history unlocked. Live email is disabled.'; renderMail(); return;}
+    }
+    const config = await api('/api/email/owner-config' ,{headers:{'X-Collections-Owner':$("email-owner-token").value}});
     ownerRecipient = config.recipient; $("email-target").textContent = `Only ${config.recipient} can receive this demo. Sender: ${config.sender}`;
     renderMail(); await refreshEmail();
   } catch(error) {ownerRecipient = ''; $("email-target").textContent = error.message; renderMail();}
+};
+$("email-logout").onclick = async () => {
+  $("email-owner-token").value = ''; ownerRecipient = ''; ownerLoggedIn = false;
+  if (publicMode) await api('/api/operator/logout',{method:'POST'});
+  clearRun(); await refreshSavedRuns();
+  $("email-target").textContent = 'Owner access closed.';
 };
 $("email-owner-token").oninput = () => {ownerRecipient = ''; $("email-target").textContent = ''; renderMail();};
 setInterval(refreshEmail,5000);
 
 clearRun();
 api("/api/health").then((health) => {
+  publicMode = Boolean(health.public_demo?.enabled);
+  $("demo-access-note").textContent = publicMode ? 'Public demo · synthetic invoices · this browser gets 3 runs and 8 LLM attempts per UTC day. Shared daily caps also apply; templates remain available when LLM quota is used.' : 'Local learning mode · keep this instance private.';
   const language = health.language;
   mailEnabled = Boolean(health.email?.ready);
   $("email-mode").textContent = mailEnabled ? "Live email configured. Owner approval sends only to the server-configured test inbox. Ten reservations per UTC day." : (health.email?.configuration_error || "Live email disabled. See M5 setup.");
@@ -457,5 +476,5 @@ api("/api/health").then((health) => {
 }).catch((error) => {
   $("backend-label").textContent = "Backend unavailable";
   banner("OFFLINE", "Check Supabase setup and the FastAPI server");
-  showError(`${error.message}. See docs/MILESTONE_4.md for SQL004 and language configuration; docs/MILESTONE_2.md for database setup.`);
+  showError(`${error.message}. See docs/MILESTONE_6.md for cloud/SQL006 setup; docs/MILESTONE_5.md for email and docs/MILESTONE_2.md for the database.`);
 });

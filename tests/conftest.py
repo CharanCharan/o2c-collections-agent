@@ -89,6 +89,9 @@ def disable_paid_api_in_tests(monkeypatch):
     monkeypatch.setenv('OPENAI_API_KEY', '')
     monkeypatch.setenv('GROQ_API_KEY', '')
     monkeypatch.setenv('EMAIL_ENABLED', 'false')
+    monkeypatch.setenv('PUBLIC_DEMO', 'false')
+    monkeypatch.setenv('RENDER', 'false')
+    monkeypatch.setenv('DEMO_SESSION_SECRET', '')
     for name in ['RESEND_API_KEY','RESEND_WEBHOOK_SECRET','EMAIL_OWNER_TOKEN','EMAIL_TEST_RECIPIENT','EMAIL_RECEIVING_DOMAIN']:
         monkeypatch.setenv(name, '')
     for name, value in {'LLM_PROVIDER':'groq', 'LLM_MODEL':'openai/gpt-oss-20b',

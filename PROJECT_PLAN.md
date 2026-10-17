@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-17
 Owner: Charan
-Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 code prepared on milestone-5-email-loop; live email/reply checks pending.
+Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 deployment code prepared on milestone-6-cloud-demo; actual cloud URL and live loop checks pending.
 
 ## Goal and scope
 
@@ -20,11 +20,11 @@ This is a hands-on learning project delivered one complete runnable milestone at
 - Read PROJECT_KNOWLEDGE.md, this plan and current code before each milestone. Deliver a branch and pull request. Charan reviews/merges, then pulls main locally. His edits must be committed and pushed before subsequent work.
 - The original hosted Sites demo is a presentation prototype; this GitHub repository and the local Python application are the working source for the real POC.
 
-## Current implementation — M5 prepared for review
+## Current implementation — M6 deployment prepared, actual cloud setup pending
 
-M4 merged; user defers its learning checks until after M5. Groq Free/default model configuration remains unchanged. M5 works with LLM disabled and template drafts. Adds controlled owner-approved Resend sends to one owned test inbox, durable intent/payload/idempotency,10new reservations/UTC day, acceptance separate from verified delivery, signed webhook dedup and strict reply correlation. Owner-reviewed reply extraction creates dated AR follow-up tasks; no automatic email scheduler/payment mutation. Reviewed disputes hold later sends across runs. SQL005 adds mail tables/functions without changing finance snapshots.
+M5 merged; user authorizes cloud hosting and reports Resend Connect errors for sent/delivered/received callbacks. Exact URL unprovided: connectivity root cause not verified. M6 uses one RenderFree Python web service/direct HTTPS webhook with existing Supabase. Adds signed browser sessions, visitor-owned history, owner-only real email data/private-event filtering and SQL-backed UTC caps (20runs/40LLMattempts global,3runs/8LLM perbrowser). Public paid routing blocked, no tier/account verification. No new paid infrastructure or runtime package.
 
-Main app stays local; callback-only helper8001 can be forwarded via existing VSCodePorts for Resend. No bought domain/new runtime dependency. docs/MILESTONE_5.md covers private config, live setup, hands-on checks and error/retry limits. 81tests and local HTTP/SSE/DOM passed with mocks/isolated SQL, not real provider accounts. Live delivery/reply/DMARC/tunnel/learnerPython3.13.5 pending. Deferred M4 exercises follow M5; M6 hosting/access/durable LLM quotas/private email-history treatment next.
+render.yaml pins Python3.12.14, one worker, manual deploy; SQL006 adds access/quotas without deleting priorhistory. /livez, publiccallbackGETprobe and read-only smoke script simplify deploymentdiagnosis. docs/MILESTONE_6.md covers account/secrets setup, health/probe, Resend URL/secret/replay and coldstartlimits. Assistant does not deploy/obtainkeys. 97localtests and cookie-aware HTTP/SSE/DOM checks passed with mocks/isolated SQL. Actual Render service URL/live health, visitor isolation and M5 callback/inbox/task tests pending; M4 learning remains deferred. Return to those live checks before allmilestones acceptance. Visitor editor remains optional after acceptance.
 
 ## Recommended stack
 
@@ -94,7 +94,7 @@ Implemented: modular Groq Chat Completions/default Free model and optional expli
 
 Acceptance pending: successful live API draft/evidence, invalid-output fallback understanding, sample classification/dedup/restart persistence, user can explain policy and limitations. Drafts use validated amounts and dates; disputed accounts pause; invalid output routes to review; tool inputs, outputs, versions, duration, and errors are recorded. Display action summaries and evidence, not private chain-of-thought.
 
-### M5 — Close the email loop [CODE PREPARED; LIVE/LEARNER CHECKS PENDING]
+### M5 — Close the email loop [MERGED; LIVE CALLBACK REPAIR PENDING]
 
 Connect outbound email, record provider IDs, and verify delivery events. Capture real replies through a signed webhook; match by message/thread ID. Extract intent, promised date/amount, or dispute reason. Save a human-reviewed follow-up work task with due date and audit record; no unattended follow-up email sending. A customer saying 'paid' must not itself mark an invoice paid: require a payment source/reconciliation.
 
@@ -102,7 +102,7 @@ Use controlled test recipients, server-enforced recipient allowlists, approval, 
 
 Acceptance: Controlled reminder arrives in a real inbox; reply produces a verified event; retries do not duplicate emails or follow-ups.
 
-### M6 — Deploy and demonstrate
+### M6 — Deploy and demonstrate [CODE/DEPLOYMENT GUIDE PREPARED; ACTUAL CLOUD SETUP PENDING]
 
 Deploy the repository under Charan's own account. Keep one service for UI/API. Use an external persistent database; do not depend on an ephemeral web-server disk. Configure API secrets, per-run isolation, usage caps, and resettable demo data before public access to live actions.
 
@@ -117,7 +117,7 @@ Offer visitors a data-edit/testing playground only after the core milestones are
 ## Cost notes — checked 2026-10-17, verify before purchasing
 
 - Render offers free static sites and free Python web services. Free web services sleep after 15 idle minutes and can take about a minute to wake. They have ephemeral local storage. Free Render Postgres expires after 30 days, so it is not the proposed durable demo database.
-- Render's entry paid web-service compute was listed at USD 7/month for 512 MB. This is a base service price, not an all-inclusive project bill.
+- Paid compute is optional; check current Render pricing before changing plans. Free service selection does not automatically bound all supplementary account usage charges.
 - Supabase Free lists 500 MB database space and pauses free projects after one inactive week. A paused database can interrupt a portfolio demo even if the web server is paid.
 - Resend Free lists 3,000 transactional emails/month and 100/day; received emails count toward the quota. Sender verification and domain configuration still apply.
 - LLM API calls and an optional domain can cost extra. Provider subdomains remove the need to buy a website domain. A custom email sending domain may be a separate decision.
@@ -157,3 +157,5 @@ At continuation, read PROJECT_KNOWLEDGE.md, this plan and canonical repository c
 | 2026-10-17 | User requested free model and modular control | PR#5 updated to Groq default, separate provider adapters/keys, env model/limits, free-only routing, no paid failover; account Free status/live output still learner checks |
 
 | 2026-10-17 | M5 authorized and prepared | PR#5 merged a18edaad; user defers M4 checks. Controlled Resend send/verified replies/review/tasks + SQL005; live owner setup pending. Next M6, then visitor editor |
+
+| 2026-10-17 | M6 authorized/prepared | PR#6 merged0114b768; user reports Resend Connect error. One RenderFree service, SQL006 session/privacy/quotas, deployment guide and webhook probe. Actual cloud URL/replay/live acceptance pending |

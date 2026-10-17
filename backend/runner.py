@@ -58,10 +58,15 @@ class RunService:
                 await self.store.recover(self.process_id)
                 self.initialized = True
 
-    async def create(self):
+    async def create(self, public_actor=None):
         await self.initialize()
         run = Run(str(uuid4()), self.process_id, self.store)
-        await self.store.create_run(run.id, self.process_id, pipeline.result_snapshot(run.context))
+        if public_actor is None:
+            await self.store.create_run(run.id, self.process_id, pipeline.result_snapshot(run.context))
+        else:
+            actor,owner=public_actor
+            await self.store.rpc("ca_public_create", {"p_run_id":run.id,"p_process_id":self.process_id,
+                "p_initial_result":pipeline.result_snapshot(run.context),"p_session_key":actor,"p_owner":owner})
         task = asyncio.create_task(self.execute(run))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)

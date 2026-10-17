@@ -109,6 +109,7 @@ class LanguageService:
         self.calls = 0
         self.lock, self.reply_lock = asyncio.Lock(), asyncio.Lock()
         self.adapter, self.transport = None, transport
+        self.budget_guard = None
 
     @classmethod
     def from_env(cls):
@@ -140,6 +141,8 @@ class LanguageService:
         async with self.lock:
             if self.calls >= self.max_process:
                 raise LanguageError('Process API-call cap reached; template/manual-review fallback, no provider switch.')
+            if self.budget_guard is not None:
+                await self.budget_guard()
             self.calls += 1
         schema = DraftOutput if task == 'draft_reminder' else ReplyOutput
         instructions = (
