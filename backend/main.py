@@ -166,6 +166,13 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         request_id: UUID = Field(strict=False)
         instructions: str = Field(default='', max_length=600)
 
+    class EditDraftRequest(BaseModel):
+        model_config = ConfigDict(extra='forbid', strict=True)
+        request_id: UUID = Field(strict=False)
+        expected_draft: dict
+        subject: str = Field(min_length=1, max_length=200)
+        body: str = Field(min_length=1, max_length=4000)
+
     @app.get('/api/cases')
     async def list_cases(request: Request):
         backend()
@@ -208,6 +215,12 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     async def redraft_case(case_id: UUID, body: DraftRequest, request: Request):
         backend()
         return await cases.redraft(public.actor(request)[0], str(case_id), str(body.request_id), body.instructions)
+
+    @app.post('/api/cases/{case_id}/draft/edit')
+    async def edit_case_draft(case_id: UUID, body: EditDraftRequest, request: Request):
+        backend()
+        return await cases.edit_draft(public.actor(request)[0], str(case_id), str(body.request_id),
+                                      body.expected_draft, body.subject, body.body)
 
     class AgentRequest(BaseModel):
         model_config=ConfigDict(extra='forbid')
@@ -404,16 +417,20 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             ai_draft = await s.store.rpc('ca_ai_draft_health')
         except StorageError:
             ai_draft = {'ready':False,'error':'Apply sql/015_ai_draft.sql after SQL014 to enable Draft with AI.'}
+        try:
+            draft_edit = await s.store.rpc('ca_draft_edit_health')
+        except StorageError:
+            draft_edit = {'ready':False,'error':'Apply sql/017_manual_draft.sql after SQL015 to enable Edit draft.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.22", "ui_version":"workflow-22", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.23", "ui_version":"workflow-23", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,
                                 "daily_run_cap":public_info.get('daily_run_cap',20) if public.config.enabled else None,
                                 "per_browser_runs":public_info.get('per_browser_runs',3) if public.config.enabled else None,
                                 "daily_llm_attempt_cap":public_info.get('daily_llm_attempt_cap',40),"per_browser_llm_attempts":public_info.get('per_browser_llm_attempts',8)},
-                "workflow":workflow,"followups":followup_status,"ai_draft":ai_draft,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
+                "workflow":workflow,"followups":followup_status,"ai_draft":ai_draft,"draft_edit":draft_edit,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
 
     @app.get('/api/reply-examples')
     async def reply_examples():

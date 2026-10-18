@@ -2,17 +2,21 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_22_header_and_optional_budget
-implementation_branch: compact-header-llm-budget
+implementation_milestone: V2_23_edit_and_context_revision
+implementation_branch: draft-edit-context-revision
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_verify_header_viewport_and_optional_SQL016_daily_budget
+pending_learning_check: apply_SQL017_deploy_edit_and_revise_saved_draft_with_context
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.22 Header and optional LLM budget — authoritative current checkpoint
+## V2.23 Draft editing and context revision — authoritative current checkpoint
+
+V2.23 corrects AI redraft: new revise_reminder structured task receives current saved subject/body plus user revision_request, not only tone preferences. Preserves subject/protected fact sentence; supports added/retained context with literal source excerpts from request/existing body and numeric provenance/policy checks, context-review badge and change summary. Unchanged body is explicit failed/no-change, never saved as success. Prompt/validatorv3. Manual Edit draft subject/body with Save/Cancel, no LLM/quota; human_edited provenance clears AI/template claims. Source fact sentence exact-once +invoiceIDsubject/plaintext/lengthchecks; otherhuman prose requiresreview. SQL017(after015;016optional) private health/save RPC with5005+rowlocks, exact expected-draft optimistic comparison, requestUUID/hash replay, send/hold/reservation checks, staleAI retirement and case-message/audit update. Initial unsent eligible reminders only; send/AI disabled while manually editing; no sentbody/history/sourceAR/run/mode/reset changes. v2.23/workflow-23.112backendregressionspassed then33finaltargetedpassed; actualHTTP/cookie/SSE JSDOM manual/context/no-change/exactsend/reload passed(mockLLM2/mail1); priorAI/lostresponseUIjourney passed(mock3/mail1). No realprovider/DB/deploy/nativepixelclaims. Lesson docs/MILESTONE_V2_23.md; branchdraft-edit-context-revision; userSQL017/merge/deploy/liveacceptancepending. Freshdemo stayscancelled; SQL016quotas unaffected.
+
+## Historical V2.22 Header and optional LLM budget
 
 V2.22 fixes header regression after GitHub link: compact visible GitHub label/accessibility preserved, desktop intro grid keeps run controls top-right (mobile <=760 stacks/right-aligns), fixed-position menu panels clamped to layout/visual viewport with bounded scrolling on open/resize/scroll. Removes old <=1400 fullwidth-row override. User screenshot inspected locally. Optional SQL016 adds one editable ca_llm_budget() definition(default100global/40browser UTCday) read by reservations+health; no usage reset, Start unlimited, model/provider/email controls unchanged. Without optionalSQL16, existing8browser/40globalremain; changingRender process/run settings doesnotchangeSQLdailycaps. BackendhealthreadsSQLvalueswitholdfallbacks; v2.22/workflow-22. 20SQL/public tests passed; seven mocked geometry viewport cases + actualHTTP/cookie/SSE JSDOM AI journey passed(mockLLM3/mail1). Nativebrowserinstallfailed(downloadtruncated), no nativepixel/layoutacceptanceclaim. No liveprovider/DB/deployment, packages/envchanges. Lesson docs/MILESTONE_V2_22.md; branchcompact-header-llm-budget; usermerge/deploy/hardrefresh/visualcheck andoptionalSQL016pending. SQL015stillrequiredforAIdraft; savedcases/Incognito preserved, freshdemocancelled.
 

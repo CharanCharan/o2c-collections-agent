@@ -189,12 +189,16 @@ function renderDetail() {
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
       <div class="detail-metric"><label>Next step</label><strong id="detail-next-action">${escapeHTML(rowView(row).next)}</strong></div>
     </div>
-    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · FACTS CHECKED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><div class="draft-controls"><button class="secondary" id="ai-draft-toggle" aria-controls="ai-draft-editor" aria-expanded="false" disabled>Draft with AI</button><button class="secondary" id="send-draft" disabled>Send reminder</button></div></div>
+    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draftModeLabel(draft)}</span><div class="draft-controls"><button class="secondary" id="ai-draft-toggle" aria-controls="ai-draft-editor" aria-expanded="false" disabled>Draft with AI</button><button class="secondary" id="edit-draft" aria-controls="manual-draft-editor" disabled>Edit draft</button><button class="secondary" id="send-draft" disabled>Send reminder</button></div></div>
       ${aiDraftPanel(row)}
+      ${manualDraftPanel(row)}
+      <div id="draft-preview" ${manualDraftEditors.get(row.id)?.open?'hidden':''}>
       ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Run collections to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
+    </div>
+    ${draft?.change_summary?`<p class="explain">Revision: ${escapeHTML(draft.change_summary)}${draft.context_review_required?' Added context is user supplied; review it before sending.':''}</p>`:''}
     <p class="llm-evidence">${draft?escapeHTML(llmCallLabel(followupDraft(currentCase)?{api_attempted:false}:draftRow.draft_audit,draftRow.draft_audit?.status==='validated_for_human_review')):'No draft or drafting call has been prepared yet.'}</p>
-    ${draft && draft.generation_mode!=='llm_assisted_validated_facts'?`<p class="explain draft-generation-reason">${escapeHTML(draftGenerationExplanation(draftRow.draft_audit,Boolean(followupDraft(currentCase))))}</p>`:''}
+    ${draft && !['llm_assisted_validated_facts','human_edited'].includes(draft.generation_mode)?`<p class="explain draft-generation-reason">${escapeHTML(draftGenerationExplanation(draftRow.draft_audit,Boolean(followupDraft(currentCase))))}</p>`:''}
     <p class="explain" id="draft-email-status"></p>
     ${currentCase ? `<p class="panel-sub">Draft saved with case snapshot ${escapeHTML(currentCase.snapshot.as_of_date)} · run ${escapeHTML(currentCase.run_id.slice(0,8))}. Sending uses this displayed draft.</p>` : ''}
     ${draftRow.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(draftRow.draft_audit, null, 2))}</pre></details>` : ''}
@@ -205,6 +209,7 @@ function renderDetail() {
     </details>
     `;
   $("send-draft").onclick = sendDraft;
+  bindManualDraft(row);
   bindAIDrafting(row);
   renderSendState();
 }
@@ -523,7 +528,7 @@ function renderSendState() {
   if(follow) {
     const pending=c.workflow.pending?.tool==='send_followup_email';
     const out=followupMail(c);
-    button.disabled=sendBusy||!mailEnabled||!(pending||['quota_wait','unknown','review_required'].includes(follow.status));
+    button.disabled=Boolean(manualDraftEditors.get(row?.id)?.open)||manualDraftBusy.has(row?.id)||sendBusy||!mailEnabled||!(pending||['quota_wait','unknown','review_required'].includes(follow.status));
     button.textContent=sendBusy?'Sending follow-up…':follow.status==='accepted'?'Follow-up sent':follow.status==='superseded'?'Follow-up superseded':follow.status==='declined'?'Follow-up declined':follow.status==='review_required'?'Retry reviewed follow-up':follow.status==='unknown'?'Retry same follow-up':follow.status==='quota_wait'?'Retry follow-up after quota reset':'Send follow-up';
     $('draft-email-status').textContent=outboundLabel(out);
     if($('detail-next-action') && row)$('detail-next-action').textContent=rowView(row).next;
@@ -532,7 +537,7 @@ function renderSendState() {
   }
   const held = c && !['awaiting_outreach','awaiting_response'].includes(c.collection_status);
   const graphBlocked=c?.workflow && !c.workflow.pending && !c.outbound && c.workflow.status !== 'quota_wait';
-  const generating = aiDraftBusy.has(row?.id) || (c?.draft_generation?.status === 'reserved' && Date.now() - Date.parse(c.draft_generation.created_at) < 300000);
+  const generating = Boolean(manualDraftEditors.get(row?.id)?.open) || manualDraftBusy.has(row?.id) || aiDraftBusy.has(row?.id) || (c?.draft_generation?.status === 'reserved' && Date.now() - Date.parse(c.draft_generation.created_at) < 300000);
   button.disabled = Boolean(generating) || Boolean(graphBlocked) || sendBusy || !mailEnabled || !casesLoaded || Boolean(caseLoadError) || !(c || state.status === 'completed') || !draftRow?.draft || !draftRow.eligible || draftRow.dispute || held || c?.outbound?.state === 'accepted';
   button.textContent = sendBusy ? 'Sending…' : c?.outbound?.state === 'accepted' ? 'Email sent' : c?.outbound ? 'Retry same email' : c?.workflow?.status === 'quota_wait' ? 'Retry email after quota reset' : 'Send reminder';
   if($('detail-next-action') && row)$('detail-next-action').textContent=rowView(row).next;

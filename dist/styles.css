@@ -398,3 +398,6 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 
 .guide-inbox-image {display:inline-flex;align-items:center;justify-content:center;width:28px;height:26px;vertical-align:middle;margin:0 3px;border:1px solid #b7cebf;border-radius:5px;color:#245b45;background:#edf6f0}
 .guide-inbox-image:hover {background:#dcefe2}.guide-inbox-image:focus-visible {outline:2px solid #245b45;outline-offset:2px}
+
+#manual-draft-subject {width:100%;padding:10px;font:inherit;border:1px solid #9db8a9;border-radius:7px;margin-bottom:12px;background:white}
+#manual-draft-result:empty {display:none}

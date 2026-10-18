@@ -77,7 +77,7 @@ const workflowLabels = {
   delivery_unknown:'Send outcome unknown',preventive_review:'Not due — preventive assessment only',monitoring:'No reminder — below policy threshold',
 };
 
-const activityLabels={redraft:'Generate AI reminder',load:'Load invoice',interpret:'Interpret customer reply',choose:'Select collection action',approval:'Request approval',authorization:'Authorize action',execute:'Complete action',plan_followup:'Prepare promise follow-up',finish:'Save outcome',supersede:'Update after customer reply'};
+const activityLabels={edit:'Save human draft edits',redraft:'Generate AI reminder',load:'Load invoice',interpret:'Interpret customer reply',choose:'Select collection action',approval:'Request approval',authorization:'Authorize action',execute:'Complete action',plan_followup:'Prepare promise follow-up',finish:'Save outcome',supersede:'Update after customer reply'};
 const actionLabels={record_promise:'Record payment promise',send_email:'Send reminder',send_followup_email:'Send follow-up'};
 
 function invoiceContinuation(c) {

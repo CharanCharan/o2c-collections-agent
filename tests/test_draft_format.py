@@ -28,7 +28,7 @@ def test_portable_provider_schema_and_prompt_keep_character_constraints():
             assert 'preserving every value as a JSON string' in prompt
             assert 'exactly these keys: facts, opening, request, closing' in prompt
             assert 'Thank you for your assistance.' in prompt
-            assert audit['prompt_version'] == 'collections-language-v2'
+            assert audit['prompt_version'] == 'collections-language-v3'
             assert len(requests) == 1
         finally:
             await service.close()

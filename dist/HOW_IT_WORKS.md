@@ -8,7 +8,7 @@ From receivables to a recorded collection outcome.
 | Validate | Check dates, balances and invoice history. | Python, Pydantic and Decimal |
 | Assess and predict | Apply urgency rules and two trained payment-risk models. | Python; logistic models trained with scikit-learn, exported as JSON |
 | Prioritize and draft | Rank eligible invoices and prepare reminders. | Python rules; optional Groq LLM phrasing with validated facts and template fallback |
-| Customize a reminder | Open an unsent reminder → Draft with AI → optional wording preferences → Generate draft. Review before Send reminder. | One explicit LLM call with Python validation; saved case draft in Supabase |
+| Customize a reminder | Redraft with AI revises the saved draft using your context; Edit draft offers manual Save/Cancel. Review before sending. | Structured LLM revision or human edit; protected invoice facts and saved Supabase draft |
 | Process invoices | Choose an action, pause for approval or execute within policy. | LangGraph with Supabase checkpoints |
 | Send and respond | Send real email to the demo inbox [Inbox screenshot](/assets/demo-email-inbox.png); process website-simulated replies. | Resend API, signed delivery webhooks and optional LLM reply interpretation |
 | Show results | Display invoice status, completed actions and run statistics. | FastAPI, HTML/CSS/JavaScript and live SSE events |
