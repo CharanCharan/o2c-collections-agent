@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.19 adds View source on GitHub beside How it works, opening the canonical repository in a new tab with an accessible label and noopener/noreferrer. Private visibility unchanged; invite interviewers or choose public access yourself. Credential review at main d03f1f64 plus all30 branch heads:69 reachable commits/41complete trees/471text versions, no tags; matches reviewed as test fixtures/vector, no apparent live credentials found. Scope excludes unreachable objects/discussions/logs/runtime and cannot prove chat-key rotation; two binary assets excluded from text scan. Lesson docs/MILESTONE_V2_19.md records scope and exercise. NoSQL/env/deps/liveproviders/deployment, appv2.19/uiworkflow-20. HTML checks and Pythoncompile passed; usermerge/deploy/accesscheck pending. Incognito preserved/freshdemo CANCELLED.
+
 V2.18: suppliedCloudflareWebAnalyticsmodulebeacononceinHTML, publictoken/noextraSQL/env/deps. v2.18/workflow-19, lessonV2_18; usermerge/deploy/dashboardverificationpending. Ownertrafficincluded; noidentityproof/customRun/taggedAccenture/exclusions. Sessions/budgets/Incognitounchanged; freshdemocancelled.
 
 V2.17: userCANCELLEDfreshdemo, retainsIncognito. HowitworksSendrealemailrow gets smallaccessibleimageicon→providedstaticGmailscreenshotnewtab. Fixedlocalassetmarker/escapedMarkdown, noAPIeffects; versionv2.17/workflow-18. NoSQL/env/deps/cookie/tasktracking/budget/resetchange; unfinishedfresh-demo-workspaces mustnotmerge. LessonV2_17/guide-inbox-screenshot, usermerge/deploy/visualacceptancepending.
