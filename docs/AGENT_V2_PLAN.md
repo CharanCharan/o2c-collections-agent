@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.18: suppliedCloudflareWebAnalyticsmodulebeacononceinHTML, publictoken/noextraSQL/env/deps. v2.18/workflow-19, lessonV2_18; usermerge/deploy/dashboardverificationpending. Ownertrafficincluded; noidentityproof/customRun/taggedAccenture/exclusions. Sessions/budgets/Incognitounchanged; freshdemocancelled.
+
 V2.17: userCANCELLEDfreshdemo, retainsIncognito. HowitworksSendrealemailrow gets smallaccessibleimageicon→providedstaticGmailscreenshotnewtab. Fixedlocalassetmarker/escapedMarkdown, noAPIeffects; versionv2.17/workflow-18. NoSQL/env/deps/cookie/tasktracking/budget/resetchange; unfinishedfresh-demo-workspaces mustnotmerge. LessonV2_17/guide-inbox-screenshot, usermerge/deploy/visualacceptancepending.
 
 V2.16 overridespopupcoaching: Suggestedtestbannerremoved, thirdguide/suggestionsretained. Templateauditreason+savedmodevisible, LLMbadgeFactschecked; actualapprovalsdependonsavedmode. Verifiedfreshlimited0/automatic3newsend andretainedoldcases unchanged. No newSQL/env/packages/regen/reset/budgetchange. Healthv2.16/workflow-17; lessonV2_16; liveLLM/modeacceptancepending.

@@ -2,17 +2,23 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_17_guide_inbox_screenshot
-implementation_branch: guide-inbox-screenshot
+implementation_milestone: V2_18_cloudflare_web_analytics
+implementation_branch: cloudflare-web-analytics
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: verify_guide_screenshot_deploy_and_live_mode_acceptance
+pending_learning_check: deploy_and_verify_Cloudflare_visits_and_country
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.17 guide inbox screenshot — authoritative current checkpoint
+## V2.18 Cloudflare Web Analytics — authoritative current checkpoint
+
+PR27 merged a80b29603bd0158ebd90a33d83ecc79ba5dad25c; compare65e7ddaf→main mergeonly/noedits. User suppliedpublicCloudflareWebAnalytics snippet forAccentureinterviewertraffic. Branchcloudflare-web-analytics; lesson docs/MILESTONE_V2_18.md. Includeprovidedmodulebeacononcebeforebodyclose in dist/index.html; fixedCloudflaresource/publicsite token suppliedbyuser. NoAPIsecret/accountlogin/DNSmove/newSQL/env/packages. Backendversiononlyv2.18/uiworkflow-19.
+
+ParsedHTMLverifiesonecorrectbeacon/token/source/type, existingfiveappscripts/noFreshdemobutton; Pythoncompilepassed. No externalbeaconexecution/Cloudflareaccountaccess/liveprovider/deploy. Usermerge/pull/deploy/hardrefresh/visit thenCloudflareWebAnalyticsdashboardcheck; historicalvisitsnotreconstructed/blockerscanpreventcollection. Allvisitsincludingowner count; ownerexclusion/customRun events/taggedAccenturelinks/notificationsnotimplemented. Country cannotproveintervieweridentity. ExistingIncognito/session/checkpoints/budgets/scenarios/screenshotremain; freshdemoCANCELLED, abandonedbranchmustnotmerge. FinishPoC/liveacceptance; noextra integrations.
+
+## Historical V2.17 guide inbox screenshot
 
 PR26 merged20f974e927215036b79b3553dd8f9f2f4453eb39. User explicitly CANCELLED Startfreshdemo after understandingIncognito and requestsattachedimage as smallclickableicon inHowitworksSendrealemailrow. Unpublishedfresh-demo-workspaces branchadf48b64996ae8af29700974028b8be8947c4463 is ABANDONED/noPRopened; do not merge/resume withoutnewrequest. Allfreshcookie/budget/runner/endpoint/UI/test changes reverted locally beforethismilestone. Canonicalmain20f974e9 andbranchguide-inbox-screenshot; lessondocs/MILESTONE_V2_17.md nowdescribesscreenshotonly, notfreshworkspaces.
 
