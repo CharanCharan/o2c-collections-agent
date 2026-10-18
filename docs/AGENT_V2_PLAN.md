@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.14 supersedes SQL013 readiness: verified LangGraph writes-before-put race under delayed RPC. Apply SQL014 after013 to replace checkpoint FK with case FK and retain bounded durable pending writes. Backend requires revision14; healthv2.14/uiworkflow-15. LessonV2_14; user merge/SQL/deploy/live retry pending. Existing data/receipts retained, no reset or paid infrastructure.
+
 V2.13:concisetwopageMarkdownworkflowguidebesidetitle, truthfulLLMreadiness+actualcallauditlabels. UI/static/versiononlynoSQL/packages/env; priorSQL013stillrequired/learneracceptancepending. Healthv2.13/workflow-15; lessonV2_13; usermerge/deploy/visualchecks pending.
 
 V2.12 checkpointrepairtakespriority:applySQL013after012/restart/retryoldfailedjob, noreset. ReproducedretiredcheckpointlatewriteFK23503; functionsqualified/serialized, skipretiredonly/strictunknown, checkpointhealth13 andsafeSQLSTATE/action. Healthv2.12/workflow-14. LessonV2_12, userDBapplication/acceptancepending; no directDBcredentials/livechangebyassistant.

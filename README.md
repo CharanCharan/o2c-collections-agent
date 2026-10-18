@@ -1,3 +1,5 @@
+> Latest V2.14: [checkpoint save-order repair](docs/MILESTONE_V2_14.md). SQL013 did not cover writes arriving before their checkpoint. Apply `sql/014_checkpoint_write_order.sql` after SQL013, deploy latest main, verify app v2.14/checkpoint revision14 ready, then retry failed invoices. Preserves existing rows and email receipts; no reset, dependencies or environment changes.
+
 > Latest V2.13: [workflow guide and LLM labels](docs/MILESTONE_V2_13.md). How it works beside the title opens two short pages backed by editable dist/HOW_IT_WORKS.md. LLM configuration and actual per-action call evidence are labelled separately. Merge/pull and deploy; no new SQL/packages (prior SQL013 still required).
 
 > Latest V2.12: [checkpoint storage repair](docs/MILESTONE_V2_12.md). Apply SQL013 in Supabase after pulling, restart, then retry failed invoices. Fixes a reproduced delayed-checkpoint-write foreign-key failure while preserving runs, cases, invoices and mail receipts. Health v2.12/workflow-14 must show checkpoint revision13 ready. No new packages.
