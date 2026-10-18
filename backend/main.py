@@ -423,7 +423,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             draft_edit = {'ready':False,'error':'Apply sql/017_manual_draft.sql after SQL015 to enable Edit draft.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.23", "ui_version":"workflow-23", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.24", "ui_version":"workflow-24", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,

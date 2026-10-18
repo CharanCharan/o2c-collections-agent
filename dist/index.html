@@ -7,13 +7,13 @@
   <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="/assets/favicon.ico?v=1" />
   <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/favicon.svg?v=1" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-23" />
-  <script src="/assets/guide-ui.js?v=workflow-23" defer></script>
-  <script src="/assets/invoice-ui.js?v=workflow-23" defer></script>
-  <script src="/assets/followup-ui.js?v=workflow-23" defer></script>
-  <script src="/assets/workflow-ui.js?v=workflow-23" defer></script>
-  <script src="/assets/draft-ui.js?v=workflow-23" defer></script>
-  <script src="/assets/app.js?v=workflow-23" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-24" />
+  <script src="/assets/guide-ui.js?v=workflow-24" defer></script>
+  <script src="/assets/invoice-ui.js?v=workflow-24" defer></script>
+  <script src="/assets/followup-ui.js?v=workflow-24" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-24" defer></script>
+  <script src="/assets/draft-ui.js?v=workflow-24" defer></script>
+  <script src="/assets/app.js?v=workflow-24" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -27,8 +27,8 @@
       <div class="run-actions" aria-label="Collections actions">
         <button class="primary" id="start-run" disabled><span class="play">▶</span> Run collections</button>
         <details class="header-menu" id="portfolio-menu"><summary>Run overview <span class="menu-count" id="portfolio-count">—</span></summary><div class="action-popover"><section id="workflow-summary" class="workflow-summary" aria-label="Run results and current invoice outcomes" aria-live="polite"></section></div></details>
-        <details class="header-menu" id="promises-menu"><summary>Payment promises <span class="menu-count" id="promise-count">—</span></summary><div class="action-popover promise-popover"><section id="followup-controls" class="followup-controls" aria-label="Promise-to-pay management"></section></div></details>
-        <details class="previous-runs header-menu" id="previous-runs"><summary>Collections run history</summary><div class="history-popover action-popover"><section class="history-bar" aria-label="Collections run history"><label for="saved-runs">Choose a collections run</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · saved history</span></section></div></details>
+        <details class="header-menu" id="promises-menu"><summary>Promises <span class="menu-count" id="promise-count">—</span></summary><div class="action-popover promise-popover"><section id="followup-controls" class="followup-controls" aria-label="Promise-to-pay management"></section></div></details>
+        <details class="previous-runs header-menu" id="previous-runs"><summary>Run history</summary><div class="history-popover action-popover"><section class="history-bar" aria-label="Collections run history"><label for="saved-runs">Choose a collections run</label><select id="saved-runs"><option value="">Loading history…</option></select><button class="secondary" id="open-saved-run">Open run</button><button class="secondary" id="refresh-runs">Refresh</button><span class="panel-sub">Last 20 runs · saved history</span></section></div></details>
       </div>
       <div class="last-run" id="last-run">No active run</div>
     </div>

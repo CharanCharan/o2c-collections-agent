@@ -1,18 +1,22 @@
 ---
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
-updated: 2026-10-18
-implementation_milestone: V2_23_edit_and_context_revision
-implementation_branch: draft-edit-context-revision
+updated: 2026-10-19
+implementation_milestone: V2_24_single_row_controls
+implementation_branch: single-row-run-controls
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: apply_SQL017_deploy_edit_and_revise_saved_draft_with_context
+pending_learning_check: deploy_verify_single_row_controls_and_menu_bounds
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.23 Draft editing and context revision — authoritative current checkpoint
+## V2.24 Single-row controls — authoritative current checkpoint
+
+V2.24 compact single-row collection controls: labels Promises and Run history; desktop run-wrap width:max-content replaces55vw allocation, toolbar nowrap/nonshrinking controls. Mobile <=760 keepsone row withnativehorizontalscroll insteadofwrapping/tinytext. Existingrightalignment, counters, menuIDs/clampedpopovers/businessactions unchanged. v2.24/workflow-24 metadata/cacheonlybackendchange; noSQL/env/packages/budgets/modelchanges. Userimage5 inspected. Staticlabels/CSS/script/beacon/compilechecks andsevenmockedpopovergeometrycases passed; nonativelayoutclaim. Lesson docs/MILESTONE_V2_24.md; branchsingle-row-run-controls; usermerge/deploy/hardrefresh/visualacceptancepending. SQL017previousfeatureprereq only; Incognito/savedcases/freshdemocancellationpreserved.
+
+## Historical V2.23 Draft editing and context revision
 
 V2.23 corrects AI redraft: new revise_reminder structured task receives current saved subject/body plus user revision_request, not only tone preferences. Preserves subject/protected fact sentence; supports added/retained context with literal source excerpts from request/existing body and numeric provenance/policy checks, context-review badge and change summary. Unchanged body is explicit failed/no-change, never saved as success. Prompt/validatorv3. Manual Edit draft subject/body with Save/Cancel, no LLM/quota; human_edited provenance clears AI/template claims. Source fact sentence exact-once +invoiceIDsubject/plaintext/lengthchecks; otherhuman prose requiresreview. SQL017(after015;016optional) private health/save RPC with5005+rowlocks, exact expected-draft optimistic comparison, requestUUID/hash replay, send/hold/reservation checks, staleAI retirement and case-message/audit update. Initial unsent eligible reminders only; send/AI disabled while manually editing; no sentbody/history/sourceAR/run/mode/reset changes. v2.23/workflow-23.112backendregressionspassed then33finaltargetedpassed; actualHTTP/cookie/SSE JSDOM manual/context/no-change/exactsend/reload passed(mockLLM2/mail1); priorAI/lostresponseUIjourney passed(mock3/mail1). No realprovider/DB/deploy/nativepixelclaims. Lesson docs/MILESTONE_V2_23.md; branchdraft-edit-context-revision; userSQL017/merge/deploy/liveacceptancepending. Freshdemo stayscancelled; SQL016quotas unaffected.
 
