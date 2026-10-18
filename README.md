@@ -1,3 +1,5 @@
+> Latest V2.19: [GitHub source link and credential review](docs/MILESTONE_V2_19.md). Adds View source on GitHub beside How it works. Repository visibility stays private; invite interviewers or choose public access for everyone. The documented source/history scan found no apparent live credentials within its stated scope; prior chat-key rotation remains your service-side check. No SQL/packages/settings changes.
+
 > Latest V2.18: [Cloudflare Web Analytics](docs/MILESTONE_V2_18.md). Adds the supplied website analytics beacon. Merge/deploy, visit the website and check Cloudflare Web Analytics; owner visits are included. No new SQL/packages/settings or DNS changes.
 
 > Latest V2.17: [demo inbox screenshot](docs/MILESTONE_V2_17.md). How it works has a small clickable image icon beside the real-email step, opening the supplied inbox screenshot. Existing Incognito behavior stays; no fresh-demo feature or database cleanup. Deploy and hard-refresh; no new SQL/packages/settings.
