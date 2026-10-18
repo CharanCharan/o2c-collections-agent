@@ -400,6 +400,17 @@ for(const menu of document.querySelectorAll('.header-menu')) {
 }
 document.addEventListener('click',event=>{for(const menu of document.querySelectorAll('.header-menu'))if(!menu.contains(event.target))menu.open=false;});
 document.addEventListener('keydown',event=>{if(event.key==='Escape')for(const menu of document.querySelectorAll('.header-menu'))if(menu.open){menu.open=false;menu.querySelector('summary').focus();}});
+function reloadFreshDemo(){window.location.reload();}
+$('fresh-demo').onclick=async()=>{
+  const busy=state.status==='running'||dueActive()||['waiting_for_portfolio','running'].includes(agentJob?.status)||caseActionBusy||sendBusy||clockBusy;
+  if(busy){toast('Let active processing finish before starting a fresh demo.');return;}
+  const button=$('fresh-demo');button.disabled=true;button.textContent='Starting fresh…';
+  try {
+    await api('/api/demo/fresh',{method:'POST'});
+    state.source?.close();stopExecutionStream();stopInvoiceStream();
+    reloadFreshDemo();
+  }catch(error){showError(error.message);button.disabled=false;button.textContent='Start fresh demo';}
+};
 $("reset-link").onclick = (event) => {
   event.preventDefault();
   if (state.status === "running" || dueActive() || ["waiting_for_portfolio","running"].includes(agentJob?.status)) {toast("Let the active run finish before resetting the page."); return;}
@@ -590,6 +601,7 @@ api("/api/health").then(async (health) => {
   }
   renderFollowupControls();
   $('start-run').disabled=dueActive()||['waiting_for_portfolio','running'].includes(agentJob?.status);
+  $('fresh-demo').disabled=!workflowReady;
 }).catch((error) => {
   $("backend-label").textContent = "Backend unavailable";
   banner("OFFLINE", "Check Supabase setup and the FastAPI server");

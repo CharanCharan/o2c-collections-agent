@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_16_saved_draft_mode_clarity
-implementation_branch: clear-saved-draft-modes
+implementation_milestone: V2_17_fresh_demo_workspaces
+implementation_branch: fresh-demo-workspaces
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: verify_live_LLM_new_cases_limited_vs_automatic_after_rotation
+pending_learning_check: verify_fresh_demo_reload_then_live_LLM_mode_acceptance
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.16 popup banner removal and saved draft/mode clarity — authoritative current checkpoint
+## V2.17 fresh demo workspaces — authoritative current checkpoint
+
+PR26 merged20f974e927215036b79b3553dd8f9f2f4453eb39; userwantsfreshdatawithoutoldcases/drafts/modeshinderinglive walkthrough. Branchfresh-demo-workspaces, lessondocs/MILESTONE_V2_17.md. Add Startfreshdemo besideRuncollections; explicitPOST rotatesworkspacecookie/reloads populatedcurrentAR withfreshcases/currentclock/history. Clearviewfootername distinguishesdisplayreset. No DBdeletion/migration/newenv/deps/extra integrations. Appv2.17/uiworkflow-18; SQL014priorprerequisite/liveacceptancepending.
+
+PreserveactualLangGraphsave/resumewithinworkspace; oldsource/runs/cases/checkpoints/mailreceipts/dailyusage retainedbehindnewworkspace. Newruncreatesfreshcases/currentdraftconfiguration/newselectedmode; resetitselfnoagent/model/mail. NewAutomaticruncansendnewcaseemails bounded3/global10, noemailrecallorcounterrefill. FreshnotguaranteeLLM ifexistingquotaexhausted/modelinvalid. Sourcepreviewstillpreloaded. Publichistory/caseownershipnewworkspace, localoperatorhistorycanremainDBwide; globalcase500storagecapacityunchanged.
+
+PublicAccess signedcookie newoptionalbudget_id, validates64hex; actorhashsessionid forownership, budget_actorhashbudget_id orlegacyid forACTOR/publicLLMreservations. fresh_sessionpreservesbudgetid/rotatescaseworkspaceid/resetsissued/clearsowner. No keyvaluesinrepo. MiddlewaretracksactiveHTTPmutationcounts, emitsSetCookieonlynew/changed toavoidlateGETrevertingfreshcookie. NewPOST/api/demo/fresh failclosed onDBerror,blocksactiveDBjobs/duejobs/caselocks/requestcounts/backgroundtaskowners. RunService.track_task mapsactor→tasksforanalysis/graph/due scheduling,donecleanup. Staleinterruptedcaseprocessingflagalone doesn'tblockexplicitfresh; noliveworkcancelled.
+
+Validation:178 full regression tests passed in218.47s before final background-task owner tracking; after that change,25 targeted public/fresh/SSE regressions and all4 final fresh-workspace tests passed. Final actualHTTP/SSE/cookieJSDOM journey passed freshbutton→API→newcookie→reloaded24rowportfolio, emptycases/publichistory/baseclock/oldcaseIDdenial plus priorno-banner/scenarios/approval/send/delivery/recovery/payment/promise/followup/reload flow. Mockprovider counts2mail/6LLMonly; JSsyntax/Pythoncompilepassed. Nativepixel/focustrapnotverified. Newtests verify source/receipts/checkpoints retained, oldIDsdenied/newhistoryempty/currentbaseclock, freshcurrentLLMdrafts+autopilot3afteroldlimitedcase, stable8/browser+globalcounteracross3resets, activejob/crossorigin/ownedbackgroundtaskblock, unchangedcookieonread. Existingpublicsessioncookieflagtestupdatedtoinspectinitialresponse(noeveryGETcookieexpectation). No cloudDBchange/reset/providercalls/deploy. Usermerge/pull/deploy/hardrefresh thenStartfreshdemo→Runcollections; noincognitorequired. FinishPoCafterliveacceptance; noaddedintegrations/editor.
+
+## Historical V2.16 popup banner removal and saved draft/mode clarity
 
 PR25 merged bd2f2aba405c6419d5d2be478dbf0053331f09e2; comparehead172b66dc→main mergeonly/noedits. User removes Suggestedtestbanner from allpopups and asks verify LLMtemplates/savedcases/automaticvsreview flow. Branch clear-saved-draft-modes, lesson docs/MILESTONE_V2_16.md. No newSQL/env/packages; priorSQL014stillrequired/liveacceptanceunconfirmed. Versionv2.16/uiworkflow-17.
 

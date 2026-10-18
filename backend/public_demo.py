@@ -68,6 +68,7 @@ class PublicAccess:
             if not hmac.compare_digest(signature,expected):raise ValueError
             result=json.loads(base64.urlsafe_b64decode(body+'='*(-len(body)%4)))
             if not re.fullmatch(r'[0-9a-f]{64}',result['id']) or not 0<=time.time()-result['issued']<7*86400:raise ValueError
+            if 'budget_id' in result and not re.fullmatch(r'[0-9a-f]{64}',result['budget_id']):raise ValueError
             if type(result.get('owner_until',0)) not in {int,float}:raise ValueError
             return result
         except (ValueError,TypeError,KeyError,AttributeError):return None
@@ -81,6 +82,15 @@ class PublicAccess:
     def actor(self,request):
         session=request.state.demo_session
         return hashlib.sha256(session['id'].encode()).hexdigest(),request.state.demo_owner
+
+    def budget_actor(self,request):
+        session=request.state.demo_session
+        return hashlib.sha256(session.get('budget_id',session['id']).encode()).hexdigest(),request.state.demo_owner
+
+    def fresh_session(self,session):
+        budget_id=session.get('budget_id',session['id'])
+        session.clear()
+        session.update(id=secrets.token_hex(32),budget_id=budget_id,issued=int(time.time()),owner_until=0)
 
     async def allowed(self,request,run_id):
         if not self.config.enabled:return

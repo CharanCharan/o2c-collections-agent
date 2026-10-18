@@ -4,7 +4,11 @@ Last updated: 2026-10-18
 Owner: Charan
 Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. PR#8 merged c5778663 and user confirms preload works. Current v2-visitor-cases implements conversation/case foundation, SQL007 setup pending; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
-## Current milestone — V2.16 saved draft/mode clarity
+## Current milestone — V2.17 fresh demo workspaces
+
+PR26merged20f974e9. Startfreshdemo rotatesonlybrowserworkspace/reloads originalcurrentAR withnewcases/newmode/LLMconfiguration onnextRun. Preservewithin-demoLangGraphstate/source/history/mailreceipts/stablebrowser+globalquotas. Blocksactivework, noagent/model/mailonreset; no DBdelete/SQL/env/deps. Cookieonlynew/changedpreventsoldGETrevertingrotation; trackownedbackgroundtasks. Healthv2.17/workflow-18, lessonV2_17/branchfresh-demo-workspaces. Merge/deploy/liveacceptancepending. No extra integrations; finishPoCafteracceptance.
+
+## Historical milestone — V2.16 saved draft/mode clarity
 
 PR25mergedbd2f2aba. Remove Suggestedtestpopupbanner; guide/scenario/replypickersremain. Show recordedtemplate reason andsavedcase mode; verifyfreshLLMlimited0send/autopilot3boundednewsend/reusedcaseimmutability. No newSQL/env/packages/reset/modeconversion/budgetchange. Healthv2.16/workflow-17, lessonV2_16, branchclear-saved-draft-modes; merge/deploy/liveacceptancepending. EnablingLLMcannot guaranteeallLLMdrafts; existingcases keepdraft/mode, followupstemplates. No extra integrations; finishliveacceptance.
 

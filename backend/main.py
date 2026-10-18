@@ -21,7 +21,7 @@ from .cases import CaseService
 from .workflow.agent import CaseAgent
 from .workflow.diagnostics import failure
 from .workflow.followups import FollowupService
-from .public_demo import PublicConfig, PublicAccess, ACTOR
+from .public_demo import PublicConfig, PublicAccess, ACTOR, COOKIE
 from pydantic import BaseModel, ConfigDict, Field
 from .storage import StorageError, StoreRequestError, SupabaseStore
 
@@ -72,13 +72,15 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     app.state.agent = agent
     app.state.followups = followups
 
+    active_actions={}
+
     @app.middleware('http')
     async def demo_boundary(request: Request,call_next):
         try:
             public.config.check()
         except HTTPException as exc:
             return JSONResponse({'detail':exc.detail},status_code=exc.status_code)
-        session=None
+        session=None;initial_session=None;had_session=False;action_actor=None
         if request.url.path not in {'/livez','/api/webhooks/resend'}:
             origin=request.headers.get('origin')
             if public.config.enabled and request.method not in {'GET','HEAD','OPTIONS'} and origin:
@@ -86,24 +88,33 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
                 parsed=urlsplit(origin)
                 if parsed.scheme!='https' or parsed.netloc!=request.headers.get('host'):
                     return JSONResponse({'detail':'Cross-origin action rejected.'},status_code=403)
+            had_session=public.decode(request.cookies.get(COOKIE,'')) is not None
             session=public.session(request)
+            initial_session=dict(session)
             request.state.demo_session=session
             request.state.demo_owner=public.config.enabled and (session.get('owner_until',0)>time.time() or public.owner(request.headers.get('x-collections-owner')))
-            actor=public.actor(request)
+            actor=public.budget_actor(request)
+            if request.method not in {'GET','HEAD','OPTIONS'} and request.url.path!='/api/demo/fresh':
+                action_actor=public.actor(request)[0]
+                active_actions[action_actor]=active_actions.get(action_actor,0)+1
         else:
             request.state.demo_owner=False
             actor=('webhook',False)
         context=ACTOR.set(actor)
         try:
             response=await call_next(request)
-            if session is not None:public.set_cookie(response,session)
+            if session is not None and (not had_session or session!=initial_session):public.set_cookie(response,session)
             response.headers['X-Content-Type-Options']='nosniff'
             response.headers['X-Frame-Options']='DENY'
             response.headers['Referrer-Policy']='no-referrer'
             if request.url.path.startswith('/api/'):
                 response.headers['Cache-Control']='no-store'
             return response
-        finally:ACTOR.reset(context)
+        finally:
+            ACTOR.reset(context)
+            if action_actor:
+                active_actions[action_actor]-=1
+                if not active_actions[action_actor]:active_actions.pop(action_actor)
 
     @app.get('/livez')
     async def liveness():
@@ -138,6 +149,21 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     @app.exception_handler(risk_model.ModelError)
     async def model_error(request, exc):
         return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+    @app.post('/api/demo/fresh')
+    async def fresh_demo(request: Request):
+        s=backend();actor=public.actor(request)[0]
+        # Rotate only this browser's workspace. Never delete business receipts or quotas.
+        job=await s.store.rpc('ca_agent_latest',{'p_session_key':actor})
+        due=await followups.job(actor)
+        owned=await cases.list(actor)
+        recent=await s.store.rpc('ca_public_recent',{'p_session_key':actor})
+        if (active_actions.get(actor,0) or any(r['status'] in {'queued','running'} for r in recent)
+            or any(not task.done() and (not public.config.enabled or s.task_actors.get(task)==actor) for task in s.tasks) or (job and job['status'] in {'running','waiting_for_portfolio'})
+            or (due and due['status']=='running') or any(agent.locks[c['id']].locked() for c in owned)):
+            raise HTTPException(409,'Let active collections, replies and promise processing finish before starting a fresh demo.')
+        public.fresh_session(request.state.demo_session)
+        return {'fresh':True,'source_reset':False,'usage_reset':False}
 
     @app.get('/api/portfolio')
     async def portfolio_preview():
@@ -224,7 +250,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
                 result['created']=True
             if result['created']:
                 task=asyncio.create_task(agent.run_job(actor,str(run_id),body.mode))
-                s.tasks.add(task);task.add_done_callback(s.tasks.discard)
+                s.track_task(task,actor)
             return result
 
     @app.get('/api/runs/{run_id}/agent')
@@ -322,7 +348,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     def schedule_due(actor,job):
         if job['created']:
             task=asyncio.create_task(followups.run(actor,job['job']['id']))
-            service.tasks.add(task);task.add_done_callback(service.tasks.discard)
+            service.track_task(task,actor)
         return job
 
     @app.post('/api/followup-checks')
@@ -389,7 +415,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             followup_status={'ready':False,'error':'Apply sql/012_promise_followups.sql to enable demo-clock follow-ups.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.16", "ui_version":"workflow-17", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.17", "ui_version":"workflow-18", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,

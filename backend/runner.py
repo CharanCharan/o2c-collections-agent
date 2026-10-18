@@ -47,8 +47,17 @@ class RunService:
         self.language = language or LanguageService.from_env()
         self.process_id = str(uuid4())
         self.tasks: set[asyncio.Task] = set()
+        self.task_actors = {}
         self.initialized = False
         self.init_lock = asyncio.Lock()
+
+    def track_task(self,task,actor=None):
+        self.tasks.add(task)
+        self.task_actors[task]=actor
+        def finished(done):
+            self.tasks.discard(done)
+            self.task_actors.pop(done,None)
+        task.add_done_callback(finished)
 
     async def initialize(self):
         async with self.init_lock:
@@ -73,8 +82,7 @@ class RunService:
                 await self._fail(run,'case_agent_setup','failed','Could not save case-agent setup. No case actions started.',None)
                 raise
         task = asyncio.create_task(self.execute(run,after_run))
-        self.tasks.add(task)
-        task.add_done_callback(self.tasks.discard)
+        self.track_task(task,public_actor[0] if public_actor else None)
         return run
 
     async def execute(self, run, after_run=None):

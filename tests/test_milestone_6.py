@@ -21,10 +21,10 @@ def app_for(store_factory,language=None,config=PUBLIC):
 
 def test_https_session_run_history_isolation_and_all_mutation_routes(store_factory):
     with TestClient(app_for(store_factory),base_url='https://demo.test') as a:
+        headers=a.get('/').headers
         run,_=finish(a);rid=run['run_id']
         cookie=a.cookies.get(COOKIE)
         assert cookie and a.get('/api/runs').json()['runs'][0]['run_id']==rid
-        headers=a.get('/').headers
         assert 'Secure' in headers['set-cookie'] and 'HttpOnly' in headers['set-cookie'] and 'SameSite=lax' in headers['set-cookie']
         with TestClient(app_for(store_factory),base_url='https://demo.test') as b:
             assert b.get('/api/runs').json()['runs']==[]
