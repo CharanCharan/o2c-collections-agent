@@ -141,14 +141,15 @@ function renderQueue() {
       <td><span class="tag ${row.score == null ? 'state' : row.level}">${row.score == null ? (row.days === 0 ? 'Not overdue' : 'Awaiting rules') : `${row.score}/100 · ${escapeHTML(row.level)}`}</span></td>
       <td>${row.prediction?.status==='scored'?`<strong>${(100*probability(row.prediction)).toFixed(1)}%</strong><div class="subline">${isPreDue(row.prediction)?'Becomes overdue':'Unpaid in 30 days'}</div>`:'<span class="subline">No matching prediction</span>'}</td>
       <td><span class="tag ${v.status.includes('dispute')?'warn':'state'}">${escapeHTML(v.label)}</span></td>
-      <td>${escapeHTML(v.latest)}${v.timestamp?`<div class="subline">${escapeHTML(new Date(v.timestamp).toLocaleTimeString())}</div>`:''}</td><td>${escapeHTML(v.next)}</td>
+      <td>${escapeHTML(v.latest)}${v.timestamp?`<div class="subline">${escapeHTML(new Date(v.timestamp).toLocaleTimeString())}</div>`:''}</td><td>${escapeHTML(v.next)}</td><td><button class="invoice-events" type="button" aria-label="View event log for ${escapeHTML(row.id)}">Log${v.w?.activity?.length?` · ${v.w.activity.length}`:''}</button></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="8" class="empty-state">${state.invoices.length?'No invoices match this filter.':'Waiting for invoice data.'}</td></tr>`;
+  }).join('') : `<tr><td colspan="9" class="empty-state">${state.invoices.length?'No invoices match this filter.':'Waiting for invoice data.'}</td></tr>`;
   $('clear-outcome-filter').hidden=!outcomeFilter;
   renderWorkflowSummary();renderCaseExecution();
   $("queue").querySelectorAll("tr[data-id]").forEach((row) => {
     const select = () => openInvoiceWorkspace(row.dataset.id);
     row.addEventListener("click", select);
+    row.querySelector(".invoice-events").onclick=event=>{event.stopPropagation();openInvoiceWorkspace(row.dataset.id,true);};
     row.addEventListener("keydown", (event) => {
       if (event.target === row && (event.key === "Enter" || event.key === " ")) {event.preventDefault(); select();}
     });
@@ -203,16 +204,15 @@ function renderDetail() {
 }
 
 function renderFlow() {
-  let completed = 0;
-  const visibleStages = state.legacyRun ? stages.filter(([id]) => id !== "predict") : stages;
-  $("flow").innerHTML = visibleStages.map(([id, name, desc], i) => {
-    const status = state.stageStatus[id];
-    if (status === "completed") completed++;
-    const cls = status === "completed" ? "complete" : status === "started" ? "active" : status === "failed" ? "failed" : "";
-    const symbol = status === "completed" ? "✓" : status === "failed" ? "!" : i + 1;
-    return `<div class="step ${cls}" role="listitem"><div class="step-icon">${symbol}</div><div><div class="step-name">${name}</div><div class="step-desc">${desc}</div></div><div class="step-meta">${status || "Waiting"}</div></div>`;
-  }).join("");
-  $("progress-bar").style.width = `${completed / visibleStages.length * 100}%`;
+  const preparation=state.legacyRun?stages.filter(([id])=>id!=='predict'):stages;
+  const job=agentJob,jobActive=['waiting_for_portfolio','running'].includes(job?.status);
+  const savedPreparation=job && !state.currentRun && ['running','completed','interrupted'].includes(job.status);
+  const rows=preparation.map(([id,name])=>({id,name,status:state.stageStatus[id] || (savedPreparation?'completed':null)}));
+  if(job)rows.push({id:'case_actions',name:'Process invoice actions',status:job.status==='running'?'started':job.status==='completed'?(job.progress?.failed?'warning':'completed'):['interrupted','analysis_failed'].includes(job.status)?'failed':null});
+  $('flow').innerHTML=rows.map(({id,name,status},i)=>`<div class="step ${status==='completed'?'complete':status==='started'?'active':status==='failed'?'failed':status==='warning'?'warning':''}" data-stage="${id}" role="listitem" aria-label="${escapeHTML(name)}: ${status || 'waiting'}" ${status==='started'?'aria-current="step"':''}><span class="step-icon">${status==='completed'?'✓':status==='failed'||status==='warning'?'!':i+1}</span><span class="step-name">${escapeHTML(name)}</span></div>`).join('');
+  $('progress-bar').style.width=`${rows.filter(r=>['completed','warning'].includes(r.status)).length/rows.length*100}%`;
+  const event=liveExecution?.invoice_id===job?.progress?.current_invoice?liveExecution:null;
+  $('current-execution').textContent=jobActive?(event?`${event.invoice_id} · ${activityLabels[event.node] || event.node} · ${event.status==='started'?'In progress':event.status==='completed'?'Recorded':event.status}`:job.status==='waiting_for_portfolio'?'Preparing the portfolio…':`Processing ${job.progress?.current_invoice || 'invoices'} · ${job.progress?.processed || 0}/${job.progress?.total || state.invoices.length}`):job?`${!state.currentRun?'Saved run · ':''}${job.progress?.processed || 0}/${job.progress?.total || 0} invoices processed${job.progress?.retained?` · ${job.progress.retained} existing cases retained`:''}${job.progress?.failed?` · ${job.progress.failed} need review`:''}`:'Run collections to start. Fast steps may finish immediately.';
 }
 
 function addEvent(event) {
@@ -241,7 +241,7 @@ function handleEvent(event) {
     applySnapshot(event.result);
     state.source?.close();
     $("start-run").disabled = false;
-    if(pendingMode){pendingMode=null;$('start-run').disabled=true;banner('COLLECTIONS RUNNING','Portfolio prepared; processing saved collection actions.');}
+    if(pendingMode){pendingMode=null;$('start-run').disabled=['running','waiting_for_portfolio'].includes(agentJob?.status);if(agentJob?.status==='completed')showJobState();else banner('COLLECTIONS RUNNING','Portfolio prepared; processing saved collection actions.');}
     else banner("COMPLETE", "Run saved in Supabase · review drafts and inspect step outputs");
     refreshSavedRuns();
     $("last-run").textContent = `Run ${state.currentRun.slice(0, 8)} · ${event.result.summary.draft_count} drafts`;
@@ -260,7 +260,8 @@ function handleEvent(event) {
 
 function clearRun() {
   outcomeFilter=null;
-  pendingMode=null;
+  pendingMode=null;agentJob=null;
+  stopExecutionStream();stopInvoiceStream();liveExecution=null;
   state.source?.close();
   const selectedStage = state.queueStage;
   Object.assign(state, {invoices: [], selectedId: null, currentRun: null, status: "idle", legacyRun: false,
@@ -290,6 +291,7 @@ async function startRun(mode) {
     const run = await api("/api/runs", {method: "POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode})});
     agentJob={run_id:run.run_id,mode,status:"waiting_for_portfolio",progress:{}};
     state.currentRun = run.run_id;
+    connectExecutionStream(run.run_id);renderFlow();
     $("last-run").textContent = `Run ${run.run_id.slice(0, 8)} · backend execution`;
     $("inspect-run").href = `/api/runs/${run.run_id}`;
     $("inspect-run").hidden = false;
@@ -360,6 +362,7 @@ async function openSavedRun() {
     state.status = run.status;
     agentJob=null;
     if(workflowReady){try{agentJob=await api(`/api/runs/${id}/agent`);}catch(error){if(error.status!==404)showError('Run statistics unavailable: '+error.message);}}
+    liveExecution=null;renderFlow();
     applySnapshot(run.result);
     banner(run.status.toUpperCase(), `Opened saved run ${id.slice(0, 8)} from Supabase`);
     $("last-run").textContent = `Saved run ${id.slice(0, 8)}`;
@@ -411,7 +414,7 @@ async function refreshCases(repaint = true) {
   const oldCase=visitorCases.find(c=>c.invoice_id===state.selectedId);
   const composer=$('case-reply-text');const draftText=composer?.value;const focused=document.activeElement===composer;
   try {
-    visitorCases = (await api('/api/cases')).cases;
+    mergeExecutionCases((await api('/api/cases')).cases);
     casesLoaded = true; caseLoadError = '';
   } catch(error) {caseLoadError = error.message;}
   renderQueue();
@@ -574,7 +577,8 @@ api("/api/health").then(async (health) => {
     scenarioSummaries=(await api('/api/scenarios')).scenarios;
     agentJob=(await api('/api/agent-jobs')).job;
     $('clear-outcome-filter').hidden=!outcomeFilter;
-  renderWorkflowSummary();renderCaseExecution();
+  renderWorkflowSummary();renderCaseExecution();renderFlow();
+    if(["running","waiting_for_portfolio"].includes(agentJob?.status))connectExecutionStream(agentJob.run_id);
   }
   renderFollowupControls();
   $('start-run').disabled=dueActive()||['waiting_for_portfolio','running'].includes(agentJob?.status);

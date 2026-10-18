@@ -20,6 +20,7 @@ from ..storage import StoreRequestError,StorageError
 from .checkpoints import SupabaseSaver
 from .reporting import case_snapshot, case_result
 from .diagnostics import failure
+from .events import ExecutionEvents,active_run
 
 
 class State(TypedDict,total=False):
@@ -39,6 +40,7 @@ class CaseAgent:
         self.store,self.language,self.mail,self.cases=store,language,mail,cases
         self.locks=defaultdict(asyncio.Lock)
         self.job_locks=defaultdict(asyncio.Lock)
+        self.events=ExecutionEvents()
         g=StateGraph(State)
         for name in ['load','interpret','choose','approval','execute','plan_followup','finish']:
             g.add_node(name,getattr(self,name))
@@ -60,8 +62,16 @@ class CaseAgent:
         return {'configurable':{'thread_id':case_id},'recursion_limit':16,'callbacks':[]}
 
     async def patch(self,s,patch,node,message,status='completed'):
-        return await self.store.rpc('ca_workflow_patch',{'p_session_key':s['actor'],'p_case_id':s['case_id'],
+        case=await self.store.rpc('ca_workflow_patch',{'p_session_key':s['actor'],'p_case_id':s['case_id'],
             'p_patch':patch,'p_event_key':s['event_key']+':'+node+':'+status,'p_node':node,'p_status':status,'p_message':message})
+
+        self.publish_case(case)
+        return case
+
+    def publish_case(self,case):
+        run_id=active_run.get()
+        if run_id:self.events.publish(run_id,{'case':case})
+        self.events.publish('case:'+case['id'],{'case':case})
 
     async def load(self,s):
         c=await self.case(s['actor'],s['case_id'])
@@ -228,8 +238,9 @@ class CaseAgent:
                 collection_status='dispute_hold_review_required' if tool=='inspect_dispute' else 'documents_ready',evidence=report,
                 next_action='Review discrepancy or missing evidence' if tool=='inspect_dispute' else 'Review documents and prepare customer response')
             result.update(message=('Dispute held; ' if tool=='inspect_dispute' else '')+str(len(docs))+' controlled synthetic document(s) retrieved.'+(' Missing: '+', '.join(report['missing_documents'])+'.' if report['missing_documents'] else '')+' No document email sent.',evidence=report)
-        await self.store.rpc('ca_workflow_effect',{'p_session_key':s['actor'],'p_case_id':s['case_id'],'p_event_key':s['event_key'],
+        case=await self.store.rpc('ca_workflow_effect',{'p_session_key':s['actor'],'p_case_id':s['case_id'],'p_event_key':s['event_key'],
             'p_tool':tool,'p_result':result,'p_patch':patch})
+        self.publish_case(case)
         return {}
 
     async def plan_followup(self,s):
@@ -340,15 +351,19 @@ class CaseAgent:
             return {'case':c}
 
     async def run_job(self,actor,run_id,mode):
-        progress={'processed':0,'total':0,'auto_send_limit':3,'auto_case_ids':[]}
+        token=active_run.set(run_id)
+        progress={'processed':0,'total':0,'auto_send_limit':3,'auto_case_ids':[],'retained':0}
         async def save(status='running'):
-            return await self.store.rpc('ca_agent_job',{'p_action':'update','p_session_key':actor,'p_run_id':run_id,'p_progress':progress,'p_status':status})
+            saved=await self.store.rpc('ca_agent_job',{'p_action':'update','p_session_key':actor,'p_run_id':run_id,'p_progress':progress,'p_status':status})
+            self.events.publish(run_id,{'job':saved})
+            return saved
         try:
             job=await self.store.rpc('ca_agent_job',{'p_action':'get','p_session_key':actor,'p_run_id':run_id})
             progress.update(job['progress'])
             progress.setdefault('report',{'version':1,'invoices':{},'legacy_partial':bool(progress.get('processed'))})
             report=progress['report']['invoices']
             progress['processed']=0
+            progress['retained']=0
             run=await self.store.get_run(run_id);rows=run['result']['invoices'];progress['total']=len(rows)
             progress.pop('error',None);progress.pop('failure',None)
             for row in rows:
@@ -371,8 +386,11 @@ class CaseAgent:
                         await self.invoke(actor,c['id'],mode=mode,allow_auto_send=c['id'] in ids)
                     elif c['workflow'].get('processing') and not c['workflow'].get('pending'):
                         await self.resume(actor,c['id'])
+                    else:
+                        progress['retained']+=1
                     phase='read_outcome'
                     c=await self.case(actor,c['id'])
+                    self.publish_case(c)
                     entry.update(completed=True,after=case_snapshot(c),result=case_result(entry['before'],c))
                     entry.pop('error',None)
                     progress['processed']+=1
@@ -395,3 +413,5 @@ class CaseAgent:
             progress['error']=progress['failure']['message']
             try:await save('interrupted')
             except StorageError:pass
+        finally:
+            active_run.reset(token)
