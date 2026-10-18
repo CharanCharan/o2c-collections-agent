@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_16_saved_draft_mode_clarity
-implementation_branch: clear-saved-draft-modes
+implementation_milestone: V2_17_guide_inbox_screenshot
+implementation_branch: guide-inbox-screenshot
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: verify_live_LLM_new_cases_limited_vs_automatic_after_rotation
+pending_learning_check: verify_guide_screenshot_deploy_and_live_mode_acceptance
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.16 popup banner removal and saved draft/mode clarity — authoritative current checkpoint
+## V2.17 guide inbox screenshot — authoritative current checkpoint
+
+PR26 merged20f974e927215036b79b3553dd8f9f2f4453eb39. User explicitly CANCELLED Startfreshdemo after understandingIncognito and requestsattachedimage as smallclickableicon inHowitworksSendrealemailrow. Unpublishedfresh-demo-workspaces branchadf48b64996ae8af29700974028b8be8947c4463 is ABANDONED/noPRopened; do not merge/resume withoutnewrequest. Allfreshcookie/budget/runner/endpoint/UI/test changes reverted locally beforethismilestone. Canonicalmain20f974e9 andbranchguide-inbox-screenshot; lessondocs/MILESTONE_V2_17.md nowdescribesscreenshotonly, notfreshworkspaces.
+
+Imageprovided image(3).png inspected: GmailinboxshowsthreeO2Cdemoemails, noAPIkeys; userauthorizeswebsiteembedding. CopyoriginalPNGunchanged todist/demo-email-inbox.png. FirstMDguidepageSendandrespondrow hasexact [Inbox screenshot](/assets/demo-email-inbox.png) markerbesidedemoinboxtext. renderGuideInlineescapesalltextthenrecognizesonlythatfixedmarker andinsertsimageSVGlinktofixedlocalPNG targetblank/noopenernoreferrer/title/arialabel/keyboardfocus. NoarbitraryURLs/rawHTML/Markdownimageparser allowed. Staticexample, notliveinbox/currentrunreceipt; opensnoAPI/model/email. FirsttwoMDpages/thirdscenarioguide/suggestedrepliesunchanged.
+
+Appv2.17/uiworkflow-18(versiononlybackendchange). No freshdemobutton/endpoint/cookie/budget/tasktracking/source/history changes ornewSQL/env/deps/integrations. Existingnormalbrowserstatepersists, Incognitoexistingapproachforfreshcasewalkthrough; globalquotasstillapply. Userrecentlyreportsrealemailworking viaattachedscreenshot, but noassistantlivecall/callbackverification claimed. PriorSQL014required.
+
+Validation:4 preview/savedmode SQL/API regressions passed. ActualHTTP/SSE/cookieJSDOM guide verifiediconinexactSendrealemailrow, accessiblearialabel/keyboardlink/newtab/fixedlocalhref, image/png200andbyte-for-byteoriginalPNG, escapedHTML/unrecognizedjavascriptMarkdownnotalink, nofreshdemobutton, pluspriorfullscenario/approval/send/signeddelivery/recovery/payment/promise/date/followup/reload/sourcepreservationjourney. Mockproviders2mail/6LLMonly; JSsyntax/Pythoncompilepassed. Nativepixel/focustrapnotverified. Usermerge/pull/deploy/hardrefresh; Howitworks→Entireworkflow→smallinboximageicon opensoriginalscreenshotnewtab. Nativevisualacceptancepending. No liveprovider/cloudDBchanges/deploy; no database cleanup needed. FinishPoCafterliveacceptance.
+
+## Historical V2.16 popup banner removal and saved draft/mode clarity
 
 PR25 merged bd2f2aba405c6419d5d2be478dbf0053331f09e2; comparehead172b66dc→main mergeonly/noedits. User removes Suggestedtestbanner from allpopups and asks verify LLMtemplates/savedcases/automaticvsreview flow. Branch clear-saved-draft-modes, lesson docs/MILESTONE_V2_16.md. No newSQL/env/packages; priorSQL014stillrequired/liveacceptanceunconfirmed. Versionv2.16/uiworkflow-17.
 

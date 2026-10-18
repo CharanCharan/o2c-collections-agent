@@ -5,9 +5,14 @@ let guidePages=null;
 let guideLoading=null;
 let languageStatus=null;
 
+function renderGuideInline(value) {
+  const icon='<a class="guide-inbox-image" href="/assets/demo-email-inbox.png" target="_blank" rel="noopener noreferrer" aria-label="View demo inbox screenshot (opens in a new tab)" title="View demo inbox screenshot (opens in a new tab)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m4 17 5-5 4 4 3-3 5 5"/></svg></a>';
+  return escapeHTML(value).replaceAll('[Inbox screenshot](/assets/demo-email-inbox.png)',icon);
+}
+
 function renderGuideMarkdown(markdown) {
   const lines=markdown.trim().split('\n'),output=[];
-  const cells=line=>line.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(cell=>escapeHTML(cell.trim()));
+  const cells=line=>line.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(cell=>renderGuideInline(cell.trim()));
   for(let i=0;i<lines.length;i++) {
     const line=lines[i].trim();if(!line)continue;
     if(/^\|/.test(line) && /^\|[\s:|\-]+$/.test(lines[i+1]?.trim() || '')) {

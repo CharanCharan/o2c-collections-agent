@@ -1,3 +1,5 @@
+> Latest V2.17: [demo inbox screenshot](docs/MILESTONE_V2_17.md). How it works has a small clickable image icon beside the real-email step, opening the supplied inbox screenshot. Existing Incognito behavior stays; no fresh-demo feature or database cleanup. Deploy and hard-refresh; no new SQL/packages/settings.
+
 > Latest V2.16: [saved draft/mode clarity](docs/MILESTONE_V2_16.md). Removes the invoice popup Suggested test banner while retaining the scenario guide and reply suggestions. Shows template generation reasons and saved case mode; verifies fresh limited vs automatic sending. Deploy latest main and hard-refresh; no new SQL/packages/settings.
 
 > Latest V2.15: [guided invoice scenarios](docs/MILESTONE_V2_15.md). How it works → Try a scenario opens an invoice with a suggested test. Every invoice has suggested-reply categories, including an unsent preview before a run. Opening and filling text are read-only; sending remains explicit. Deploy latest main and hard-refresh; no new SQL/packages/settings (SQL014 remains required).
