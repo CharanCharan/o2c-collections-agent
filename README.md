@@ -1,3 +1,5 @@
+> Latest V2.22: [compact header and optional LLM allowance](docs/MILESTONE_V2_22.md). Smaller GitHub link, top-right desktop actions and viewport-clamped menus. Deploy/hard-refresh for UI; optionally apply `sql/016_demo_llm_budget.sql` for 40 browser / 100 shared LLM attempts per UTC day. Usage is preserved. No new packages/settings.
+
 > Latest V2.21: [Draft with AI](docs/MILESTONE_V2_21.md). Optional wording preferences generate and save a new reminder for review, without sending. Apply `sql/015_ai_draft.sql` after SQL014, deploy and hard-refresh. Existing LLM budgets and financial checks remain; sent content is preserved. No new packages/settings.
 
 > Latest V2.20: [LLM draft formatting](docs/MILESTONE_V2_20.md). Explicit field limits/types and concise examples improve draft reliability; rejected output shows safe field-specific reasons. Financial checks and budgets remain. Deploy latest main; saved drafts retain earlier outcomes. No new SQL/packages/settings.
