@@ -119,13 +119,15 @@ const isPreDue = p => p?.risk_type === 'pre_due_overdue';
 const stageLabel = row => row.lifecycle === 'pre_due' ? 'Prevention' : row.lifecycle === 'due_today' ? 'Due today' : row.lifecycle === 'settled' ? 'No balance' : 'Recovery';
 const timingLabel = row => row.days > 0 ? `${row.days} days overdue` : row.days_to_due > 0 ? `Due in ${row.days_to_due} days` : 'Due today';
 
-function renderQueue() {
+function renderQueue(preserveSelection=false) {
   $("filter-btn").disabled = !outcomeFilter && state.queueStage === "pre_due";
   $("preventive-caption").hidden=Boolean(outcomeFilter) || state.queueStage!=="pre_due";
   const rows = state.invoices.filter(row => (!outcomeFilter || outcomeFilter.ids.includes(row.id)) && (!state.highOnly || (row.level === 'high' && row.eligible)) &&
     (outcomeFilter || (state.queueStage === 'pre_due' ? ['pre_due','due_today'].includes(row.lifecycle) : row.days > 0)));
-  if (!rows.length) state.selectedId = null;
-  else if (!rows.some(row => row.id === state.selectedId)) state.selectedId = rows[0].id;
+  if(!preserveSelection && !$('invoice-dialog').open){
+    if (!rows.length) state.selectedId = null;
+    else if (!rows.some(row => row.id === state.selectedId)) state.selectedId = rows[0].id;
+  }
   $("queue-sub").textContent = `${rows.length} shown${outcomeFilter ? ' · '+outcomeFilter.label : ''} · totals above: full portfolio`;
   $("stage-overdue").setAttribute('aria-pressed', String(!outcomeFilter && state.queueStage === 'overdue'));
   $("stage-preventive").setAttribute('aria-pressed', String(!outcomeFilter && state.queueStage === 'pre_due'));
@@ -393,7 +395,7 @@ $("filter-btn").onclick = () => {
   renderQueue(); renderDetail();
 };
 for(const menu of document.querySelectorAll('.header-menu')) {
-  menu.addEventListener('toggle',()=>{if(menu.open)for(const other of document.querySelectorAll('.header-menu'))if(other!==menu)other.open=false;});
+  menu.addEventListener('toggle',()=>{if(menu.open){for(const other of document.querySelectorAll('.header-menu'))if(other!==menu)other.open=false;if(menu.id==='promises-menu')renderFollowupControls();}});
 }
 document.addEventListener('click',event=>{for(const menu of document.querySelectorAll('.header-menu'))if(!menu.contains(event.target))menu.open=false;});
 document.addEventListener('keydown',event=>{if(event.key==='Escape')for(const menu of document.querySelectorAll('.header-menu'))if(menu.open){menu.open=false;menu.querySelector('summary').focus();}});
@@ -440,6 +442,7 @@ function renderCase() {
   if (!panel) return;
   const row = state.invoices.find(r => r.id === state.selectedId);
   const current = visitorCases.find(c => c.invoice_id === row?.id);
+  renderScenarioCoach(row,current);
   if (caseLoadError) {
     panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${escapeHTML(caseLoadError)} Run sql/007_visitor_cases.sql and sql/008_case_email.sql for this milestone.</p><button class="secondary" id="case-reload">Reload cases</button>`;
     $('case-reload').onclick = refreshCases; return;
@@ -448,6 +451,7 @@ function renderCase() {
     panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${!casesLoaded ? 'Loading saved cases…' : row ? 'Run collections from the queue to prepare this invoice’s reminder and enable customer replies. This browser’s cases survive reload.' : 'Select an invoice to see its saved conversation.'}</p>
       <button class="secondary" id="case-open" ${casesLoaded && row && state.status === 'completed' && agentJob?.status !== 'running' ? '' : 'disabled'} ${state.status !== 'completed' ? 'hidden' : ''}>Enable customer replies</button>
       <p class="explain">Opening a case saves an unsent draft copy. It does not deliver email. Use Send reminder beside the draft for a real Resend send to the project test inbox.</p>`;
+    if(row){panel.insertAdjacentHTML('beforeend','<div id="reply-preview"><label for="case-reply-text">Prepare a simulated reply · not sent</label><textarea id="case-reply-text" maxlength="4000" placeholder="Choose a suggested response or type your own."></textarea><p class="explain">Run collections to enable sending this simulated reply.</p></div>');mountSuggestedReplies(row,null);}
     $('case-open').onclick = async () => {
       const button = $('case-open'); button.disabled = true;
       try {saveCase(await api('/api/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.currentRun,invoice_id:row.id})}));}
@@ -487,13 +491,12 @@ function renderCase() {
     renderSendState();
     try {
       const response = await api(`/api/cases/${current.id}/replies`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({request_id:pending.request_id,text})});
-      pendingCaseReply = null; replyDrafts.delete(current.id); saveCase(response);
+      pendingCaseReply = null; replyDrafts.delete(current.id); replyDrafts.delete('invoice:'+current.invoice_id); saveCase(response);
       toast(response.recorded ? 'Reply and review status saved. Invoice balance unchanged.' : 'Saved reply reopened; no duplicate model call.');
     } catch(error) {replyFailed=true;showError(error.message);await refreshCases(false);}
     finally{caseActionBusy=false;renderCase();renderSendState();if(replyFailed && $('case-reply-text'))$('case-reply-text').value=text;}
   };
-  const suggested=current.workflow?.scenario?.suggested_reply || scenarioSummaries.find(s=>s.invoice_id===current.invoice_id)?.suggested_reply;
-  if(suggested){const b=document.createElement('button');b.className='secondary';b.type='button';b.textContent='Use this scenario’s suggested reply';b.onclick=()=>{$('case-reply-text').value=suggested;replyDrafts.set(current.id,suggested);$('case-reply-text').focus();};$('case-reply-form').prepend(b);}
+  mountSuggestedReplies(row,current);
   bindWorkflowExtras(current);
 }
 
@@ -578,6 +581,8 @@ api("/api/health").then(async (health) => {
   await refreshCases();
   if(workflowReady){
     scenarioSummaries=(await api('/api/scenarios')).scenarios;
+    if($('workflow-guide').open && guidePage===2)showGuidePage(2);
+    renderCase();
     agentJob=(await api('/api/agent-jobs')).job;
     $('clear-outcome-filter').hidden=!outcomeFilter;
   renderWorkflowSummary();renderCaseExecution();renderFlow();

@@ -375,3 +375,12 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 .guide-footer {display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 22px;border-top:1px solid var(--line);font-size:13px}
 .guide-footer a {margin-right:auto;color:#25634e}.guide-footer button {font-size:13px}
 @media(max-width:760px) {.guide-head,.guide-footer {padding:14px}.guide-head h2 {font-size:19px}.guide-tabs {padding:10px 14px}.guide-content {padding:4px 14px 12px}}
+
+/* Guided scenarios stay visible beside the real current state. */
+.guide-tabs {flex-wrap:wrap}.scenario-table th:first-child {width:22%}.scenario-table th:last-child {width:18%}
+.scenario-table p {margin:5px 0}.scenario-table small {color:#4d665c}
+.scenario-coach {margin:12px 18px 0;padding:12px 16px;background:#eef7f1;border:1px solid #bfd8c8;border-radius:9px;font-size:14px;line-height:1.45}
+.scenario-coach p {margin:5px 0}.scenario-current {font-weight:600}.scenario-coach small {display:block;color:#4e665b}
+.suggested-replies {display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;padding:10px;background:#f3f7f4;border-radius:8px}
+.suggested-replies label,.suggested-replies small {flex-basis:100%}.suggested-replies select {max-width:100%;padding:8px;font:inherit;border:1px solid #c4d6cb;border-radius:6px;background:white}
+#reply-preview textarea {width:100%;min-height:100px;font:inherit;padding:10px;box-sizing:border-box}

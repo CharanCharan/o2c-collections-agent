@@ -7,12 +7,12 @@
   <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="/assets/favicon.ico?v=1" />
   <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/favicon.svg?v=1" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-15" />
-  <script src="/assets/guide-ui.js?v=workflow-15" defer></script>
-  <script src="/assets/invoice-ui.js?v=workflow-15" defer></script>
-  <script src="/assets/followup-ui.js?v=workflow-15" defer></script>
-  <script src="/assets/workflow-ui.js?v=workflow-15" defer></script>
-  <script src="/assets/app.js?v=workflow-15" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-16" />
+  <script src="/assets/guide-ui.js?v=workflow-16" defer></script>
+  <script src="/assets/invoice-ui.js?v=workflow-16" defer></script>
+  <script src="/assets/followup-ui.js?v=workflow-16" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-16" defer></script>
+  <script src="/assets/app.js?v=workflow-16" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -73,13 +73,14 @@
 </div>
 <dialog id="workflow-guide" class="workflow-guide" aria-labelledby="workflow-guide-title">
   <header class="guide-head"><div><div class="eyebrow">Behind the demo</div><h2 id="workflow-guide-title">How this collections agent works</h2></div><button class="secondary" id="close-workflow-guide">Close ×</button></header>
-  <div id="guide-tabs" class="guide-tabs" role="tablist" aria-label="Workflow guide pages"><button id="guide-tab-0" role="tab" aria-controls="guide-content" aria-selected="true">1. Entire workflow</button><button id="guide-tab-1" role="tab" aria-controls="guide-content" aria-selected="false" tabindex="-1">2. Agentic workflow</button></div>
+  <div id="guide-tabs" class="guide-tabs" role="tablist" aria-label="Workflow guide pages"><button id="guide-tab-0" role="tab" aria-controls="guide-content" aria-selected="true">1. Entire workflow</button><button id="guide-tab-1" role="tab" aria-controls="guide-content" aria-selected="false" tabindex="-1">2. Agentic workflow</button><button id="guide-tab-2" role="tab" aria-controls="guide-content" aria-selected="false" tabindex="-1">3. Try a scenario</button></div>
   <section id="guide-content" class="guide-content" role="tabpanel" aria-labelledby="guide-tab-0" tabindex="0"></section>
   <p id="guide-llm-status" class="guide-llm-status">LLM calls: checking configuration…</p>
-  <footer class="guide-footer"><a href="/assets/HOW_IT_WORKS.md" target="_blank" rel="noopener">Markdown source</a><span id="guide-page-count">Page 1 of 2</span><button class="secondary" id="guide-prev">Previous</button><button class="secondary" id="guide-next">Next</button></footer>
+  <footer class="guide-footer"><a href="/assets/HOW_IT_WORKS.md" target="_blank" rel="noopener">Markdown source</a><span id="guide-page-count">Page 1 of 3</span><button class="secondary" id="guide-prev">Previous</button><button class="secondary" id="guide-next">Next</button></footer>
 </dialog>
 <dialog id="invoice-dialog" class="invoice-dialog" aria-labelledby="invoice-dialog-title" aria-describedby="invoice-dialog-caption">
   <header class="invoice-dialog-head"><div><div class="eyebrow">Invoice workspace</div><h2 id="invoice-dialog-title">Invoice details</h2><p id="invoice-dialog-caption">Review the email on the left and simulate a customer reply on the right.</p></div><button class="secondary" id="close-invoice-dialog" autofocus>Back to queue <span aria-hidden="true">×</span></button></header>
+  <section id="scenario-coach" class="scenario-coach" role="status" tabindex="-1" hidden></section>
   <div class="invoice-dialog-columns">
     <section class="panel detail" id="detail" aria-label="Invoice and reminder email"></section>
     <section class="panel detail reply-pane" aria-label="Customer reply and selected invoice activity"><div id="case-conversation" aria-label="Simulated customer reply" aria-live="polite"><p class="explain">Loading this browser’s saved cases…</p></div><section class="activity" id="case-agent-activity" aria-label="Selected invoice processing history" aria-live="polite"></section></section>

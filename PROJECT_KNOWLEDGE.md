@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_14_checkpoint_write_order
-implementation_branch: checkpoint-write-order
+implementation_milestone: V2_15_scenario_walkthroughs
+implementation_branch: guided-invoice-scenarios
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: apply_SQL014_deploy_v2_14_then_retry_live_failed_invoices
+pending_learning_check: verify_SQL014_live_retry_and_third_guide_tab_all_invoice_suggestions
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.14 checkpoint write ordering — authoritative current checkpoint
+## V2.15 guided invoice scenarios — authoritative current checkpoint
+
+PR24 merged 5e8e1301d69be6e9d6e4eec8d41b5ac39d24da13; compare head6f0d278a→main mergeonly/noedits. User requests third Howitworks tab with invoice/scenario/open button, persistent suggested-action notification, and suggested replies for every invoice with generic category fallback. Branch guided-invoice-scenarios; lesson docs/MILESTONE_V2_15.md. UI/static/version-only; no newSQL/packages/env. SQL014 remains prerequisite; live application/retry success not confirmed. Healthv2.15/uiworkflow-16.
+
+Guide firsttwo Markdown pages unchanged; third dynamic catalogue uses currentportfolio + scenarioSummaries + savedcases, 15seeded shortwalkthroughs and genericoriginalrow guidance. Launch closesguide/opens exactinvoice/focuses Suggestedtest coach, no run/case/model/mail effect. Critical filterfix: renderQueue preserves requested selection during launcher/open dialog so preventive/no-balance/filtered invoices cannot silently open another invoice. Popup coaching updatesfrom currentcase pendingpromise/alreadyrecordedpromise/fullmatch/processing/nextstep. No invented successful outcome.
+
+Allinvoice suggestions: tailoredscenario defaultwhenavailable plus genericpromise/paidclaim/dispute/invoicecopy/other categories, explicit Use suggestedreply inserts editabletext only. Promiseexample usesdemoClockdate+7; seeded10601 also adaptsfuturedate. Beforecase exists samepicker+previewtextarea/localdraft, noPOST; runrequiredtosubmit. Localinvoice draft transfersintocase, successfulreply clearsbothdraftkeys, reload notpersistent. Existing backendmodel/manualreview/tools/holds/receipts/budgets/source unchanged. No automatic reply/email/approval. Guide3tabs keyboardwrap/Home/End/Escape/focusreturn; noHTMLexecution fromsources. Firsttwo MDpages retainone---divider.
+
+Validation:8 preview/email isolated SQL/API tests passed; full actualHTTP/SSE/cookieJSDOM journey passed thirdtab/keyboard/24launchers/all24precasepickers×5categories/zero runs orcases created/read-only filling/exact filteredoutselection/savedpromise coaching plus prior24row/approval/send/signeddelivery/interruption-recovery/paymentmatch/promise/date/followup/reload/sourcepreservation. Mockprovider counts2mail/6LLM only; JSsyntax/Pythoncompilepassed. Nativepixel/focustrapnotverified. Walkthrough exposed stale Paymentpromises controls after caseaction; menuopen now recomputes busy state, enabling actual duecheck whenidle. No liveprovidercalls/cloudDBchanges/deploy. Usermerge/pull/deploy/hardrefresh; tryseededfullmatch+originalgeneric+existingpromise guidance, verifypriorSQL014live retry before declaringdemo ready. Next interviewerwalkthrough acceptance, visitor editor last.
+
+## Historical V2.14 checkpoint write ordering
 
 PR23 merged 0c4b0bf99287d2198132bc323b2fae1d68c15e49; compare PR23 head to main: merge only, no file changes. User still sees live checkpoint_reference_error / writes / SQLSTATE23503 on six invoices after stopping local/live overlap. Read-only live health showed appv2.12/uiworkflow-14, checkpoint_schema13 readytrue. SQL013 is present but incomplete; do not advise repeating013 as the solution.
 
