@@ -406,13 +406,13 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             ai_draft = {'ready':False,'error':'Apply sql/015_ai_draft.sql after SQL014 to enable Draft with AI.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.21", "ui_version":"workflow-21", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.22", "ui_version":"workflow-22", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,
                                 "daily_run_cap":public_info.get('daily_run_cap',20) if public.config.enabled else None,
                                 "per_browser_runs":public_info.get('per_browser_runs',3) if public.config.enabled else None,
-                                "daily_llm_attempt_cap":40,"per_browser_llm_attempts":8},
+                                "daily_llm_attempt_cap":public_info.get('daily_llm_attempt_cap',40),"per_browser_llm_attempts":public_info.get('per_browser_llm_attempts',8)},
                 "workflow":workflow,"followups":followup_status,"ai_draft":ai_draft,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
 
     @app.get('/api/reply-examples')

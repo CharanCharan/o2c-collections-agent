@@ -287,7 +287,32 @@ async function pollWorkflow() {
   finally{workflowPollBusy=false;}
 }
 
+function positionHeaderPopover(menu) {
+  if(!menu.open)return;
+  const panel=menu.querySelector('.action-popover'),summary=menu.querySelector('summary');
+  if(!panel || !summary)return;
+  const margin=12,viewport=window.visualViewport;
+  const leftEdge=viewport?.offsetLeft || 0,topEdge=viewport?.offsetTop || 0;
+  const width=viewport?.width || document.documentElement.clientWidth || window.innerWidth;
+  const height=viewport?.height || window.innerHeight;
+  panel.style.maxWidth=Math.max(0,width-margin*2)+'px';
+  const rect=summary.getBoundingClientRect(),panelWidth=panel.getBoundingClientRect().width;
+  const left=Math.max(leftEdge+margin,Math.min(rect.right-panelWidth,leftEdge+width-margin-panelWidth));
+  const top=Math.max(topEdge+margin,Math.min(rect.bottom+8,topEdge+height-margin-180));
+  panel.style.left=left+'px';panel.style.top=top+'px';panel.style.right='auto';
+  panel.style.maxHeight=Math.max(0,topEdge+height-top-margin)+'px';
+}
+
+function repositionHeaderPopovers() {
+  for(const menu of document.querySelectorAll('.header-menu[open]'))positionHeaderPopover(menu);
+}
+
 function initWorkflowControls() {
+  for(const menu of document.querySelectorAll('.header-menu'))menu.addEventListener('toggle',()=>positionHeaderPopover(menu));
+  window.addEventListener('resize',repositionHeaderPopovers);
+  window.addEventListener('scroll',repositionHeaderPopovers,{passive:true});
+  window.visualViewport?.addEventListener('resize',repositionHeaderPopovers);
+  window.visualViewport?.addEventListener('scroll',repositionHeaderPopovers);
   $('start-run').onclick=()=>{
     if(state.status==='running'||dueActive()||['waiting_for_portfolio','running'].includes(agentJob?.status))return;
     if(!workflowReady){showError('Apply sql/013_checkpoint_repair.sql after existing SQL009–012 to repair checkpoint storage. Current AR remains available.');return;}

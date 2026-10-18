@@ -2,17 +2,21 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_21_explicit_AI_draft
-implementation_branch: ai-reminder-draft
+implementation_milestone: V2_22_header_and_optional_budget
+implementation_branch: compact-header-llm-budget
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: apply_SQL015_deploy_generate_review_and_send_updated_draft
+pending_learning_check: deploy_verify_header_viewport_and_optional_SQL016_daily_budget
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.21 Explicit AI reminder drafts — authoritative current checkpoint
+## V2.22 Header and optional LLM budget — authoritative current checkpoint
+
+V2.22 fixes header regression after GitHub link: compact visible GitHub label/accessibility preserved, desktop intro grid keeps run controls top-right (mobile <=760 stacks/right-aligns), fixed-position menu panels clamped to layout/visual viewport with bounded scrolling on open/resize/scroll. Removes old <=1400 fullwidth-row override. User screenshot inspected locally. Optional SQL016 adds one editable ca_llm_budget() definition(default100global/40browser UTCday) read by reservations+health; no usage reset, Start unlimited, model/provider/email controls unchanged. Without optionalSQL16, existing8browser/40globalremain; changingRender process/run settings doesnotchangeSQLdailycaps. BackendhealthreadsSQLvalueswitholdfallbacks; v2.22/workflow-22. 20SQL/public tests passed; seven mocked geometry viewport cases + actualHTTP/cookie/SSE JSDOM AI journey passed(mockLLM3/mail1). Nativebrowserinstallfailed(downloadtruncated), no nativepixel/layoutacceptanceclaim. No liveprovider/DB/deployment, packages/envchanges. Lesson docs/MILESTONE_V2_22.md; branchcompact-header-llm-budget; usermerge/deploy/hardrefresh/visualcheck andoptionalSQL016pending. SQL015stillrequiredforAIdraft; savedcases/Incognito preserved, freshdemocancelled.
+
+## Historical V2.21 Explicit AI reminder drafts
 
 V2.21 implements explicit Draft with AI/Redraft with AI beside Send reminder. Inline optional plain-text preferences (max600) go as untrusted data for tone/brevity/wording, never replace system controls/facts. One explicit LLM call under existing process/public budgets; successful validated output replaces the owned case snapshot/draft-preview/audit, never immutable run/source or sent content. Failures keep existing draft and save safe reason. SQL015 after014 adds private durable request reservations/attempts and health plus fresh-payload/send guards; apply manually before deploy. Case/graph lock, SQL5005 ordering, duplicate/restart no-repeat, 5min stale supersession and finish-time eligibility check protect races. Unsent eligible initial reminders only: no replies/disputes/send intent/followup/processing; no auto-send on Generate. Snapshot refresh includes draft/audit changes over poll/SSE. v2.21/workflow-21; six app scripts including draft-ui.js; no newenv/packages/quotas. 100-test backend regression passed; final feature suite12passed; actualHTTP/cookie/SSE JSDOM flow including lost-response replay passed(mockLLM3/mail1), syntax/HTML checks passed. No liveprovider/DB/deploy/nativepixel claims. Lesson docs/MILESTONE_V2_21.md; branchai-reminder-draft; userSQL/merge/deploy/visualacceptancepending. Incognito/savedcases/financialchecks preserved; freshdemo stayscancelled.
 
