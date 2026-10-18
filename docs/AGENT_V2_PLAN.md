@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.16 overridespopupcoaching: Suggestedtestbannerremoved, thirdguide/suggestionsretained. Templateauditreason+savedmodevisible, LLMbadgeFactschecked; actualapprovalsdependonsavedmode. Verifiedfreshlimited0/automatic3newsend andretainedoldcases unchanged. No newSQL/env/packages/regen/reset/budgetchange. Healthv2.16/workflow-17; lessonV2_16; liveLLM/modeacceptancepending.
+
 V2.15: third Howitworks scenario launcher plus state-aware invoice Suggestedtest coach and all-invoice suggested replies/generic categories/precase localdraftpreview. Read-only until explicit Send simulatedreply; no extraSQL/packages/env. Exactinvoice selection preservedoutsidequeuefilters. Healthv2.15/workflow-16; lessonV2_15. PriorSQL014live retry acceptance stillpending; usermerge/deploy/UIacceptance required.
 
 V2.14 supersedes SQL013 readiness: verified LangGraph writes-before-put race under delayed RPC. Apply SQL014 after013 to replace checkpoint FK with case FK and retain bounded durable pending writes. Backend requires revision14; healthv2.14/uiworkflow-15. LessonV2_14; user merge/SQL/deploy/live retry pending. Existing data/receipts retained, no reset or paid infrastructure.

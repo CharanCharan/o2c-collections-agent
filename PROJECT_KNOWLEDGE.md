@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_15_scenario_walkthroughs
-implementation_branch: guided-invoice-scenarios
+implementation_milestone: V2_16_saved_draft_mode_clarity
+implementation_branch: clear-saved-draft-modes
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: verify_SQL014_live_retry_and_third_guide_tab_all_invoice_suggestions
+pending_learning_check: verify_live_LLM_new_cases_limited_vs_automatic_after_rotation
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.15 guided invoice scenarios — authoritative current checkpoint
+## V2.16 popup banner removal and saved draft/mode clarity — authoritative current checkpoint
+
+PR25 merged bd2f2aba405c6419d5d2be478dbf0053331f09e2; comparehead172b66dc→main mergeonly/noedits. User removes Suggestedtestbanner from allpopups and asks verify LLMtemplates/savedcases/automaticvsreview flow. Branch clear-saved-draft-modes, lesson docs/MILESTONE_V2_16.md. No newSQL/env/packages; priorSQL014stillrequired/liveacceptanceunconfirmed. Versionv2.16/uiworkflow-17.
+
+Remove scenario-coachDOM/renderer/CSS; thirdguide retains explanations/state-awareguidance, launcherfocusesreplycomposer+shorttoast. Allinvoice suggestedreplies retained. Newperdrafttemplateexplanation fromactualaudits: template_onlymeansLLMwasdisabledwhensaved, fallbackshowsrecordedreason, deterministicfollowupnocall; LLMbadgeFactschecked notblankethumanapprovalclaim. Savedcase mode besidecaseid makesclearwhyAutomaticnewrun doesn'tconvertoldlimitedcase. No draftrewrite/reset/caseconversion/receiptloss/autoresend.
+
+Codecheck: LanguageService.draft builds deterministicbase, attemptsLLMeligible withinmax_run/process/public/providerbudgets, validatesfacts, labelsfallback onfailure. Case.open reusesexistinginvoicecase/snapshot. run_job retainsfinishedcases; allocationonlyopenedrecordednewautopilotcases up to3. approvalinterrupts limited forsend/followup/promise; autopiloteligible authorizedsendexecutesResend fixedinbox. Existingmodes/checkpoints/holds/receipts unchanged; followuptemplatesintentionallynotLLM. Cannot promise alldraftsLLM or allinvoicesautosend. Exactprivatevisitorstate/providerusage unavailable; no livemodel/mail used.
+
+Validation:43 targeted isolated SQL/API/actualLangGraph tests passed in114.27s, JSsyntax/Pythoncompilepassed. ActualHTTP/SSE/cookieJSDOMjourney passed no-banner/all24suggestionpickers/guidekeyboard/exactselection/template-reasonhelpers/savedmodechip andpreviousapproval/send/signeddelivery/recovery/paymentmatch/promise/date/followup/reload/sourcepreservation; mocked2mail/6LLMonly. FirstlocalHTTPjourney had a fetchfailure atsend, fullrerunpassed; no private/livefailurecauseclaim. Nativepixel/focustrapnotverified. Tests verifyfreshmockLLMruns limited0send/automatic3send, idempotency, enablingLLMnewruncreatesfreshresults butoldcase snapshot/mode remainslimited/nosend. Current8browser/40globalLLMSQLlimits andmax_run<=10 remain: previously recommended40/100daily not implemented/authorized here. Userrotatingexposedcredentials; nevercopykeys into repo/tooloutputs. Local/privatefreshbrowseracceptance required, keepexistingmailhistory/budgets. No integrations added. Nextverifylive thenfinishPoC.
+
+## Historical V2.15 guided invoice scenarios
 
 PR24 merged 5e8e1301d69be6e9d6e4eec8d41b5ac39d24da13; compare head6f0d278a→main mergeonly/noedits. User requests third Howitworks tab with invoice/scenario/open button, persistent suggested-action notification, and suggested replies for every invoice with generic category fallback. Branch guided-invoice-scenarios; lesson docs/MILESTONE_V2_15.md. UI/static/version-only; no newSQL/packages/env. SQL014 remains prerequisite; live application/retry success not confirmed. Healthv2.15/uiworkflow-16.
 

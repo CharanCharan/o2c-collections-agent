@@ -117,7 +117,7 @@ function invoiceCaseHeader(c) {
     title='Review dispute evidence';explanation='Collections are paused. Inspect the supporting evidence on the right before deciding how to resolve the dispute. No automatic chase is allowed.';
     action='<button class="secondary" id="review-invoice-evidence">View supporting evidence</button>';
   }
-  return `${c?`<div class="case-reference"><span>Collection case</span><code title="${escapeHTML(c.id)}">#${escapeHTML(c.id.slice(0,8))}</code><span class="saved-indicator">Saved</span></div>`:''}
+  return `${c?`<div class="case-reference"><span>Collection case</span><code title="${escapeHTML(c.id)}">#${escapeHTML(c.id.slice(0,8))}</code><span class="saved-indicator">Saved</span>${w?.mode?`<span class="saved-case-mode">Saved mode: ${w.mode==='autopilot'?'Automatic processing':'Review & approve'}</span>`:''}</div>`:''}
     <div class="invoice-next-step"><div class="eyebrow">Next step · ${escapeHTML(row.id)}</div><h3>${escapeHTML(title)}</h3><p>${escapeHTML(explanation)}</p><div class="next-step-actions">${action}</div></div>`;
 }
 
