@@ -1,3 +1,5 @@
+> Latest V2.16: [saved draft/mode clarity](docs/MILESTONE_V2_16.md). Removes the invoice popup Suggested test banner while retaining the scenario guide and reply suggestions. Shows template generation reasons and saved case mode; verifies fresh limited vs automatic sending. Deploy latest main and hard-refresh; no new SQL/packages/settings.
+
 > Latest V2.15: [guided invoice scenarios](docs/MILESTONE_V2_15.md). How it works → Try a scenario opens an invoice with a suggested test. Every invoice has suggested-reply categories, including an unsent preview before a run. Opening and filling text are read-only; sending remains explicit. Deploy latest main and hard-refresh; no new SQL/packages/settings (SQL014 remains required).
 
 > Latest V2.14: [checkpoint save-order repair](docs/MILESTONE_V2_14.md). SQL013 did not cover writes arriving before their checkpoint. Apply `sql/014_checkpoint_write_order.sql` after SQL013, deploy latest main, verify app v2.14/checkpoint revision14 ready, then retry failed invoices. Preserves existing rows and email receipts; no reset, dependencies or environment changes.
