@@ -189,10 +189,11 @@ function renderDetail() {
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
       <div class="detail-metric"><label>Next step</label><strong id="detail-next-action">${escapeHTML(rowView(row).next)}</strong></div>
     </div>
-    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send reminder</button></div>
+    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · FACTS CHECKED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send reminder</button></div>
       ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Run collections to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
     <p class="llm-evidence">${draft?escapeHTML(llmCallLabel(followupDraft(currentCase)?{api_attempted:false}:draftRow.draft_audit,draftRow.draft_audit?.status==='validated_for_human_review')):'No draft or drafting call has been prepared yet.'}</p>
+    ${draft && draft.generation_mode!=='llm_assisted_validated_facts'?`<p class="explain draft-generation-reason">${escapeHTML(draftGenerationExplanation(draftRow.draft_audit,Boolean(followupDraft(currentCase))))}</p>`:''}
     <p class="explain" id="draft-email-status"></p>
     ${currentCase ? `<p class="panel-sub">Draft saved with case snapshot ${escapeHTML(currentCase.snapshot.as_of_date)} · run ${escapeHTML(currentCase.run_id.slice(0,8))}. Sending uses this displayed draft.</p>` : ''}
     ${draftRow.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(draftRow.draft_audit, null, 2))}</pre></details>` : ''}
@@ -442,7 +443,6 @@ function renderCase() {
   if (!panel) return;
   const row = state.invoices.find(r => r.id === state.selectedId);
   const current = visitorCases.find(c => c.invoice_id === row?.id);
-  renderScenarioCoach(row,current);
   if (caseLoadError) {
     panel.innerHTML = `<div class="panel-title">Customer conversation</div><p class="explain">${escapeHTML(caseLoadError)} Run sql/007_visitor_cases.sql and sql/008_case_email.sql for this milestone.</p><button class="secondary" id="case-reload">Reload cases</button>`;
     $('case-reload').onclick = refreshCases; return;

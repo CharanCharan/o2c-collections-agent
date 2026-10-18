@@ -115,15 +115,9 @@ function renderScenarioGuide() {
 function bindScenarioGuide() {
  for(const button of $('guide-content').querySelectorAll('.scenario-open'))button.onclick=()=>{
   closeWorkflowGuide();openInvoiceWorkspace(button.dataset.invoice);
-  const coach=$('scenario-coach');coach?.focus({preventScroll:true});
-  toast('Suggested test opened. Insert a reply below, then send it when ready.');
+  $('case-reply-text')?.focus({preventScroll:true});
+  toast('Scenario opened. Choose a suggested reply, then send it when ready.');
  };
-}
-function renderScenarioCoach(row,current) {
- const coach=$('scenario-coach');if(!coach)return;
- coach.hidden=!row;if(!row)return;
- const s=invoiceScenario(row,current);
- coach.innerHTML=`<b>Suggested test · ${escapeHTML(s.title)}</b><p>${escapeHTML(s.explanation)} ${escapeHTML(s.action)}</p><p class="scenario-current">${escapeHTML(scenarioNextStep(row,current))}</p><small>Reply interpretation uses the optional LLM. Disabled, capped or rejected calls require manual review. No action is triggered by opening this test.</small>`;
 }
 function genericReply(category,row,current) {
  const base=demoClock?.demo_date || current?.snapshot?.as_of_date || new Date().toISOString().slice(0,10);
@@ -149,4 +143,11 @@ function mountSuggestedReplies(row,current) {
  const value=replyDrafts.get(key) ?? replyDrafts.get('invoice:'+row.id);
  if(value!==undefined)$('case-reply-text').value=value;
  $('case-reply-text').oninput=()=>replyDrafts.set(key,$('case-reply-text').value);
+}
+
+function draftGenerationExplanation(audit,isFollowup=false) {
+ if(isFollowup)return 'Follow-up reminders use a deterministic template built from the saved promise and remaining balance. No LLM drafting call is made.';
+ if(audit?.status==='template_only')return 'This saved draft was generated while the LLM was disabled. Enabling the LLM affects new drafts; it does not rewrite existing case history.';
+ if(audit?.reason)return 'Template reason: '+audit.reason;
+ return 'No successful LLM drafting call is recorded for this saved template. Inspect draft validation and tool evidence for available details.';
 }

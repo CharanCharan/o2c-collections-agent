@@ -7,12 +7,12 @@
   <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="/assets/favicon.ico?v=1" />
   <link rel="icon" type="image/svg+xml" sizes="any" href="/assets/favicon.svg?v=1" />
   <title>Charan’s Collections Agent</title>
-  <link rel="stylesheet" href="/assets/styles.css?v=workflow-16" />
-  <script src="/assets/guide-ui.js?v=workflow-16" defer></script>
-  <script src="/assets/invoice-ui.js?v=workflow-16" defer></script>
-  <script src="/assets/followup-ui.js?v=workflow-16" defer></script>
-  <script src="/assets/workflow-ui.js?v=workflow-16" defer></script>
-  <script src="/assets/app.js?v=workflow-16" defer></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=workflow-17" />
+  <script src="/assets/guide-ui.js?v=workflow-17" defer></script>
+  <script src="/assets/invoice-ui.js?v=workflow-17" defer></script>
+  <script src="/assets/followup-ui.js?v=workflow-17" defer></script>
+  <script src="/assets/workflow-ui.js?v=workflow-17" defer></script>
+  <script src="/assets/app.js?v=workflow-17" defer></script>
 </head>
 <body>
 <div class="shell">
@@ -80,7 +80,6 @@
 </dialog>
 <dialog id="invoice-dialog" class="invoice-dialog" aria-labelledby="invoice-dialog-title" aria-describedby="invoice-dialog-caption">
   <header class="invoice-dialog-head"><div><div class="eyebrow">Invoice workspace</div><h2 id="invoice-dialog-title">Invoice details</h2><p id="invoice-dialog-caption">Review the email on the left and simulate a customer reply on the right.</p></div><button class="secondary" id="close-invoice-dialog" autofocus>Back to queue <span aria-hidden="true">×</span></button></header>
-  <section id="scenario-coach" class="scenario-coach" role="status" tabindex="-1" hidden></section>
   <div class="invoice-dialog-columns">
     <section class="panel detail" id="detail" aria-label="Invoice and reminder email"></section>
     <section class="panel detail reply-pane" aria-label="Customer reply and selected invoice activity"><div id="case-conversation" aria-label="Simulated customer reply" aria-live="polite"><p class="explain">Loading this browser’s saved cases…</p></div><section class="activity" id="case-agent-activity" aria-label="Selected invoice processing history" aria-live="polite"></section></section>
