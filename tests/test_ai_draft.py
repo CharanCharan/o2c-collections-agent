@@ -51,7 +51,7 @@ def test_generate_save_restart_replay_and_send_exact_reviewed_draft(store_factor
         assert updated['workflow']['activity'][-1]['node']=='redraft'
         assert 'timestamp' in updated['workflow']['activity'][-1]
         payload=calls[0]; data=json.loads(payload['messages'][1]['content'])
-        assert data['draft_preferences']=='Make it warmer and shorter.'
+        assert data['revision_request']=='Make it warmer and shorter.'
         assert 'Make it warmer and shorter.' not in payload['messages'][0]['content']
         assert c.get(f"/api/runs/{run['run_id']}").json()['result']==run['result']
         assert not mail.sent

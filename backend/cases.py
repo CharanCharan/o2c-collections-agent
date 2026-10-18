@@ -6,9 +6,10 @@ Graph-enabled cases automatically invoke their durable LangGraph thread on reply
 """
 import asyncio
 import hashlib
+import json
 
 from fastapi import HTTPException
-from .language import facts_for, LanguageError
+from .language import facts_for, invoice_fact_sentence, LanguageError
 from .storage import StorageError
 
 
@@ -52,6 +53,32 @@ class CaseService:
                 audit.update(result_audit)
                 result = await self.store.rpc('ca_ai_draft', {'p_action': 'complete', **args,
                     'p_draft': draft, 'p_audit': audit})
+            self.agent.publish_case(result['case'])
+            return result
+
+    async def edit_draft(self, actor, case_id, request_id, expected, subject, body):
+        subject, body = subject.strip(), body.strip()
+        if not subject or not body or any(ord(c)<32 for c in subject) or any(ord(c)<32 and c not in '\n\t' for c in body):
+            raise HTTPException(422, 'Enter a plain-text subject and message.')
+        try:
+            await self.store.rpc('ca_draft_edit_health')
+        except StorageError:
+            raise HTTPException(503, 'Apply sql/017_manual_draft.sql after SQL015 to enable Edit draft.') from None
+        async with self.agent.locks[case_id]:
+            case = await self.agent.case(actor, case_id)
+            facts = facts_for(case['snapshot']['invoice'], case['snapshot'])
+            if body.count(invoice_fact_sentence(facts)) != 1:
+                raise HTTPException(422, 'Keep the invoice facts sentence unchanged and present exactly once. Amount, due date and invoice identity come from the saved invoice.')
+            if facts['invoice_id'] not in subject:
+                raise HTTPException(422, 'Keep this invoice ID in the subject.')
+            content = {'subject':subject,'body':body,'expected':expected}
+            digest = hashlib.sha256(json.dumps(content,sort_keys=True).encode()).hexdigest()
+            draft = {'subject':subject,'body':body,'generation_mode':'human_edited','review_required':True}
+            audit = {'tool':'edit_reminder','api_attempted':False,'status':'human_edited',
+                     'checks':['plain_text','locked_invoice_fact_sentence','invoice_id_in_subject'],
+                     'previous_draft_sha256':hashlib.sha256(json.dumps(expected,sort_keys=True).encode()).hexdigest()}
+            result = await self.store.rpc('ca_save_draft',{'p_session_key':actor,'p_case_id':case_id,
+                'p_request_id':request_id,'p_content_hash':digest,'p_expected_draft':expected,'p_draft':draft,'p_audit':audit})
             self.agent.publish_case(result['case'])
             return result
 

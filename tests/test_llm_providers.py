@@ -33,8 +33,12 @@ def mock_groq(mode='valid', config=None):
             raise httpx.ReadTimeout('private provider details', request=request)
         data = json.loads(payload['messages'][1]['content'])
         facts = data['facts']
-        if payload['response_format']['json_schema']['name'] == 'draft_reminder':
+        if payload['response_format']['json_schema']['name'] in {'draft_reminder','revise_reminder'}:
             value = draft_value(facts)
+            if payload['response_format']['json_schema']['name']=='revise_reminder':
+                value.update(additional_context='',context_quotes=[],change_summary='Revised wording for clarity.')
+                # Make successive mocked revisions observable without inventing context.
+                value['opening'] = 'I hope your team is doing well' + '!'*len(requests)
             if mode == 'bad_facts': value['facts'] = {**facts, 'amount':'1.00'}
             if mode == 'length': value['closing'] = 'x' * 101
         else:
