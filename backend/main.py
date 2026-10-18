@@ -1,7 +1,7 @@
 """One FastAPI server for the website, Supabase-backed runs and SSE."""
 
 import asyncio
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 import json
 import time
 from contextlib import asynccontextmanager
@@ -161,6 +161,11 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         request_id: UUID = Field(strict=False)
         text: str = Field(min_length=1,max_length=4000)
 
+    class DraftRequest(BaseModel):
+        model_config = ConfigDict(extra='forbid', strict=True)
+        request_id: UUID = Field(strict=False)
+        instructions: str = Field(default='', max_length=600)
+
     @app.get('/api/cases')
     async def list_cases(request: Request):
         backend()
@@ -185,6 +190,9 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             raise HTTPException(422,'This action takes no message or recipient overrides.')
         actor=public.actor(request)[0]
         case=await agent.case(actor,str(case_id))
+        generation=case.get('draft_generation') or {}
+        if generation.get('status')=='reserved' and datetime.now(timezone.utc)-datetime.fromisoformat(generation['created_at'])<timedelta(minutes=5):
+            raise HTTPException(409,'Wait for draft generation, then review the saved reminder before sending.')
         pending=(case.get('workflow') or {}).get('pending')
         if pending:
             if pending['tool']!='send_email':raise HTTPException(409,'This case is waiting for a different reviewed action.')
@@ -195,6 +203,11 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
                 return await agent.retry_email(actor,str(case_id))
             raise HTTPException(409,'The graph has not authorized a reminder for this case. Review its pending action or hold.')
         return await mail.send_case(actor,str(case_id))
+
+    @app.post('/api/cases/{case_id}/draft')
+    async def redraft_case(case_id: UUID, body: DraftRequest, request: Request):
+        backend()
+        return await cases.redraft(public.actor(request)[0], str(case_id), str(body.request_id), body.instructions)
 
     class AgentRequest(BaseModel):
         model_config=ConfigDict(extra='forbid')
@@ -387,16 +400,20 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             followup_status={'ready':True,'schema':12,'scheduler':'explicit_demo_check'}
         except StorageError:
             followup_status={'ready':False,'error':'Apply sql/012_promise_followups.sql to enable demo-clock follow-ups.'}
+        try:
+            ai_draft = await s.store.rpc('ca_ai_draft_health')
+        except StorageError:
+            ai_draft = {'ready':False,'error':'Apply sql/015_ai_draft.sql after SQL014 to enable Draft with AI.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.20", "ui_version":"workflow-20", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.21", "ui_version":"workflow-21", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,
                                 "daily_run_cap":public_info.get('daily_run_cap',20) if public.config.enabled else None,
                                 "per_browser_runs":public_info.get('per_browser_runs',3) if public.config.enabled else None,
                                 "daily_llm_attempt_cap":40,"per_browser_llm_attempts":8},
-                "workflow":workflow,"followups":followup_status,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
+                "workflow":workflow,"followups":followup_status,"ai_draft":ai_draft,"email": mail.config.status(), "language": s.language.status(), "model_versions": {"overdue": model["model_version"], "pre_due": preventive["model_version"]}}
 
     @app.get('/api/reply-examples')
     async def reply_examples():
