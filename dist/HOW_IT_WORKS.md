@@ -9,7 +9,7 @@ From receivables to a recorded collection outcome.
 | Assess and predict | Apply urgency rules and two trained payment-risk models. | Python; logistic models trained with scikit-learn, exported as JSON |
 | Prioritize and draft | Rank eligible invoices and prepare reminders. | Python rules; optional Groq LLM phrasing with validated facts and template fallback |
 | Process invoices | Choose an action, pause for approval or execute within policy. | LangGraph with Supabase checkpoints |
-| Send and respond | Send real email to the demo inbox; process website-simulated replies. | Resend API, signed delivery webhooks and optional LLM reply interpretation |
+| Send and respond | Send real email to the demo inbox [Inbox screenshot](/assets/demo-email-inbox.png); process website-simulated replies. | Resend API, signed delivery webhooks and optional LLM reply interpretation |
 | Show results | Display invoice status, completed actions and run statistics. | FastAPI, HTML/CSS/JavaScript and live SSE events |
 
 Hosting: one Python service on Render, backed by Supabase. Opening this guide makes no LLM call.
