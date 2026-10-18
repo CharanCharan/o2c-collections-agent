@@ -21,11 +21,11 @@ function watchInvoiceExecution(c) {
     if(source!==invoiceStream || state.selectedId!==c.invoice_id)return;
     try {
       const data=JSON.parse(message.data),old=JSON.stringify(visitorCases.find(x=>x.id===c.id));
-      const draft=JSON.stringify(followupDraft(visitorCases.find(x=>x.id===c.id)));
+      const draft=caseDraftSignature(visitorCases.find(x=>x.id===c.id));
       mergeExecutionCases([data.case]);
       if(old!==JSON.stringify(visitorCases.find(x=>x.id===c.id))){
         renderQueue();
-        if(draft!==JSON.stringify(followupDraft(data.case)))renderDetail();else{renderCase();renderSendState();}
+        if(draft!==caseDraftSignature(data.case))renderDetail();else{renderCase();renderSendState();}
       }
     }catch(error){showError('Could not display invoice activity: '+error.message);}
   });
@@ -55,11 +55,11 @@ function connectExecutionStream(runId) {
       const data=JSON.parse(message.data);
       if(data.job)mergeAgentJob(data.job);
       const oldSelected=JSON.stringify(visitorCases.find(c=>c.invoice_id===state.selectedId));
-      const oldDraft=JSON.stringify(followupDraft(visitorCases.find(c=>c.invoice_id===state.selectedId)));
+      const oldDraft=caseDraftSignature(visitorCases.find(c=>c.invoice_id===state.selectedId));
       if(data.cases)mergeExecutionCases(data.cases);
       if(data.case){mergeExecutionCases([data.case]);const a=data.case.workflow?.activity?.at(-1);if(a)liveExecution={invoice_id:data.case.invoice_id,...a};}
       renderQueue();renderFlow();
-      const changedDraft=oldDraft!==JSON.stringify(followupDraft(visitorCases.find(c=>c.invoice_id===state.selectedId)));
+      const changedDraft=oldDraft!==caseDraftSignature(visitorCases.find(c=>c.invoice_id===state.selectedId));
       if(changedDraft)renderDetail();else{if(oldSelected!==JSON.stringify(visitorCases.find(c=>c.invoice_id===state.selectedId)))renderCase();renderSendState();}
       showJobState();
       if(!['running','waiting_for_portfolio'].includes(agentJob?.status))stopExecutionStream();
@@ -77,7 +77,7 @@ const workflowLabels = {
   delivery_unknown:'Send outcome unknown',preventive_review:'Not due — preventive assessment only',monitoring:'No reminder — below policy threshold',
 };
 
-const activityLabels={load:'Load invoice',interpret:'Interpret customer reply',choose:'Select collection action',approval:'Request approval',authorization:'Authorize action',execute:'Complete action',plan_followup:'Prepare promise follow-up',finish:'Save outcome',supersede:'Update after customer reply'};
+const activityLabels={redraft:'Generate AI reminder',load:'Load invoice',interpret:'Interpret customer reply',choose:'Select collection action',approval:'Request approval',authorization:'Authorize action',execute:'Complete action',plan_followup:'Prepare promise follow-up',finish:'Save outcome',supersede:'Update after customer reply'};
 const actionLabels={record_promise:'Record payment promise',send_email:'Send reminder',send_followup_email:'Send follow-up'};
 
 function invoiceContinuation(c) {

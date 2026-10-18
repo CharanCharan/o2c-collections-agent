@@ -1,3 +1,5 @@
+> Latest V2.21: [Draft with AI](docs/MILESTONE_V2_21.md). Optional wording preferences generate and save a new reminder for review, without sending. Apply `sql/015_ai_draft.sql` after SQL014, deploy and hard-refresh. Existing LLM budgets and financial checks remain; sent content is preserved. No new packages/settings.
+
 > Latest V2.20: [LLM draft formatting](docs/MILESTONE_V2_20.md). Explicit field limits/types and concise examples improve draft reliability; rejected output shows safe field-specific reasons. Financial checks and budgets remain. Deploy latest main; saved drafts retain earlier outcomes. No new SQL/packages/settings.
 
 > Latest V2.19: [GitHub source link and credential review](docs/MILESTONE_V2_19.md). Adds View source on GitHub beside How it works. Repository visibility stays private; invite interviewers or choose public access for everyone. The documented source/history scan found no apparent live credentials within its stated scope; prior chat-key rotation remains your service-side check. No SQL/packages/settings changes.

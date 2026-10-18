@@ -189,7 +189,8 @@ function renderDetail() {
       <div class="detail-metric"><label>Due date</label><strong>${dateLabel(row.due)}</strong></div>
       <div class="detail-metric"><label>Next step</label><strong id="detail-next-action">${escapeHTML(rowView(row).next)}</strong></div>
     </div>
-    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · FACTS CHECKED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send reminder</button></div>
+    <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · FACTS CHECKED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><div class="draft-controls"><button class="secondary" id="ai-draft-toggle" aria-controls="ai-draft-editor" aria-expanded="false" disabled>Draft with AI</button><button class="secondary" id="send-draft" disabled>Send reminder</button></div></div>
+      ${aiDraftPanel(row)}
       ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Run collections to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
     <p class="llm-evidence">${draft?escapeHTML(llmCallLabel(followupDraft(currentCase)?{api_attempted:false}:draftRow.draft_audit,draftRow.draft_audit?.status==='validated_for_human_review')):'No draft or drafting call has been prepared yet.'}</p>
@@ -204,6 +205,7 @@ function renderDetail() {
     </details>
     `;
   $("send-draft").onclick = sendDraft;
+  bindAIDrafting(row);
   renderSendState();
 }
 
@@ -426,7 +428,7 @@ async function refreshCases(repaint = true) {
   if (repaint) renderDetail(); else {
     const newCase=visitorCases.find(c=>c.invoice_id===state.selectedId);
     if(JSON.stringify(oldCase)!==JSON.stringify(newCase)) {
-      if(JSON.stringify(oldCase?.workflow?.followup?.draft)!==JSON.stringify(newCase?.workflow?.followup?.draft))renderDetail();else renderCase();
+      if(caseDraftSignature(oldCase)!==caseDraftSignature(newCase))renderDetail();else renderCase();
       if(draftText && state.selectedId===oldCase?.invoice_id && $('case-reply-text')){$('case-reply-text').value=draftText;if(focused)$('case-reply-text').focus();}
     }
     renderSendState();
@@ -511,6 +513,7 @@ function outboundLabel(outbound) {
 }
 
 function renderSendState() {
+  renderAIDraftState();
   const button = $('send-draft');
   if (!button) return;
   const row = state.invoices.find(r => r.id === state.selectedId);
@@ -529,7 +532,8 @@ function renderSendState() {
   }
   const held = c && !['awaiting_outreach','awaiting_response'].includes(c.collection_status);
   const graphBlocked=c?.workflow && !c.workflow.pending && !c.outbound && c.workflow.status !== 'quota_wait';
-  button.disabled = Boolean(graphBlocked) || sendBusy || !mailEnabled || !casesLoaded || Boolean(caseLoadError) || !(c || state.status === 'completed') || !draftRow?.draft || !draftRow.eligible || draftRow.dispute || held || c?.outbound?.state === 'accepted';
+  const generating = aiDraftBusy.has(row?.id) || (c?.draft_generation?.status === 'reserved' && Date.now() - Date.parse(c.draft_generation.created_at) < 300000);
+  button.disabled = Boolean(generating) || Boolean(graphBlocked) || sendBusy || !mailEnabled || !casesLoaded || Boolean(caseLoadError) || !(c || state.status === 'completed') || !draftRow?.draft || !draftRow.eligible || draftRow.dispute || held || c?.outbound?.state === 'accepted';
   button.textContent = sendBusy ? 'Sending…' : c?.outbound?.state === 'accepted' ? 'Email sent' : c?.outbound ? 'Retry same email' : c?.workflow?.status === 'quota_wait' ? 'Retry email after quota reset' : 'Send reminder';
   if($('detail-next-action') && row)$('detail-next-action').textContent=rowView(row).next;
   $('draft-email-status').textContent = held && !c.outbound ? 'Reminder paused: review this case before further outreach.' : !mailEnabled ? 'Email is disabled or not configured on the server.' : outboundLabel(c?.outbound);
@@ -570,6 +574,7 @@ api("/api/health").then(async (health) => {
       : 'Public demo · daily Start limits still active. Apply sql/011_unlimited_demo_starts.sql to remove them. Model and email allowances remain bounded.')
     : 'Local learning mode · keep this instance private.';
   const language = health.language;
+  initAIDrafting(health);
   updateLanguageLabels(language);
   mailEnabled = Boolean(health.email?.ready);
   $("backend-label").textContent = language ? (language.configuration_error ? "Supabase · LLM configuration blocked" : language.enabled ? (language.key_configured ? `Supabase · ${language.provider} · ${language.model}` : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";
