@@ -7,7 +7,7 @@ function updateInvoiceDialogTitle(row) {
   const title=$('invoice-dialog-title');if(title && row)title.textContent=`${row.customer} · ${row.id}`;
 }
 
-function openInvoiceWorkspace(invoiceId) {
+function openInvoiceWorkspace(invoiceId,showEvents=false) {
   const row=state.invoices.find(r=>r.id===invoiceId);if(!row)return;
   const changed=state.selectedId!==invoiceId;
   invoiceReturnId=invoiceId;state.selectedId=invoiceId;
@@ -21,10 +21,13 @@ function openInvoiceWorkspace(invoiceId) {
     document.body.classList.add('invoice-workspace-open');
     $('close-invoice-dialog').focus();
   }
+  watchInvoiceExecution(visitorCases.find(c=>c.invoice_id===invoiceId));
+  if(showEvents){const activity=$('case-agent-activity');activity.tabIndex=-1;activity.focus();activity.scrollIntoView?.({block:'start'});}
 }
 
 function restoreQueueFocus() {
   if($('invoice-dialog').open)return;
+  stopInvoiceStream();
   document.body.classList.remove('invoice-workspace-open');
   const row=[...$('queue').querySelectorAll('tr[data-id]')].find(r=>r.dataset.id===invoiceReturnId);
   (row?.querySelector('.invoice-open') || $('queue-scroll')).focus({preventScroll:true});

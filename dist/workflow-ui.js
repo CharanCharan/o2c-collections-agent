@@ -7,6 +7,67 @@ let workflowPollBusy = false;
 let caseActionBusy = false;
 let scenarioSummaries = [];
 let outcomeFilter = null;
+let executionStream=null;
+let liveExecution=null;
+let invoiceStream=null;
+let invoiceStreamId=null;
+function stopInvoiceStream(){invoiceStream?.close();invoiceStream=null;invoiceStreamId=null;}
+function watchInvoiceExecution(c) {
+  if(!$('invoice-dialog')?.open || !c)return;
+  if(invoiceStreamId===c.id)return;
+  stopInvoiceStream();invoiceStreamId=c.id;
+  const source=new EventSource(`/api/cases/${c.id}/events`);invoiceStream=source;
+  source.addEventListener('case-update',message=>{
+    if(source!==invoiceStream || state.selectedId!==c.invoice_id)return;
+    try {
+      const data=JSON.parse(message.data),old=JSON.stringify(visitorCases.find(x=>x.id===c.id));
+      const draft=JSON.stringify(followupDraft(visitorCases.find(x=>x.id===c.id)));
+      mergeExecutionCases([data.case]);
+      if(old!==JSON.stringify(visitorCases.find(x=>x.id===c.id))){
+        renderQueue();
+        if(draft!==JSON.stringify(followupDraft(data.case)))renderDetail();else{renderCase();renderSendState();}
+      }
+    }catch(error){showError('Could not display invoice activity: '+error.message);}
+  });
+}
+
+
+function mergeAgentJob(job) {
+  if(agentJob?.run_id===job?.run_id && agentJob.updated_at && job.updated_at && job.updated_at<agentJob.updated_at)return;
+  agentJob=job;
+}
+function stopExecutionStream(){executionStream?.close();executionStream=null;}
+function mergeExecutionCases(incoming) {
+  for(const c of incoming){const old=visitorCases.find(x=>x.id===c.id);if(!old || String(c.updated_at)>=String(old.updated_at))visitorCases=[c,...visitorCases.filter(x=>x.id!==c.id)];}
+}
+function showJobState() {
+  if(!agentJob)return;
+  const active=['running','waiting_for_portfolio'].includes(agentJob.status);
+  $('start-run').disabled=active||dueActive()||state.status==='running';
+  if(!active)banner(agentJob.status==='completed'?(agentJob.progress?.failed?'REVIEW REQUIRED':'PROCESSING FINISHED'):'RECOVERY REQUIRED',agentJob.status==='completed'?(agentJob.progress?.failed?`${agentJob.progress.processed}/${agentJob.progress.total} invoices processed; ${agentJob.progress.failed} need review. See Run overview.`:'Case actions saved. Waiting/review states remain open.'):'Open Run overview for the saved reason and recovery action.');
+}
+function connectExecutionStream(runId) {
+  stopExecutionStream();
+  const source=new EventSource(`/api/runs/${runId}/agent/events`);executionStream=source;
+  source.addEventListener('execution',message=>{
+    if(source!==executionStream)return;
+    try {
+      const data=JSON.parse(message.data);
+      if(data.job)mergeAgentJob(data.job);
+      const oldSelected=JSON.stringify(visitorCases.find(c=>c.invoice_id===state.selectedId));
+      const oldDraft=JSON.stringify(followupDraft(visitorCases.find(c=>c.invoice_id===state.selectedId)));
+      if(data.cases)mergeExecutionCases(data.cases);
+      if(data.case){mergeExecutionCases([data.case]);const a=data.case.workflow?.activity?.at(-1);if(a)liveExecution={invoice_id:data.case.invoice_id,...a};}
+      renderQueue();renderFlow();
+      const changedDraft=oldDraft!==JSON.stringify(followupDraft(visitorCases.find(c=>c.invoice_id===state.selectedId)));
+      if(changedDraft)renderDetail();else{if(oldSelected!==JSON.stringify(visitorCases.find(c=>c.invoice_id===state.selectedId)))renderCase();renderSendState();}
+      showJobState();
+      if(!['running','waiting_for_portfolio'].includes(agentJob?.status))stopExecutionStream();
+    }catch(error){showError('Could not display invoice execution: '+error.message);}
+  });
+  source.onerror=()=>{if(source===executionStream && !['running','waiting_for_portfolio'].includes(agentJob?.status))stopExecutionStream();};
+}
+
 const workflowLabels = {
   quota_wait:'Waiting for mail quota',processing:'Processing case',ready_for_outreach:'Reminder ready to send',awaiting_approval:'Action ready for approval',
   awaiting_outreach:'Reminder ready to send',manual_review_required:'Human review needed',promise_review_required:'Payment promise needs review',dispute_hold_review_required:'Dispute — collections paused',
@@ -31,7 +92,7 @@ function invoiceCaseHeader(c) {
   const row=state.invoices.find(r=>r.id===state.selectedId);if(!row)return '';
   const w=c?.workflow,pending=w?.pending,send=$('send-draft');
   let title='Review this invoice',explanation=rowView(row).next,action='';
-  const busy=caseActionBusy||sendBusy||dueActive()||['running','waiting_for_portfolio'].includes(agentJob?.status);
+  const busy=caseActionBusy||sendBusy||Boolean(c?.workflow?.processing)||Boolean(caseLoadError);
   const issue=agentJob?.progress?.report?.invoices?.[row.id]?.error;
   if(issue && rowView(row).status==='processing_error' && !invoiceContinuation(c)) {
     title='Recover invoice processing';explanation=issue.message+' Open Run overview for the diagnostic and Retry failed invoices action.';
@@ -63,6 +124,7 @@ function invoiceCaseHeader(c) {
 function refreshInvoiceCaseHeader(c) {
   const panel=$('invoice-case-controls');if(!panel)return;
   panel.innerHTML=invoiceCaseHeader(c);panel.hidden=false;
+  watchInvoiceExecution(c);
   if($('invoice-next-action'))$('invoice-next-action').onclick=()=>{if(!$('send-draft').disabled)$('send-draft').click();};
   if($('review-invoice-evidence'))$('review-invoice-evidence').onclick=()=>{
     const evidence=$('case-conversation').querySelector('.case-outcome');
@@ -164,8 +226,8 @@ function renderCaseExecution() {
   const changed=panel.dataset.invoice!==row?.id,scrollLeft=changed?0:(panel.querySelector('.case-trace')?.scrollLeft || 0);panel.dataset.invoice=row?.id || '';
   panel.innerHTML=`<div class="activity-head"><span class="activity-title">Invoice processing · ${escapeHTML(row?.id || 'select an invoice')}</span>${w?`<span class="tag state">${w.mode==='limited'?'Review &amp; approve':'Automatic processing'}</span>`:''}</div>
     <p class="panel-sub">Saved backend actions for this invoice only. These are separate from portfolio preparation.</p>
-    ${w?`<p class="explain">${escapeHTML(rowView(row).label)} · ${escapeHTML(rowView(row).next)}</p>
-      <div class="case-trace" tabindex="0" role="list" aria-label="Recorded invoice processing steps">${(w.activity||[]).slice(-12).map(a=>`<div class="case-trace-item" role="listitem"><b>${escapeHTML(activityLabels[a.node] || a.node)}</b><span class="trace-status">${a.status==='completed'?'Completed':a.status==='started'?'In progress':escapeHTML(a.status)}</span><div>${escapeHTML(a.message)}</div><small>${escapeHTML(new Date(a.timestamp).toLocaleString())}</small></div>`).join('') || '<p>No backend actions recorded yet.</p>'}</div>`:
+    ${w?`<p class="explain">${escapeHTML(rowView(row).label)} · ${escapeHTML(rowView(row).next)}</p>${w.processing?`<p class="invoice-live-step">Current step: ${escapeHTML(activityLabels[w.activity?.at(-1)?.node] || 'Loading invoice')} · ${w.activity?.at(-1)?.status==='started'?'In progress':'Recorded'}</p>`:''}
+      <div class="case-trace" tabindex="0" role="list" aria-label="Recorded invoice processing steps">${(w.activity||[]).slice(-40).map(a=>`<div class="case-trace-item" role="listitem"><b>${escapeHTML(activityLabels[a.node] || a.node)}</b><span class="trace-status">${a.status==='completed'?'Completed':a.status==='started'?'In progress':escapeHTML(a.status)}</span><div>${escapeHTML(a.message)}</div><small>${escapeHTML(new Date(a.timestamp).toLocaleString())}</small></div>`).join('') || '<p>No backend actions recorded yet.</p>'}</div>`:
       `<p class="explain">${c?'This saved case has no recorded LangGraph steps yet.':'This invoice has not been processed by the collection agent yet.'} Run collections to prepare actions; opening the invoice is read-only.</p>`}`;
   const trace=panel.querySelector('.case-trace');if(trace)trace.scrollLeft=scrollLeft;
 }
@@ -196,8 +258,8 @@ function bindWorkflowExtras(c) {
 
 async function launchCaseAgent(runId,mode) {
   agentJob={run_id:runId,mode,status:'running',progress:{processed:0,total:state.invoices.length}};
-  $('start-run').disabled=true;banner('COLLECTIONS RUNNING','Portfolio prepared; processing saved collection actions.');renderWorkflowSummary();
-  try{agentJob=(await api(`/api/runs/${runId}/agent`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})})).job;}
+  $('start-run').disabled=true;banner('COLLECTIONS RUNNING','Portfolio prepared; processing saved collection actions.');renderWorkflowSummary();renderFlow();
+  try{agentJob=(await api(`/api/runs/${runId}/agent`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})})).job;connectExecutionStream(runId);}
   catch(error){
     try{agentJob=await api(`/api/runs/${runId}/agent`);}catch(readError){agentJob.status='interrupted';}
     showError(error.message);$('start-run').disabled=['running','waiting_for_portfolio'].includes(agentJob.status);renderWorkflowSummary();
@@ -212,11 +274,11 @@ async function pollWorkflow() {
   if(!active && !checkingDue && !caseActionBusy && !mailPending && !$('invoice-dialog')?.open)return;
   workflowPollBusy=true;
   try {
-    if(active)agentJob=await api(`/api/runs/${agentJob.run_id}/agent`);
+    if(active && executionStream?.readyState!==1)mergeAgentJob(await api(`/api/runs/${agentJob.run_id}/agent`));
     if(checkingDue)dueJob=await api(`/api/followup-checks/${dueJob.id}`);
     await refreshCases(false);
     if(checkingDue && !dueActive()){ $('start-run').disabled=active;banner('FOLLOW-UP CHECK FINISHED','Saved promises and payment evidence checked; review states remain open.'); }
-    renderFollowupControls();
+    renderFollowupControls();renderFlow();renderSendState();
     if(active && !['waiting_for_portfolio','running'].includes(agentJob.status)) {
       $('start-run').disabled=dueActive();
       banner(agentJob.status==='completed'?(agentJob.progress?.failed?'REVIEW REQUIRED':'PROCESSING FINISHED'):'RECOVERY REQUIRED',agentJob.status==='completed'?(agentJob.progress?.failed?`${agentJob.progress.processed}/${agentJob.progress.total} invoices processed; ${agentJob.progress.failed} need review. See Run overview.`:'Case actions saved. Waiting/review states remain open.'):'Open Run overview for the saved reason and recovery action.');

@@ -226,6 +226,57 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         await public.allowed(request,run_id);s=backend()
         return await s.store.rpc('ca_agent_job',{'p_action':'get','p_session_key':public.actor(request)[0],'p_run_id':str(run_id)})
 
+    @app.get('/api/runs/{run_id}/agent/events')
+    async def agent_events(run_id: UUID,request: Request):
+        await public.allowed(request,run_id)
+        s=backend();actor=public.actor(request)[0];rid=str(run_id)
+        queue=agent.events.subscribe(rid)
+        try:
+            saved=await s.store.rpc('ca_agent_job',{'p_action':'get','p_session_key':actor,'p_run_id':rid})
+            current_cases=await cases.list(actor)
+        except BaseException:
+            agent.events.unsubscribe(rid,queue)
+            raise
+        async def stream():
+            try:
+                yield 'retry: 1500\n\n'
+                yield 'event: execution\ndata: '+json.dumps({'job':saved,'cases':current_cases,'restored':True})+'\n\n'
+                if saved['status'] not in {'running','waiting_for_portfolio'}:return
+                while not await request.is_disconnected():
+                    try:payload=await asyncio.wait_for(queue.get(),timeout=5)
+                    except asyncio.TimeoutError:
+                        # Durable catch-up also handles queued waiting-for-analysis jobs.
+                        try:
+                            job=await s.store.rpc('ca_agent_job',{'p_action':'get','p_session_key':actor,'p_run_id':rid})
+                            payload={'job':job}
+                        except StorageError:
+                            yield ': reconnect when database is available\n\n';continue
+                    yield 'event: execution\ndata: '+json.dumps(payload)+'\n\n'
+                    if payload.get('job',{}).get('status') in {'completed','interrupted','analysis_failed'}:return
+            finally:agent.events.unsubscribe(rid,queue)
+        return StreamingResponse(stream(),media_type='text/event-stream',headers={'Cache-Control':'no-cache','X-Accel-Buffering':'no'})
+
+    @app.get('/api/cases/{case_id}/events')
+    async def case_events(case_id: UUID,request: Request):
+        backend();actor=public.actor(request)[0];cid=str(case_id);key='case:'+cid
+        queue=agent.events.subscribe(key)
+        try:saved=await agent.case(actor,cid)
+        except BaseException:
+            agent.events.unsubscribe(key,queue)
+            raise
+        async def stream():
+            try:
+                yield 'retry: 1500\n\nevent: case-update\ndata: '+json.dumps({'case':saved,'restored':True})+'\n\n'
+                while not await request.is_disconnected():
+                    try:payload=await asyncio.wait_for(queue.get(),timeout=5)
+                    except asyncio.TimeoutError:
+                        try:payload={'case':await agent.case(actor,cid),'restored':True}
+                        except StorageError:
+                            yield ': database temporarily unavailable\n\n';continue
+                    yield 'event: case-update\ndata: '+json.dumps(payload)+'\n\n'
+            finally:agent.events.unsubscribe(key,queue)
+        return StreamingResponse(stream(),media_type='text/event-stream',headers={'Cache-Control':'no-cache','X-Accel-Buffering':'no'})
+
     @app.post('/api/cases/{case_id}/approve')
     async def approve_case(case_id: UUID,body: ApprovalRequest,request: Request):
         backend()
@@ -331,7 +382,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             followup_status={'ready':False,'error':'Apply sql/012_promise_followups.sql to enable demo-clock follow-ups.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.10", "ui_version":"workflow-12", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.11", "ui_version":"workflow-13", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,

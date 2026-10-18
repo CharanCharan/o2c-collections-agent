@@ -2,17 +2,29 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_10_reliable_portfolio
-implementation_branch: reliable-portfolio-results
+implementation_milestone: V2_11_live_execution
+implementation_branch: compact-live-execution
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_latest_main_verify_v2_10_health_then_complete_run
+pending_learning_check: deploy_v2_11_verify_live_steps_row_logs_and_ready_approval
 next_milestone: guided_interviewer_walkthrough_then_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.10 portfolio reliability and bottom processing details — authoritative current checkpoint
+## V2.11 compact real execution and invoice logs — authoritative current checkpoint
+
+PR20 mergedd887e83635c697afdbf3b422fa25de2ec0a5b791, compared82562bc→main mergeonly/noedits. Useroverridesbottompanel: smalltopstripnamesonly, realbackendprogressinclLangGraph, rowendlogbutton andfixdisabledNextstep. Branchcompact-live-execution; lesson docs/MILESTONE_V2_11.md. NoSQL/packages/env, previous009–012prereqs. Healthv2.11/workflow-13. Usermerge/manualdeploy/nativevisualacceptancepending.
+
+Compacttopnamed6preparationstages+7thProcessinvoiceactionsactiveuntilactualjobterminal; descriptionsremoved, detailedportfolioeventlogcollapsedbelowtable. Currentexecutionlineactualinvoice/node/status/counts; fasttemplates/portableMLfastandrepeatretainedcasesexplicit, noartificiallatency/replay. ClearingrunresetspreviousagentJob/streams sooldcompleteiconsdonotflash. Clientmergesjob/casebyDBtimestampstrings(topreservefractionalprecision) topreventstalepollingoverwritingnewSSE. Retainedcasecountsavedinjobprogress.
+
+Newbackend/workflow/events.py ExecutionEvents bounded128messagequeues plusContextVaractive_run. Agentpatch/effect/job publishesONLYafterexistingSQLcommitreturn. OwnedGET/api/runs/{id}/agent/events restoresSQLjob+sessioncases, streamsrunupdates,endsatjobterminal; GET/api/cases/{id}/events restoresownedcase, streamsmanualapproval/reply/dueupdates, closesondismiss/switch. Snapshotcatchup5s, existingpollfallback; oneprocessperDBstillrequired. MemoryqueueisdeliveryONLYnotbusiness/checkpointfallback, SQLretained40activities/checkpointsremaintruth. Noservices/tracing/newproviders/autoactions; privateinboundstillnotexposed. Contextresetfinally; subscriptionscleanup/cappedbuffer. Noexacttimingscheduler/alwaysonclaim.
+
+TopNextstepbugconfirmed:globalportfolioactivebusyblockedreadyinvoiceapproval. Topbusycase/useraction/erroronly; specificpendingvalidbuttonenablewhileotherinvoicesrun, noholds/mailreadiness/idempotencybypass. InvoiceactivityCurrentstep livefromsavednode; latest40retainedactions. New9thEventlogcolumnsmallLogbutton openscorrectinvoiceandfocuseshistory, alloriginal8fieldsdedicated. Unsentreplymaps/readonlyopening preserved; SSEdoesnotrerenderunaffectedcomposer.
+
+Validation48uniqueisolatedSQL/API/graph/report/followup/liveeventchecks mockedproviders. Newcommittedhistory/SSEownership/read-onlysnapshot/boundedcleanup/retainedcases/manualapprovalevents tests. ActuallocalHTTP/SSE/cookieJSDOM passedrealstreams/sevenstages/topcompactnodescriptions/ninefields/rowlogfocus/selectedidentity/topapprovalenabledwhileotherinvoiceheld/test-onlygate/send/signeddelivery/recovery/reply/promise/date/followup/reload/sourceunchanged. JSsyntax/Pythoncompilepassed. Noliveprovidercalls/cloudwrites/deploy/pixelacceptanceclaim. Nextguidedwalkthrough/editorlast.
+
+## Historical V2.10 portfolio reliability and bottom processing details
 
 PR19 merged279cd10800e2fe09f905f28febadc5c01c1bc925; compare0a58f500→main mergeonly/nofilechanges. Userasksinvestigateinterruption/finishallinvoices andmovePortfolio processingbottom. Branchreliable-portfolio-results, lesson docs/MILESTONE_V2_10.md. NoSQL/packages/envchanges, previous009–012prerequisites. Userreview/merge/manualdeploy/versionverification/visualacceptancepending.
 

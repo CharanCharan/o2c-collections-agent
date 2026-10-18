@@ -1,3 +1,5 @@
+> Latest V2.11: [compact live execution and invoice logs](docs/MILESTONE_V2_11.md). Small top stage strip includes actual invoice processing; owned event streams update invoice actions live. Row Log buttons open invoice history, and ready approvals work while other invoices process. Deploy latest main and verify v2.11/workflow-13; no new SQL/packages.
+
 > Latest V2.10: [reliable portfolio results](docs/MILESTONE_V2_10.md). One invoice error no longer abandons the portfolio; reports retain explicit exceptions and retry failed invoices. Processing details are collapsed below the table. Deploy latest main and verify `/api/health` reports app_version v2.10 and ui_version workflow-12; no new SQL or packages.
 
 > Latest V2.9: [invoice Next step and horizontal processing](docs/MILESTONE_V2_9.md). Portfolio stages run horizontally above the full-width queue; selected invoice history appears in its popup beside reply/evidence, with specific next-action controls at the top. Merge/pull and redeploy; no new SQL or packages.
