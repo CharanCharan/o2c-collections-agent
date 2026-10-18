@@ -205,11 +205,17 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         event_key: str=Field(min_length=1,max_length=100)
         approved: bool
 
+    async def require_checkpoint_storage():
+        try:ready=await backend().store.rpc('ca_checkpoint_health')
+        except StorageError:raise HTTPException(503,'Apply sql/013_checkpoint_repair.sql after SQL009–012, then retry.') from None
+        if not ready.get('ready'):raise HTTPException(503,'Apply sql/013_checkpoint_repair.sql after SQL009–012, then retry.')
+
     @app.post('/api/runs/{run_id}/agent')
     async def start_case_agent(run_id: UUID,body: AgentRequest,request: Request):
         await public.allowed(request,run_id)
         s=backend();actor=public.actor(request)[0]
         await s.store.rpc('ca_workflow_health')
+        await require_checkpoint_storage()
         async with agent.job_locks[str(run_id)]:
             result=await s.store.rpc('ca_agent_job',{'p_action':'create','p_session_key':actor,'p_run_id':str(run_id),'p_mode':body.mode})
             if not result['created'] and result['job']['status']=='completed' and result['job']['progress'].get('failed',0)>0:
@@ -372,9 +378,10 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             await mail.readiness()
         try:
             await s.store.rpc('ca_workflow_health')
-            workflow={'ready':True,'engine':'langgraph','version':'1.2.16'}
+            checkpoint=await s.store.rpc('ca_checkpoint_health')
+            workflow={'ready':bool(checkpoint.get('ready')),'engine':'langgraph','version':'1.2.16','checkpoint':checkpoint}
         except StorageError:
-            workflow={'ready':False,'error':'Run sql/009_case_workflow.sql to enable the case agent.'}
+            workflow={'ready':False,'error':'Apply sql/013_checkpoint_repair.sql after existing SQL009–012 to repair checkpoint storage.'}
         try:
             await s.store.rpc('ca_followup_health')
             followup_status={'ready':True,'schema':12,'scheduler':'explicit_demo_check'}
@@ -382,7 +389,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             followup_status={'ready':False,'error':'Apply sql/012_promise_followups.sql to enable demo-clock follow-ups.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.11", "ui_version":"workflow-13", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.12", "ui_version":"workflow-14", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,
@@ -477,6 +484,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
     @app.post("/api/runs", status_code=202)
     async def start_run(request: Request,body: RunStartRequest | None = None):
         s=backend();actor=public.actor(request)[0]
+        if body:await require_checkpoint_storage()
         async def plan(run):
             await s.store.rpc('ca_agent_plan',{'p_session_key':actor,'p_run_id':run.id,'p_mode':body.mode})
         async def after(run):
