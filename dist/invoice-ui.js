@@ -12,7 +12,7 @@ function openInvoiceWorkspace(invoiceId,showEvents=false) {
   const changed=state.selectedId!==invoiceId;
   invoiceReturnId=invoiceId;state.selectedId=invoiceId;
   for(const menu of document.querySelectorAll('.header-menu'))menu.open=false;
-  renderQueue();renderDetail();
+  renderQueue(true);renderDetail();
   void refreshCases(false);
   const dialog=$('invoice-dialog');
   if(changed)for(const panel of dialog.querySelectorAll('.invoice-dialog-columns>.panel'))panel.scrollTop=0;
