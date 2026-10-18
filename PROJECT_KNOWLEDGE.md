@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_13_workflow_guide
-implementation_branch: workflow-guide-llm-labels
+implementation_milestone: V2_14_checkpoint_write_order
+implementation_branch: checkpoint-write-order
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: verify_two_page_guide_llm_labels_and_prior_SQL013_acceptance
+pending_learning_check: apply_SQL014_deploy_v2_14_then_retry_live_failed_invoices
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.13 two-page workflow guide and LLM labels — authoritative current checkpoint
+## V2.14 checkpoint write ordering — authoritative current checkpoint
+
+PR23 merged 0c4b0bf99287d2198132bc323b2fae1d68c15e49; compare PR23 head to main: merge only, no file changes. User still sees live checkpoint_reference_error / writes / SQLSTATE23503 on six invoices after stopping local/live overlap. Read-only live health showed appv2.12/uiworkflow-14, checkpoint_schema13 readytrue. SQL013 is present but incomplete; do not advise repeating013 as the solution.
+
+Verified pinned LangGraph1.2.16 schedules pending input writes and checkpoint puts independently, even durabilitysync. New real-graph/SQL test delays parent put30ms: writes arrives first, SQL013 fails23503, SQL014 completes and restores correct state. Earlier synchronous mock transport hid this race. This is a reproduced sufficient cause, not access to private live failing traces. No cloudDBcredentials/directrepair/deletion/providercalls/deploy.
+
+Branch checkpoint-write-order; lesson docs/MILESTONE_V2_14.md. SQL014 changes ca_graph_writes FK from compositecheckpoint to owningcase ONDELETECASCADE; existing rows preserved. Early writes durable and hidden until checkpoint appears. SQL013 retiredwrite handling retained; explicit cleanup linkedwrites below latest8checkpointwindow plus at most8unpaired IDs/case/namespace. Case/ns advisory lock, RLS/service-only, dedup positiveidx/updatesnegativeidx unchanged. No memory/retry fallback. Existing runs/cases/source/mailreceipts/budgets untouched. Updated preflight requires revision>=14; healthv2.14/uiworkflow-15; UI unchanged. New safe diagnostics reference014, savedhistorical errors may stillreference013.
+
+Regression suite result recorded in the PR. Tests cover SQL013 failure/014 success under networkdelay, all24invoices+approval/resume, earlywrite persistence, migrationidempotency, boundedunpaired/pairedretention, casecascade, namespace/publicaccess, revision13 rejection, existing checkpoint/runs/mail/followups. User must merge/pull, apply014inSupabaseSQLeditor after013 whenidle, manuallydeploy latestmain, checkhealth14ready, retryfailed samebrowser. No history reset needed. Onebackend/DB stillrequired independently of this fix. Next liveacceptancethen guidedinterviewerwalkthrough/editorlast.
+
+## Historical V2.13 two-page workflow guide and LLM labels
 
 PR22 mergedce3624d93096345d19be6c6069d130b8e8a071bd; comparefbb7a6ef→main mergeonly/noedits. UserasksconciseeditableMDintwo-pagewebsitepopupbesidetitle plusLLMcallreferencesinnotice/relevantareas. Branchworkflow-guide-llm-labels; lesson docs/MILESTONE_V2_13.md. UI/staticcontent+backendversiononly, noSQL/packages/env; priorSQL013stillrequiredanduserapplicationacceptancenotconfirmed. Appv2.13/uiworkflow-15. Review/merge/manualdeploy/nativevisualchecks pending.
 

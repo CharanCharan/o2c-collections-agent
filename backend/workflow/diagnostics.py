@@ -17,8 +17,8 @@ def failure(exc,invoice_id,phase):
         message={'network_unavailable':'The database connection failed during this invoice.',
             'schema_missing':'A required database function is missing; apply the required migrations.',
             'access_denied':'Database access was rejected; the owner must check configuration.',
-            'checkpoint_reference_error':'Checkpoint storage rejected a reference. Apply sql/013_checkpoint_repair.sql, then retry failed invoices.',
-            'checkpoint_schema_error':'Checkpoint schema needs repair. Apply sql/013_checkpoint_repair.sql.',
+            'checkpoint_reference_error':'Checkpoint storage rejected a reference. Apply sql/014_checkpoint_write_order.sql, then retry failed invoices.',
+            'checkpoint_schema_error':'Checkpoint schema needs repair. Apply sql/014_checkpoint_write_order.sql.',
             'database_timeout':'The database operation timed out. Check database availability.'}.get(code,'A database operation failed during this invoice. Check schema and database availability.')
     result={'error_id':str(uuid4()),'code':code,'message':message,'phase':phase,'invoice_id':invoice_id,'exception_type':type(exc).__name__}
     if getattr(exc,'operation',None):result['operation']=exc.operation

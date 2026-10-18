@@ -207,8 +207,8 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
 
     async def require_checkpoint_storage():
         try:ready=await backend().store.rpc('ca_checkpoint_health')
-        except StorageError:raise HTTPException(503,'Apply sql/013_checkpoint_repair.sql after SQL009–012, then retry.') from None
-        if not ready.get('ready'):raise HTTPException(503,'Apply sql/013_checkpoint_repair.sql after SQL009–012, then retry.')
+        except StorageError:raise HTTPException(503,'Apply sql/014_checkpoint_write_order.sql after SQL009–013, then retry.') from None
+        if not ready.get('ready') or ready.get('checkpoint_schema',0)<14:raise HTTPException(503,'Apply sql/014_checkpoint_write_order.sql after SQL009–013, then retry.')
 
     @app.post('/api/runs/{run_id}/agent')
     async def start_case_agent(run_id: UUID,body: AgentRequest,request: Request):
@@ -379,9 +379,9 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
         try:
             await s.store.rpc('ca_workflow_health')
             checkpoint=await s.store.rpc('ca_checkpoint_health')
-            workflow={'ready':bool(checkpoint.get('ready')),'engine':'langgraph','version':'1.2.16','checkpoint':checkpoint}
+            workflow={'ready':bool(checkpoint.get('ready') and checkpoint.get('checkpoint_schema',0)>=14),'engine':'langgraph','version':'1.2.16','checkpoint':checkpoint}
         except StorageError:
-            workflow={'ready':False,'error':'Apply sql/013_checkpoint_repair.sql after existing SQL009–012 to repair checkpoint storage.'}
+            workflow={'ready':False,'error':'Apply sql/014_checkpoint_write_order.sql after existing SQL009–013 to repair checkpoint storage.'}
         try:
             await s.store.rpc('ca_followup_health')
             followup_status={'ready':True,'schema':12,'scheduler':'explicit_demo_check'}
@@ -389,7 +389,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             followup_status={'ready':False,'error':'Apply sql/012_promise_followups.sql to enable demo-clock follow-ups.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.13", "ui_version":"workflow-15", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.14", "ui_version":"workflow-15", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,

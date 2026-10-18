@@ -2,6 +2,8 @@
 
 Stores real checkpoints AND pending writes. No pickle, ephemeral file or memory
 fallback. Retains eight recent checkpoints per case; case audit is separate.
+SQL014 stores pending writes independently: LangGraph may persist them before
+the corresponding checkpoint save finishes. No in-memory save-order fallback.
 """
 import base64
 from langgraph.checkpoint.base import BaseCheckpointSaver,CheckpointTuple,WRITES_IDX_MAP,get_checkpoint_metadata

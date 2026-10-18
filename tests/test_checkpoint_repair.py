@@ -13,6 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def legacy_function(database):
+    database.sql('alter table ca_graph_writes add constraint ca_graph_writes_legacy_checkpoint_fkey foreign key(case_id,namespace,checkpoint_id) references ca_graph_checkpoints on delete cascade')
     sql=(ROOT/'sql/009_case_workflow.sql').read_text()
     start=sql.index('create or replace function public.ca_checkpoint(')
     end=sql.index('create or replace function public.ca_workflow_patch(',start)
@@ -51,7 +52,7 @@ def test_write_idempotency_negative_indices_and_health_privileges(store_factory,
         writes=checkpoint(database,case,'get',ident)['data']['writes']
         assert next(w for w in writes if w['idx']==0)['value']=='first'
         assert next(w for w in writes if w['idx']==-1)['value']=='second'
-        assert c.get('/api/health').json()['workflow']['checkpoint']['checkpoint_schema']==13
+        assert c.get('/api/health').json()['workflow']['checkpoint']['checkpoint_schema']==14
     database.sql('set role anon')
     try:assert 'error' in database.call(command='sql',sql='select public.ca_checkpoint_health()')
     finally:database.sql('reset role')
@@ -65,7 +66,7 @@ def test_checkpoint_sqlstate_and_action_exposed_without_raw_details():
             result=failure(saved.value,'INV-10287','process_invoice')
             assert result['sqlstate']=='23503' and result['checkpoint_action']=='writes'
             assert result['code']=='checkpoint_reference_error'
-            assert '013_checkpoint_repair.sql' in result['message'] and 'PRIVATE' not in json.dumps(result)
+            assert '014_checkpoint_write_order.sql' in result['message'] and 'PRIVATE' not in json.dumps(result)
         finally:await store.close()
     asyncio.run(check())
 
@@ -76,6 +77,6 @@ def test_unrepaired_checkpoint_function_blocks_new_runs(store_factory,database):
         response=c.get('/api/health')
         assert response.status_code==200 and response.json()['workflow']['ready'] is False
         response=c.post('/api/runs',json={'mode':'limited'})
-        assert response.status_code==503 and '013_checkpoint_repair.sql' in response.text
+        assert response.status_code==503 and '014_checkpoint_write_order.sql' in response.text
         assert c.get('/api/runs').json()['runs']==[]
     assert database.call(command='exec',sql=(ROOT/'sql/013_checkpoint_repair.sql').read_text())['data']
