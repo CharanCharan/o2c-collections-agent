@@ -56,6 +56,7 @@ class SupabaseStore:
             return await self._rpc(name,body)
         except StorageError as exc:
             exc.operation=name
+            if name=='ca_checkpoint' and (body or {}).get('p_action') in {'get','put','writes'}:exc.checkpoint_action=body['p_action']
             raise
 
     async def _rpc(self, name: str, body: dict | None = None):
@@ -93,7 +94,15 @@ class SupabaseStore:
                 raise StoreRequestError(int(data["code"][2:]), allowed[data["code"]])
             if response.status_code == 404:
                 raise StorageError("Supabase schema function missing. Run the required schema SQL (001/002 for setup; 004_language_review.sql for M4; 005_email_loop.sql for M5; 006_public_demo.sql for M6; 007_visitor_cases.sql and 008_case_email.sql for V2; 009_case_workflow.sql for LangGraph).",code="schema_missing")
-            raise StorageError("Supabase could not complete the database operation. Check schema setup and project availability.")
+            sqlstate=str(data.get('code',''))
+            category='storage_operation_failed'
+            if sqlstate in {'42P01','42883','PGRST202'}:category='schema_missing'
+            elif name=='ca_checkpoint' and sqlstate=='23503':category='checkpoint_reference_error'
+            elif name=='ca_checkpoint' and sqlstate in {'42702','42703','23505'}:category='checkpoint_schema_error'
+            elif sqlstate=='57014':category='database_timeout'
+            error=StorageError("Supabase could not complete the database operation. Check schema setup and project availability.",code=category)
+            if re.fullmatch(r'[0-9A-Z]{5}|PGRST[0-9]{3}',sqlstate):error.sqlstate=sqlstate
+            raise error
         try:
             return response.json()
         except ValueError:

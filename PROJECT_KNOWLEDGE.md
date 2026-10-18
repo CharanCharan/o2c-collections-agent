@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_11_live_execution
-implementation_branch: compact-live-execution
+implementation_milestone: V2_12_checkpoint_repair
+implementation_branch: repair-checkpoint-storage
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_v2_11_verify_live_steps_row_logs_and_ready_approval
+pending_learning_check: apply_SQL013_restart_verify_checkpoint_health_then_retry_failed_run
 next_milestone: guided_interviewer_walkthrough_then_visitor_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.11 compact real execution and invoice logs — authoritative current checkpoint
+## V2.12 checkpoint repair — authoritative current checkpoint
+
+PR21 merged796e4ab11841fe5c96f215e975937d5a55dffffa; compare66053284→main mergeonly/noedits. Userreportslocalca_checkpoint/storage_operation_failed onINV10287/10482/10604, stoppedrunaa398a3a, offersdroppingrunsifneeded. Branchrepair-checkpoint-storage, lesson docs/MILESTONE_V2_12.md. No directSupabaseaccesshere(noenv/key), noactualDBchanges/deletion/provider/deploy. UsermustapplySQL013+restart; exactoriginalSQLSTATEunknownbecauseolddiagnosticsomitit.
+
+ReproducedrealSQL009buginPGlite:>8checkpointputsprunepastparent, delayedpendingwritesforretiredcheckpointfailFK23503. New013function-onlyrepairqualifiedcolumns/explicitinserts/percase+namespaceadvisoryxactlock; ignoresmissingparentsONLYiftargetolderthanoldestof>=8retained, returnsretiredtrue, neverrecreatesoldstate. Unknown/future/othernamespaceparentsstillfail. Preservepositivewriteidempotency/negativespecialwriteupdates, RLS/serviceonly, latest8. Doesnotdrop/truncate/clearcases/runs/mail/budgets/source. Noresetneededforthisrepair.
+
+Privateca_checkpoint_healthrevision13marker/readiness; mainhealthappv2.12/uiworkflow-14/workflow.checkpointready. Newgraphstartpreflightblocksworkifrepairmissing/currentARavailable; runexistingafterSQLready. StorageattachesSQLSTATEandcheckpoint_actiononlysafevalues, categorizesreference/schema/timeouterrors; runoverviewissueprintsSQLSTATE/action. NorawSQL/providertext/keys. OldSQLSTATEcannotberecoveredretroactively. Noautomaticproviderretry/policychange.
+
+48targetedisolatedSQL/graph/storage/report/followup/eventtests passed(mockproviders). Testsproveold23503andfixedlatewrite, migrationidempotencepreservescounts, retainedlatest8, invalidreferencesstillrejected, indexesdedup/RLS/diagnostics/oldfunctionblocksstart; existingapproval/restart/maildedup/promises/streams pass. JSsyntax/Pythoncompilepassed. UserapplySQL013Supabaseeditor+restartcheckready13thenRetryfailed/Recover; manualRenderdeployafterverification. IfRender/localshareDB, onlyonebackendactiveduringtest—startuprecoveryassumessingleprocesscanmarkotheractivejobsstopped. Nextverifymigrationbeforefeaturework, guidedwalkthrough/editorlast.
+
+## Historical V2.11 compact real execution and invoice logs
 
 PR20 mergedd887e83635c697afdbf3b422fa25de2ec0a5b791, compared82562bc→main mergeonly/noedits. Useroverridesbottompanel: smalltopstripnamesonly, realbackendprogressinclLangGraph, rowendlogbutton andfixdisabledNextstep. Branchcompact-live-execution; lesson docs/MILESTONE_V2_11.md. NoSQL/packages/env, previous009–012prereqs. Healthv2.11/workflow-13. Usermerge/manualdeploy/nativevisualacceptancepending.
 

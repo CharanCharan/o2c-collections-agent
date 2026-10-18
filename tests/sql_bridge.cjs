@@ -14,6 +14,7 @@ const {PGlite} = require('@electric-sql/pglite');
   await db.exec(fs.readFileSync('sql/009_case_workflow.sql','utf8'));
   await db.exec(fs.readFileSync('sql/011_unlimited_demo_starts.sql','utf8'));
   await db.exec(fs.readFileSync('sql/012_promise_followups.sql','utf8'));
+  await db.exec(fs.readFileSync('sql/013_checkpoint_repair.sql','utf8'));
   const seed=fs.readFileSync('sql/002_seed_demo.sql','utf8');
   await db.exec(seed);
   console.log(JSON.stringify({ready:true}));

@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.12 checkpointrepairtakespriority:applySQL013after012/restart/retryoldfailedjob, noreset. ReproducedretiredcheckpointlatewriteFK23503; functionsqualified/serialized, skipretiredonly/strictunknown, checkpointhealth13 andsafeSQLSTATE/action. Healthv2.12/workflow-14. LessonV2_12, userDBapplication/acceptancepending; no directDBcredentials/livechangebyassistant.
+
 V2.11: compacttopnames-onlyflow+actualcaseprocessingstage, ownedSQL-backedrun/invoiceeventstreams, ninthrowLogcontrol andreadycaseapprovalenabledindependentlyofportfoliojob. Noartificialpacing/SQL/packages/env; healthv2.11/workflow-13. LessonV2_11, merge/deploy/visualchecks pending.
 
 V2.10: processingdetailscollapsedbelowtable; perinvoicefaultisolation/explicitexceptionresults+retryfailedonly, fataljobfailuresretaintruthfulrecovery/partialresults. Healthv2.10/workflow-12 distinguishesdeployments; publiccheckwasoldworkflow-6, exactuserfailureunknown. NoSQL/packages/env; lessonV2_10; deploy/acceptancepending.
