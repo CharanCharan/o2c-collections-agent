@@ -208,8 +208,9 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 /* Compact business actions replace full-width overview/promise banners. */
 .intro {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);align-items:start}
 .intro-copy {min-width:0}
-.run-wrap {min-width:0;width:clamp(470px,55vw,790px);max-width:100%;justify-items:end;justify-self:end}
-.run-actions {flex-wrap:wrap;justify-content:flex-end;min-width:0;max-width:100%}
+.run-wrap {min-width:0;width:max-content;max-width:100%;justify-items:end;justify-self:end}
+.run-actions {flex-wrap:nowrap;justify-content:flex-end;min-width:0;max-width:100%;gap:8px}
+.run-actions>* {flex:0 0 auto;white-space:nowrap}
 .header-menu {position:relative}
 .header-menu>summary {display:flex;align-items:center;gap:8px;list-style:none;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:14px;font-weight:650;color:#365c54;background:white;min-height:42px;white-space:nowrap}
 .header-menu>summary::-webkit-details-marker {display:none}
@@ -237,7 +238,7 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
  .run-wrap {width:100%;justify-items:end}
 }
 @media(max-width:760px) {
- .run-actions {justify-content:flex-end;gap:8px}
+ .run-actions {justify-content:flex-start;gap:8px;overflow-x:auto;scrollbar-width:thin;padding-bottom:5px}
  .header-menu>summary {font-size:13px;padding:8px 10px}
  .action-popover {width:min(540px,calc(100vw - 28px));padding:16px}
  .invoice-continue button {width:100%}
