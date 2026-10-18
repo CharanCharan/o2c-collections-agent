@@ -2,17 +2,21 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_19_github_source_link
-implementation_branch: github-source-link
+implementation_milestone: V2_20_llm_draft_format
+implementation_branch: llm-draft-format-fix
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_and_verify_source_link_and_repository_access
+pending_learning_check: deploy_and_verify_new_LLM_draft_and_safe_rejection_reason
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.19 GitHub source link — authoritative current checkpoint
+## V2.20 LLM draft formatting — authoritative current checkpoint
+
+V2.20 improves draft format reliability: one shared set of character bounds drives Pydantic fields, retained portable schema descriptions and explicit prompt limits/types/keys with safe short examples. Preserve strict exact-fact/prose checks and no automatic retry/provider switch. Schema rejection now reports allowlisted field/type/length reasons without input/prose/untrusted-key echo; existing audit/provider usage retained. Prompt/validator versions v2; backend appv2.20, UI workflow-20 unchanged. 47 targeted draft/provider/M4 tests passed with mocked providers and isolated SQL. No SQL/env/deps/quota changes, live provider calls or deployment. Previous live generic failure not precisely diagnosed (raw output not retained); prompt/schema length gap confirmed in code, no 100% LLM success claim. Saved drafts unchanged; usermerge/deploy then test a newly created case/run within existing budgets. Lesson docs/MILESTONE_V2_20.md; branchllm-draft-format-fix; freshdemo remains cancelled.
+
+## Historical V2.19 GitHub source link
 
 V2.19 adds View source on GitHub beside How it works, opening the canonical repository in a new tab with an accessible label and noopener/noreferrer. Private visibility unchanged; invite interviewers or choose public access yourself. Credential review at main d03f1f64 plus all30 branch heads:69 reachable commits/41complete trees/471text versions, no tags; matches reviewed as test fixtures/vector, no apparent live credentials found. Scope excludes unreachable objects/discussions/logs/runtime and cannot prove chat-key rotation; two binary assets excluded from text scan. Lesson docs/MILESTONE_V2_19.md records scope and exercise. NoSQL/env/deps/liveproviders/deployment, appv2.19/uiworkflow-20. HTML checks and Pythoncompile passed; usermerge/deploy/accesscheck pending. Incognito preserved/freshdemo CANCELLED.
 

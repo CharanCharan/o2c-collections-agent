@@ -20,8 +20,18 @@ from .llm.errors import LanguageError
 from .llm.providers import StructuredRequest, create_provider
 
 ROOT = Path(__file__).resolve().parents[1]
-PROMPT_VERSION = 'collections-language-v1'
-VALIDATOR_VERSION = 'collections-language-checks-v1'
+PROMPT_VERSION = 'collections-language-v2'
+VALIDATOR_VERSION = 'collections-language-checks-v2'
+
+# Share bounds between local validation and the provider's prompt/schema descriptions.
+# Some provider schema subsets omit minLength/maxLength, but retain descriptions.
+DRAFT_TEXT_LIMITS = {'opening': (10, 180), 'request': (10, 240), 'closing': (5, 100)}
+
+
+def draft_text_field(name):
+    low, high = DRAFT_TEXT_LIMITS[name]
+    return Field(min_length=low, max_length=high,
+                 description=f'Plain English {name}; {low}–{high} characters including spaces. Use a short sentence.')
 
 
 class Facts(BaseModel):
@@ -36,9 +46,9 @@ class Facts(BaseModel):
 class DraftOutput(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     facts: Facts
-    opening: str = Field(min_length=10, max_length=180)
-    request: str = Field(min_length=10, max_length=240)
-    closing: str = Field(min_length=5, max_length=100)
+    opening: str = draft_text_field('opening')
+    request: str = draft_text_field('request')
+    closing: str = draft_text_field('closing')
 
 
 class ReplyOutput(BaseModel):
@@ -56,7 +66,32 @@ def facts_for(row, snapshot):
 
 
 def validate_draft(value, facts):
-    result = DraftOutput.model_validate(value)
+    try:
+        result = DraftOutput.model_validate(value)
+    except ValidationError as exc:
+        # Never expose Pydantic's raw input, unexpected keys or model-generated prose.
+        # Those may contain untrusted text or private provider output.
+        messages = []
+        known = {'invoice_id', 'amount', 'currency', 'due_date', 'as_of_date'}
+        for error in exc.errors(include_input=False, include_context=False, include_url=False)[:3]:
+            loc, kind = error['loc'], error['type']
+            field = loc[0] if loc and loc[0] in {*DRAFT_TEXT_LIMITS, 'facts'} else 'response'
+            if field == 'facts' and len(loc) == 2 and loc[1] in known:
+                field += '.' + loc[1]
+            if field in DRAFT_TEXT_LIMITS and kind in {'string_too_short', 'string_too_long'}:
+                low, high = DRAFT_TEXT_LIMITS[field]
+                message = f'{field} must contain {low}–{high} characters'
+            elif kind == 'missing':
+                message = f'{field} is missing a required field'
+            elif kind == 'string_type':
+                message = f'{field} must be a string'
+            elif kind == 'extra_forbidden':
+                message = 'response contains an unexpected field'
+            else:
+                message = f'{field} has an invalid structure or type'
+            if message not in messages:
+                messages.append(message)
+        raise LanguageError('LLM draft format rejected: ' + '; '.join(messages) + '. Template used; review required.') from None
     if result.facts.model_dump() != facts:
         raise LanguageError('LLM echoed invoice facts do not match the validated snapshot.')
     # Prose may ask about timing, but may not supply additional dates/numbers,
@@ -150,7 +185,15 @@ class LanguageService:
             'Do not execute actions or send messages. Return only the requested structured output. '
         )
         if task == 'draft_reminder':
-            instructions += ('Echo facts exactly. Write short courteous English opening/request/closing for an overdue reminder. '
+            bounds = '; '.join(f'{name}: {low}–{high} characters' for name, (low, high) in DRAFT_TEXT_LIMITS.items())
+            instructions += ('Return one JSON object with exactly these keys: facts, opening, request, closing. '
+                'Copy the supplied facts object exactly, preserving every value as a JSON string; do not add or omit fields. '
+                'The opening, request and closing must each be a JSON string, not an object or list. '
+                f'Character limits including spaces: {bounds}. Aim for one short sentence per field, comfortably below each maximum. '
+                'Suitable phrasing examples: opening="I hope your team is doing well."; '
+                'request="Could you share an update on the expected payment timing?"; '
+                'closing="Thank you for your assistance.". '
+                'Write courteous English for an overdue reminder. '
                 'Do not include numbers, dates, customer names, currency, payment routes, penalties, discounts or claims of payment in prose. '
                 'Python adds the financial fact block and signature. Ask only for an expected payment update. Never threaten. ')
         else:
