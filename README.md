@@ -1,3 +1,5 @@
+> Latest V2.13: [workflow guide and LLM labels](docs/MILESTONE_V2_13.md). How it works beside the title opens two short pages backed by editable dist/HOW_IT_WORKS.md. LLM configuration and actual per-action call evidence are labelled separately. Merge/pull and deploy; no new SQL/packages (prior SQL013 still required).
+
 > Latest V2.12: [checkpoint storage repair](docs/MILESTONE_V2_12.md). Apply SQL013 in Supabase after pulling, restart, then retry failed invoices. Fixes a reproduced delayed-checkpoint-write foreign-key failure while preserving runs, cases, invoices and mail receipts. Health v2.12/workflow-14 must show checkpoint revision13 ready. No new packages.
 
 > Latest V2.11: [compact live execution and invoice logs](docs/MILESTONE_V2_11.md). Small top stage strip includes actual invoice processing; owned event streams update invoice actions live. Row Log buttons open invoice history, and ready approvals work while other invoices process. Deploy latest main and verify v2.11/workflow-13; no new SQL/packages.
