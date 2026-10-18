@@ -2,17 +2,27 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_12_checkpoint_repair
-implementation_branch: repair-checkpoint-storage
+implementation_milestone: V2_13_workflow_guide
+implementation_branch: workflow-guide-llm-labels
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: apply_SQL013_restart_verify_checkpoint_health_then_retry_failed_run
-next_milestone: guided_interviewer_walkthrough_then_visitor_editor
+pending_learning_check: verify_two_page_guide_llm_labels_and_prior_SQL013_acceptance
+next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.12 checkpoint repair — authoritative current checkpoint
+## V2.13 two-page workflow guide and LLM labels — authoritative current checkpoint
+
+PR22 mergedce3624d93096345d19be6c6069d130b8e8a071bd; comparefbb7a6ef→main mergeonly/noedits. UserasksconciseeditableMDintwo-pagewebsitepopupbesidetitle plusLLMcallreferencesinnotice/relevantareas. Branchworkflow-guide-llm-labels; lesson docs/MILESTONE_V2_13.md. UI/staticcontent+backendversiononly, noSQL/packages/env; priorSQL013stillrequiredanduserapplicationacceptancenotconfirmed. Appv2.13/uiworkflow-15. Review/merge/manualdeploy/nativevisualchecks pending.
+
+Newdist/HOW_IT_WORKS.md(~400words) solepublicguidesource, twopagesbyexactstandalone---. Tablesmapentireflowandrealgraphsteps toSupabase/Python/Pydantic/Decimal/portabletrainedlogisticmodels/GroqconditionalLLM/LangGraph/Resend/FastAPI/SSE/Render. Guidebuttonbesideh1native dialogwithtwo tabs/PrevNext/keyboard/Escape/backdrop/focusreturn/read-onlyMarkdownlink. guide-ui.js beforeotherscripts butinitafterappglobals; lazyfetchstaticMDonly, tinyescapedheading/paragraph/table renderer(noHTMLexecution/externaldependency). Guideusablewithoutstartingagent/model/email; editMDreload no build.
+
+NoticeincludesagentLLMcallswhenenabled; liveconfigurationlabel showsenabledprovider/model vsdisabled/templates/manualreview vskeymissing/configblocked. Thisisreadinessnotusageclaim. Perdraft/replyaudit labelscompleted/attemptedfallback/nocall/unknownlegacy; followuptemplateforcesnocalllabel. NoLLMlabelonfinancialtools/MLprediction. Existingdraftfactvalidation/providerkeys/budgets/graphpoliciesunchanged. WorkflowstripminorfixfoundbyQA:casejobactive/completeprovespreparationdone, preventlateolderdraftstart fromshowinginprogressafterjobcomplete.
+
+8preview/emailisolatedSQL/APItests +actualHTTP/SSE/cookieJSDOMguide/tabs/keyboard/focus/no-run/open/disabledlabel/escaping/actualdraftaudit andpreviousfulljourney passed; JSsyntax/Pythoncompilepassed. Nativepixel/focustrapnotverified. Nolivemodel/email/cloudwrite/deploy. NextverifypriorSQL013andguide deploymenttheninterviewerwalkthrough/editorlast.
+
+## Historical V2.12 checkpoint repair
 
 PR21 merged796e4ab11841fe5c96f215e975937d5a55dffffa; compare66053284→main mergeonly/noedits. Userreportslocalca_checkpoint/storage_operation_failed onINV10287/10482/10604, stoppedrunaa398a3a, offersdroppingrunsifneeded. Branchrepair-checkpoint-storage, lesson docs/MILESTONE_V2_12.md. No directSupabaseaccesshere(noenv/key), noactualDBchanges/deletion/provider/deploy. UsermustapplySQL013+restart; exactoriginalSQLSTATEunknownbecauseolddiagnosticsomitit.
 

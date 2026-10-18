@@ -190,6 +190,7 @@ function renderDetail() {
     <div class="draft"><div class="draft-head">${followupDraft(currentCase)?'Follow-up reminder':'Reminder'} <span>${draft ? (draft.generation_mode === "llm_assisted_validated_facts" ? "LLM · REVIEW REQUIRED" : draft.generation_mode === "template_fallback_no_llm_approval" ? "FALLBACK TEMPLATE · REVIEW" : "TEMPLATE · NO LLM") : "NO DRAFT"}</span><button class="secondary" id="send-draft" disabled>Send reminder</button></div>
       ${draft ? `<div class="draft-subject">${escapeHTML(draft.subject)}</div><pre class="draft-body">${escapeHTML(draft.body)}</pre>` : `<div class="draft-body">${row.dispute ? "Reminders paused for an active dispute." : row.days === 0 ? "Pre-due risk is for preventive review. Reminder drafting/approval currently remains in the overdue workflow." : "Run collections to prepare reminders for eligible invoices with urgency scores of at least 35."}</div>`}
     </div>
+    <p class="llm-evidence">${draft?escapeHTML(llmCallLabel(followupDraft(currentCase)?{api_attempted:false}:draftRow.draft_audit,draftRow.draft_audit?.status==='validated_for_human_review')):'No draft or drafting call has been prepared yet.'}</p>
     <p class="explain" id="draft-email-status"></p>
     ${currentCase ? `<p class="panel-sub">Draft saved with case snapshot ${escapeHTML(currentCase.snapshot.as_of_date)} · run ${escapeHTML(currentCase.run_id.slice(0,8))}. Sending uses this displayed draft.</p>` : ''}
     ${draftRow.draft_audit ? `<details class="explain"><summary>Draft validation and tool evidence</summary><pre>${escapeHTML(JSON.stringify(draftRow.draft_audit, null, 2))}</pre></details>` : ''}
@@ -206,8 +207,8 @@ function renderDetail() {
 function renderFlow() {
   const preparation=state.legacyRun?stages.filter(([id])=>id!=='predict'):stages;
   const job=agentJob,jobActive=['waiting_for_portfolio','running'].includes(job?.status);
-  const savedPreparation=job && !state.currentRun && ['running','completed','interrupted'].includes(job.status);
-  const rows=preparation.map(([id,name])=>({id,name,status:state.stageStatus[id] || (savedPreparation?'completed':null)}));
+  const savedPreparation=job && ['running','completed','interrupted'].includes(job.status);
+  const rows=preparation.map(([id,name])=>({id,name,status:savedPreparation?'completed':state.stageStatus[id] || null}));
   if(job)rows.push({id:'case_actions',name:'Process invoice actions',status:job.status==='running'?'started':job.status==='completed'?(job.progress?.failed?'warning':'completed'):['interrupted','analysis_failed'].includes(job.status)?'failed':null});
   $('flow').innerHTML=rows.map(({id,name,status},i)=>`<div class="step ${status==='completed'?'complete':status==='started'?'active':status==='failed'?'failed':status==='warning'?'warning':''}" data-stage="${id}" role="listitem" aria-label="${escapeHTML(name)}: ${status || 'waiting'}" ${status==='started'?'aria-current="step"':''}><span class="step-icon">${status==='completed'?'✓':status==='failed'||status==='warning'?'!':i+1}</span><span class="step-name">${escapeHTML(name)}</span></div>`).join('');
   $('progress-bar').style.width=`${rows.filter(r=>['completed','warning'].includes(r.status)).length/rows.length*100}%`;
@@ -377,6 +378,7 @@ $("refresh-runs").onclick = refreshSavedRuns;
 initWorkflowControls();
 
 initInvoiceWorkspace();
+initWorkflowGuide();
 $('clear-outcome-filter').onclick=()=>{outcomeFilter=null;renderQueue();renderDetail();};
 for (const [id,stage] of [['stage-overdue','overdue'],['stage-preventive','pre_due']]) {
   $(id).onclick = () => {
@@ -465,7 +467,7 @@ function renderCase() {
     ${(current.followups||[]).map(out=>`<article class="case-message followup-history"><b>Follow-up email · real Resend</b><p>${escapeHTML(out.subject)}</p><pre>${escapeHTML(out.body)}</pre><p>${escapeHTML(outboundLabel(out))}</p></article>`).join('')}
     ${current.messages.map(m => `<article class="case-message"><b>${m.channel === 'draft_preview' ? (current.outbound ? 'Reminder copy · real email status beside draft' : 'Unsent reminder copy · no email sent') : 'Simulated customer reply · entered on website'}</b><pre>${escapeHTML(m.text)}</pre>
       ${m.review ? `<p class="explain">${m.review.status === 'classified_for_review' ? `LLM classification: ${escapeHTML(m.review.classification.intent)}. The graph policy determines which actions require approval.` : m.review.status === 'pending_review' ? 'Saved before classification. Processing did not finish; manual review is required. Retrying this same message will not repeat a model call.' : 'LLM disabled, unavailable, capped or output rejected. Original text saved for manual review.'}</p>
-        <details><summary>Classification evidence</summary><pre>${escapeHTML(JSON.stringify(m.review,null,2))}</pre></details>` : ''}</article>`).join('')}
+        <p class="llm-evidence">${escapeHTML(llmCallLabel(m.review.audit,m.review.status==='classified_for_review'))}</p><details><summary>Classification evidence</summary><pre>${escapeHTML(JSON.stringify(m.review,null,2))}</pre></details>` : ''}</article>`).join('')}
     </details>
     <p class="panel-sub">Saved case snapshot ${escapeHTML(current.snapshot.as_of_date)}. Source AR stays unchanged. Classification uses the configured model; unavailable models require review.</p>`;
   if(replyDrafts.has(current.id))$('case-reply-text').value=replyDrafts.get(current.id);
@@ -565,6 +567,7 @@ api("/api/health").then(async (health) => {
       : 'Public demo · daily Start limits still active. Apply sql/011_unlimited_demo_starts.sql to remove them. Model and email allowances remain bounded.')
     : 'Local learning mode · keep this instance private.';
   const language = health.language;
+  updateLanguageLabels(language);
   mailEnabled = Boolean(health.email?.ready);
   $("backend-label").textContent = language ? (language.configuration_error ? "Supabase · LLM configuration blocked" : language.enabled ? (language.key_configured ? `Supabase · ${language.provider} · ${language.model}` : "Supabase · API key missing") : "Supabase · templates only") : "Supabase + Python connected";
   const preview = await api('/api/portfolio');

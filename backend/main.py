@@ -389,7 +389,7 @@ def create_app(store=None, language=None, mail_config=None, mail_transport=None,
             followup_status={'ready':False,'error':'Apply sql/012_promise_followups.sql to enable demo-clock follow-ups.'}
         model = risk_model.load_model()
         preventive = risk_model.load_model(stage='pre_due')
-        return {"status": "ok", "app_version":"v2.12", "ui_version":"workflow-14", "milestone": "M6", "storage": "supabase_postgres",
+        return {"status": "ok", "app_version":"v2.13", "ui_version":"workflow-15", "milestone": "M6", "storage": "supabase_postgres",
                 "source": "Supabase tables", "invoice_count": info["invoice_count"], "stage_count": len(STAGES),
                 "model_version": model["model_version"], "model_training_data": "synthetic",
                 "public_demo": {"enabled":public.config.enabled,"daily_run_limit_enabled":public_info.get('daily_run_limit_enabled',True) if public.config.enabled else False,

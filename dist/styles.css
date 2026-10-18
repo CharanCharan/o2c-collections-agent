@@ -351,3 +351,27 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 @media(max-width:760px) {.compact-flow {grid-template-columns:minmax(0,1fr)}.compact-flow .run-banner {max-width:none}}
 
 .ar-table th:first-child {width:15%}.ar-table th:nth-child(2) {width:10%}.ar-table th:nth-child(3) {width:10%}.ar-table th:nth-child(4) {width:9%}.ar-table th:nth-child(5) {width:11%}.ar-table th:nth-child(6) {width:12%}.ar-table th:nth-child(7) {width:13%}.ar-table th:nth-child(8) {width:12%}.ar-table th:last-child {width:8%}
+
+/* Small, editable two-page workflow guide. */
+.title-line {display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.title-line h1 {margin-right:0}.guide-trigger {font-size:13px;white-space:nowrap}
+.llm-mode-summary {display:block;margin-top:4px;font-size:13px;color:#476a5a}
+.llm-evidence {font-size:13px;color:#4e6d5c;margin:9px 0}
+.workflow-guide-open {overflow:hidden}
+.workflow-guide {width:min(920px,calc(100vw - 32px));max-height:90dvh;padding:0;border:1px solid #c8dcd0;border-radius:14px;color:var(--ink);background:white;box-shadow:0 20px 80px #153c3b44}
+.workflow-guide[open] {display:flex;flex-direction:column}
+.workflow-guide::backdrop {background:#102f3299}
+.guide-head {display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line)}
+.guide-head h2 {font-size:23px;margin:4px 0 0}.guide-head button {flex-shrink:0}
+.guide-tabs {display:flex;gap:8px;padding:12px 22px;border-bottom:1px solid var(--line)}
+.guide-tabs button {padding:8px 12px;border:1px solid #d1dfd6;border-radius:7px;background:#f4f8f5;color:#365c4d;font-size:14px}
+.guide-tabs button[aria-selected="true"] {background:#153f3a;color:white;border-color:#153f3a}
+.guide-content {overflow:auto;padding:6px 22px 14px;min-height:0;font-size:15px;line-height:1.5}
+.guide-content h3 {font-size:20px;margin:12px 0 6px}.guide-content p {margin:8px 0 12px}
+.guide-table-wrap {overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.guide-content table {table-layout:auto;min-width:560px}.guide-content th {font-size:13px}.guide-content td {font-size:14px;padding:10px;line-height:1.4}
+.guide-content th:first-child {width:19%}.guide-content th:last-child {width:33%}
+.guide-llm-status {margin:0;padding:10px 22px;background:#edf6f0;font-size:13px;color:#3c654f}
+.guide-footer {display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 22px;border-top:1px solid var(--line);font-size:13px}
+.guide-footer a {margin-right:auto;color:#25634e}.guide-footer button {font-size:13px}
+@media(max-width:760px) {.guide-head,.guide-footer {padding:14px}.guide-head h2 {font-size:19px}.guide-tabs {padding:10px 14px}.guide-content {padding:4px 14px 12px}}

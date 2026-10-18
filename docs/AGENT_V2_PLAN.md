@@ -1,5 +1,7 @@
 # V2 current implementation checkpoint
 
+V2.13:concisetwopageMarkdownworkflowguidebesidetitle, truthfulLLMreadiness+actualcallauditlabels. UI/static/versiononlynoSQL/packages/env; priorSQL013stillrequired/learneracceptancepending. Healthv2.13/workflow-15; lessonV2_13; usermerge/deploy/visualchecks pending.
+
 V2.12 checkpointrepairtakespriority:applySQL013after012/restart/retryoldfailedjob, noreset. ReproducedretiredcheckpointlatewriteFK23503; functionsqualified/serialized, skipretiredonly/strictunknown, checkpointhealth13 andsafeSQLSTATE/action. Healthv2.12/workflow-14. LessonV2_12, userDBapplication/acceptancepending; no directDBcredentials/livechangebyassistant.
 
 V2.11: compacttopnames-onlyflow+actualcaseprocessingstage, ownedSQL-backedrun/invoiceeventstreams, ninthrowLogcontrol andreadycaseapprovalenabledindependentlyofportfoliojob. Noartificialpacing/SQL/packages/env; healthv2.11/workflow-13. LessonV2_11, merge/deploy/visualchecks pending.
