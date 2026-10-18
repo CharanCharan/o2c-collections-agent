@@ -2,17 +2,21 @@
 document_role: implementation_knowledge_and_session_handoff
 repository: CharanCharan/o2c-collections-agent
 updated: 2026-10-18
-implementation_milestone: V2_18_cloudflare_web_analytics
-implementation_branch: cloudflare-web-analytics
+implementation_milestone: V2_19_github_source_link
+implementation_branch: github-source-link
 implementation_status: ready_for_review_not_learner_verified
 learner_status: M3_merged_user_reported_done_normal_run
-pending_learning_check: deploy_and_verify_Cloudflare_visits_and_country
+pending_learning_check: deploy_and_verify_source_link_and_repository_access
 next_milestone: verify_checkpoint_repair_then_guided_walkthrough_then_editor
 ---
 
 # Project knowledge — continuation context
 
-## V2.18 Cloudflare Web Analytics — authoritative current checkpoint
+## V2.19 GitHub source link — authoritative current checkpoint
+
+V2.19 adds View source on GitHub beside How it works, opening the canonical repository in a new tab with an accessible label and noopener/noreferrer. Private visibility unchanged; invite interviewers or choose public access yourself. Credential review at main d03f1f64 plus all30 branch heads:69 reachable commits/41complete trees/471text versions, no tags; matches reviewed as test fixtures/vector, no apparent live credentials found. Scope excludes unreachable objects/discussions/logs/runtime and cannot prove chat-key rotation; two binary assets excluded from text scan. Lesson docs/MILESTONE_V2_19.md records scope and exercise. NoSQL/env/deps/liveproviders/deployment, appv2.19/uiworkflow-20. HTML checks and Pythoncompile passed; usermerge/deploy/accesscheck pending. Incognito preserved/freshdemo CANCELLED.
+
+## Historical V2.18 Cloudflare Web Analytics
 
 PR27 merged a80b29603bd0158ebd90a33d83ecc79ba5dad25c; compare65e7ddaf→main mergeonly/noedits. User suppliedpublicCloudflareWebAnalytics snippet forAccentureinterviewertraffic. Branchcloudflare-web-analytics; lesson docs/MILESTONE_V2_18.md. Includeprovidedmodulebeacononcebeforebodyclose in dist/index.html; fixedCloudflaresource/publicsite token suppliedbyuser. NoAPIsecret/accountlogin/DNSmove/newSQL/env/packages. Backendversiononlyv2.18/uiworkflow-19.
 

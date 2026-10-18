@@ -4,7 +4,11 @@ Last updated: 2026-10-18
 Owner: Charan
 Current checkpoint: M0 complete; M1 local execution confirmed; M2 learner-complete on 2026-10-17 (Supabase source edit, immutable results and restart/approval persistence confirmed). M3 PR#4 merged; user reported done and requested M4. Normal setup/run is learner-confirmed; optional source-edit/retraining/understanding exercises not separately verified. M4 PR#5 merged a18edaad; user explicitly defers its live/learning checks until after M5. M5 PR#6 merged0114b768; user reports Resend Connect errors. M6 PR#7 merged; user reports cloud site working. Actual URL/external-loop checks not independently verified. PR#8 merged c5778663 and user confirms preload works. Current v2-visitor-cases implements conversation/case foundation, SQL007 setup pending; V2 inbox/LangGraph/autopilot design in docs/AGENT_V2_PLAN.md.
 
-## Current milestone — V2.18 Cloudflare Web Analytics
+## Current milestone — V2.19 GitHub source link
+
+V2.19 adds View source on GitHub beside How it works, opening the canonical repository in a new tab with an accessible label and noopener/noreferrer. Private visibility unchanged; invite interviewers or choose public access yourself. Credential review at main d03f1f64 plus all30 branch heads:69 reachable commits/41complete trees/471text versions, no tags; matches reviewed as test fixtures/vector, no apparent live credentials found. Scope excludes unreachable objects/discussions/logs/runtime and cannot prove chat-key rotation; two binary assets excluded from text scan. Lesson docs/MILESTONE_V2_19.md records scope and exercise. NoSQL/env/deps/liveproviders/deployment, appv2.19/uiworkflow-20. HTML checks and Pythoncompile passed; usermerge/deploy/accesscheck pending. Incognito preserved/freshdemo CANCELLED.
+
+## Historical milestone — V2.18 Cloudflare Web Analytics
 
 PR27mergeda80b2960. Userprovidedbeaconaddedoncebeforebodyclose, publictoken/module/fixedCloudflaresource. NoSQL/env/packages/account/DNSchanges; v2.18/workflow-19, lessonV2_18/branchcloudflare-web-analytics. HTMLstructure/token/sourcechecked+Pythoncompilepassed; deployment/dashboardcollectionunverified. Ownertrafficincluded, nocustomRun/taggedAccenture/exclusiontracking. Usermerge/deploy/visit/checkdashboard; freshdemo stayscancelled.
 

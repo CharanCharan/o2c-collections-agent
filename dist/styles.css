@@ -355,6 +355,8 @@ pre {white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px
 /* Small, editable two-page workflow guide. */
 .title-line {display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .title-line h1 {margin-right:0}.guide-trigger {font-size:13px;white-space:nowrap}
+.source-link {display:inline-flex;align-items:center;gap:7px;font-size:13px;text-decoration:none;white-space:nowrap}
+.source-link:focus-visible {outline:3px solid #25634e;outline-offset:3px}
 .llm-mode-summary {display:block;margin-top:4px;font-size:13px;color:#476a5a}
 .llm-evidence {font-size:13px;color:#4e6d5c;margin:9px 0}
 .workflow-guide-open {overflow:hidden}
